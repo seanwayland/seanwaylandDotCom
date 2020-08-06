@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <style>
+  #value {
+    font-size: 50px;
+}
+</style>
+    <body>
+
+    <title>TOTAL BACKBEATS EVER RECORDED IN MUSIC </title>
+    <h3>BACKBEATS IN MODERN MUSIC</h3>
+    
+    <div id="value">1000</div>
+    
+ 
+  </body>
+
+  <script>
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
+function animateValue(id, start, end, duration) {
+    var range = end - start;
+    var current = start;
+    var increment = end > start? 1 : -1;
+    var stepTime = Math.abs(Math.floor(duration / range));
+    var obj = document.getElementById(id);
+    var timer = setInterval(function() {
+        current += increment;
+        obj.innerHTML = current;
+        if (current == end) {
+            clearInterval(timer);
+        }
+    }, stepTime);
+}
+
+animateValue("value", 100000000 + getRandomInt(1000000), 2000000000, 50000);
+
+
+</script>
+
+</html>
+
