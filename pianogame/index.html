@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<!--
+PIANO GAME :
+A 2 player or one player ear training guessing game.
+Players choose notes from the musical chromatic scale and a melody length.
+The computer generates a random melody.
+The players can listen to the melody by pressing a button multiple times to play the melody sequence.
+In the one player version there is a "bank" with 10000 in it.
+Increasing the number of notes chosen and the length increases the "bet amount" .
+A keyboard is used to "guess" the melody. Player gets 3 guesses.
+A correct guess removes money from the bank account and adds it to the players bank.
+If the bank runs out of money the player wins.
+In the 2 player version each player has 10,000 to start and takes turn having 3 guesses at a melody.
+Each player chooses the notes and melody length for his/her/nonbinary turn.
+The goal is to bankrupt the other player in the 2 player version.
+In the 2 player version choosing all 12 chromatic notes for the melody will make each melody note worth a lot more.
+A player can choose a one player or 2 player game.
+If a player chooses a 2 player game they can see a list of playing games and ask to join ones with only one player in them.
+A 2 player game can be restarted or deleted.
+-->
+
+<html xmlns:v-bind="http://www.w3.org/1999/xhtml" xmlns:v-on="http://www.w3.org/1999/xhtml">
+<head>
+
+
+    <title>Piano game</title>
+</head>
+
+<script src="audiosynth.js"></script>
+
+
+<!-- load some basic files and set up libraries -->
+<script src="audiosynth.js"></script>
+<script src="Timer.js"></script>
+
+<script language="javascript" src="vars.js"></script>
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<script language="javascript" src="render.js"></script>
+
+<audio id="loseAudio">
+
+    <source src="lose.mp3" type="audio/mpeg" preload="auto">
+</audio>
+<audio id="winAudio">
+
+    <source src="win.mp3" type="audio/mpeg" preload="auto">
+</audio>
+<audio id="applauseAudio">
+
+    <source src="applause.mp3" type="audio/mpeg" preload="auto">
+</audio>
+
+
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+
+
+<script>
+    /** SET UP AUDIOSYNTH CLSS
+     * simple javascript synthesizer used for piano notes
+     * https://github.com/keithwhor/audiosynth
+     */
+    Synth instanceof AudioSynth; // true
+    var testInstance = new AudioSynth;
+    testInstance instanceof AudioSynth; // true
+    testInstance === Synth; // true
+</script>
+
+
+
+<script>
+
+
+    //var socket = io();
+ 
+
+    /**
+     * do stuff with socket when we connect to a new room
+     */
+
+
+</script>
+
+<body>
+
+<style>
+
+    div.a {
+
+        display: inline-block;
+
+    }
+
+    div.b {
+        font-size: 10px;
+    }
+
+    body {
+        background: url(background.png);
+        background-repeat: no-repeat;
+
+        background-size: cover;
+
+        font-family: Palatino, monospace;
+        font-size: x-small;
+    }
+
+    div.j {
+
+        display: inline-block;
+    }
+
+    div.g {
+        height: auto;
+    }
+
+    p.a {
+        height: 20px;
+    }
+
+    button:hover {
+        background-color: yellow;
+    }
+
+    button {
+        border-radius: 12px;
+        background-color: #4CAF50;
+        padding: 12px 28px;
+    }
+
+    div.keyboard {
+        display: inline-block;
+    }
+
+    .right {
+        position: absolute;
+        right: 0px;
+        width: 375px;
+        height: 450px;
+        overflow: scroll;
+
+        border: 3px solid #73AD21;
+        padding: 10px;
+
+    }
+
+</style>
+
+
+
+<!--
+<input type="text" id="message">
+<button type="button" name="button" onclick="sendMessage()">Send</button>
+-->
+
+
+<p>EAR TRAINING CHALLENGE! </br>
+    Guess the bank vault's secret melody code and bankrupt the bank!! <br>To start, select
+    some notes from the left keyboard, then generate a new secret melody code. <br> </p>
+<button class="y" id="instructions" onclick="instructionsFunction()">Game Instructions</button>
+
+<!--
+disable this button if not your turn
+
+document.getElementById("newCode").disabled = true;
+-->
+<button class="y" id="newCode" onclick="changeMelody()">Click me to make a new secret melody code.</button>
+
+<button class="y" id="melody" onclick="myFunction()">Click me to play secret melody code.</button>
+</br>
+
+
+<p><small>Select number of notes to guess with the left slider. Each extra note adds $100 to bet!</small></p>
+
+<div class="slidecontainer">
+    <input type="range" min="1" max="10" value="5" class="slider" id="myRange">
+    <p>Value: <span id="demo"></span></p>
+  </div>
+  
+  <script>
+  var slider = document.getElementById("myRange");
+  var output = document.getElementById("demo");
+  output.innerHTML = slider.value;
+  
+  slider.oninput = function() {
+    output.innerHTML = this.value;
+    melodyLength = this.value;
+  }
+  </script>
+
+
+
+<div class="keyboard">
+
+
+    <svg xmlns="http://www.w3.org/2000/svg" id="piano" width="300" height="150">
+
+        <!-- SVG piano keyboard. I borrowed the dimensions from somewhere. Cant remember now !
+        Used to select which notes are in the random melody choice
+        -->
+
+        <rect style="fill:white;stroke:black" id="Ckeyb" class="btn" x="0" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(0)"/>
+        <rect style="fill:white;stroke:black" id="Dkeyb" class="btn" x="23" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(2)"/>
+        <rect style="fill:white;stroke:black" id="Ekeyb" class="btn" x="46" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(4)"/>
+        <rect style="fill:white;stroke:black" id="Fkeyb" class="btn" x="69" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(5)"/>
+        <rect style="fill:white;stroke:black" id="Gkeyb" class="btn" x="92" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(7)"/>
+        <rect style="fill:white;stroke:black" id="Akeyb" class="btn" x="115" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(9)"/>
+        <rect style="fill:white;stroke:black" id="Bkeyb" class="btn" x="138" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(11)"/>
+        <rect style="fill:black;stroke:black" id="Cskeyb" class="btn" x="14.33333" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(1)"/>
+        <rect style="fill:black;stroke:black" id="Dskeyb" class="btn" x="41.66666" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(3)"/>
+        <rect style="fill:black;stroke:black" id="Fskeyb" class="btn" x="82.25" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(6)"/>
+        <rect style="fill:black;stroke:black" id="Gskeyb" class="btn" x="108.25" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(8)"/>
+        <rect style="fill:black;stroke:black" id="Askeyb" class="btn" x="134.75" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(10)"/>
+
+    </svg>
+
+
+</div>
+
+<div class="keyboard">
+
+    <!-- a 2nd keyboard to play notes on ! -->
+
+    <svg xmlns="http://www.w3.org/2000/svg" id="piano2" width="300" height="150">
+
+
+        <rect style="fill:white;stroke:black" id="Ckeyb2" class="btn" x="0" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(12)"/>
+        <rect style="fill:white;stroke:black" id="Dkeyb2" class="btn" x="23" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(14)"/>
+        <rect style="fill:white;stroke:black" id="Ekeyb2" class="btn" x="46" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(16)"/>
+        <rect style="fill:white;stroke:black" id="Fkeyb2" class="btn" x="69" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(17)"/>
+        <rect style="fill:white;stroke:black" id="Gkeyb2" class="btn" x="92" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(19)"/>
+        <rect style="fill:white;stroke:black" id="Akeyb2" class="btn" x="115" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(21)"/>
+        <rect style="fill:white;stroke:black" id="Bkeyb2" class="btn" x="138" y="0" width="23" height="120"
+              onclick="WhiteKeyClicked(23)"/>
+        <rect style="fill:black;stroke:black" id="Cskeyb2" class="btn" x="14.33333" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(13)"/>
+        <rect style="fill:black;stroke:black" id="Dskeyb2" class="btn" x="41.66666" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(15)"/>
+        <rect style="fill:black;stroke:black" id="Fskeyb2" class="btn" x="82.25" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(18)"/>
+        <rect style="fill:black;stroke:black" id="Gskeyb2" class="btn" x="108.25" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(20)"/>
+        <rect style="fill:black;stroke:black" id="Askeyb2" class="btn" x="134.75" y="0" width="13" height="80"
+              onclick="BlackKeyClicked(22)"/>
+
+    </svg>
+
+
+</div>
+
+<div>
+    <p class="a"> Use the left keyboard to choose notes are in the game!</p>
+</div>
+<div>
+    <p class="a"> Use the right keyboard to guess the secret code! </p>
+</div>
+
+
+<div>
+
+
+    <!-- I wanted to try some animation .. I created a sh$tty dollar bill and made it move across the page
+    when a correct guess occurs. Pretty lame !!! -->
+
+
+    </svg>
+
+</div>
+
+
+
+</body>
+</html>
