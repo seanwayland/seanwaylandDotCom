@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Forms</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <!--
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/superhero/bootstrap.min.css">
+    -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js" ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.0/js/bootstrap.bundle.js"></script>
+    <link rel="stylesheet" href="./style.css">
+
+
+</head>
+
+
+<body>
+
+
+
+
+<div style="background-image: url('Pickle.jpg');">
+
+    <div>
+        <h3 class="text-primary" style="color:#0073e6;">
+            The Big Mac and the Pickles
+
+            <h6>
+                Bernoulli trials for your own Monte Carlo simulation of the probability of biting into a pickle in a big mac. To run a simulation enter the number of trials and hit the run button.
+                Your mouth is pink and the pickles are green. The more trials you do the more accurate your results! With pickle size set to "dots" only the midpoint of the pickles and bite is represented.
+                Scroll to the bottom of the page for a detailed explanation.
+            </h6>
+        </h3>
+    </div>
+
+<section class="container">
+
+
+    <div class = "a"> <BR><BR><BR>
+
+        <!--
+            <form>
+                <div class="form-group">
+                    <label for="example-form">Enter some text</label>
+                    <input class="form-control" id="example-form-input" name="example-form" type="text">
+                </div>
+                <button id="button" type="button" class="btn btn-default">Enter</button>
+            </form>
+
+            -->
+
+        <div class="input-group mb-3">
+            Run Trials: <br>
+            <input id = "runTrials" type="text" class="form-control" placeholder="Enter number of Trials" aria-label="Run trials" aria-describedby="basic-addon2">
+            <div class="input-group-append">
+                <button id = "trialsButton" class="btn btn-outline-secondary" type="button">Run trials!</button>
+            </div>
+        </div>
+
+
+
+    <div>
+        Select pickle size: <br>
+    <select class="selectpicker"  id="selectButton">
+
+        <option value="scale">objects to scale</option>
+        <option value="dots">dots</option>
+    </select>
+    </div>
+        <div>
+            <h5 id = "b">Number of pickles encountered
+                <span></span>
+            </h5>
+        </div>
+    <div>
+        <h5 id = "p">Probability calculated:
+            <span></span>
+        </h5>
+    </div>
+        <div>
+            <h5 id = "l">95% confidence lower bound:
+                <span></span>
+            </h5>
+        </div>
+        <div>
+            <h5 id = "u">95% confidence upper bound:
+                <span></span>
+            </h5>
+        </div>
+
+    </div>
+
+
+
+<div class = "b" id ="viz"></div>
+
+
+
+</section>
+
+<script type="text/javascript">
+
+
+    var vizSVG = d3.select("#viz")
+        .append("svg:svg")
+        .attr("width", 600)
+        .attr("height", 600);
+
+
+    vizSVG.append("svg:circle")
+        .attr("id", "bigmac")
+        .attr("cx", 300)
+        .attr("cy", 300)
+        .attr("r", 187.5 )
+        .attr("fill", "yellow");
+
+    //runTrials(10)
+
+
+</script>
+
+    <h3 class="text-primary" style="color:#0073e6;">Simulation of biting into pickle in Big Mac.  </h3> <h4 class="text-primary">I assumed the radius of the Big Mac is 1.875 inches.
+    I assumed the radius of a pickle is .5 inches.
+    I assumed bite radius is 1 inch.
+    The pickle is randomly placed inside the burger.
+    The mouth bites randomly up to .4 inches. I assumed each Big Mac has 2 pickles which is standard.
+    The depth of the bite is randomly chosen. Complete as many Bernoulli trials as you like by entering a number of trials and running the program.
+    The page con computes exact confidence intervals for samples from the Binomial Distributions.
+     In statistics, a binomial proportion confidence interval is a confidence interval for the probability of success calculated from the outcome of a series of success/failure experiments (Bernoulli trials).
+    In other words, a binomial proportion confidence interval is an interval estimate of a success probability p when only the number of experiments n and the number of successes (n of s) are known.
+    Statistics SourcePage is https://statpages.info/confint.html
+
+</h4>
+
+
+
+</body>
+
+<script src="index.js"></script>
+
+</html>

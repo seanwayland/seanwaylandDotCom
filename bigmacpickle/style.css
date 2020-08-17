@@ -1,0 +1,28 @@
+* {
+    box-sizing: border-box;
+    font-family: Ubuntu, sans-serif;
+}
+
+html,
+body {
+    height: 100%;
+    padding: 0;
+    margin: 1px;
+}
+
+.container {
+    width: 95%;
+    height: 600px;
+    margin: auto;
+    padding: 10px;
+}
+
+.a {
+    width: 30%;
+    height: 600px;
+    float: left;
+}
+
+.b {
+    margin-left: 25%;
+}
