@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body>
-<h3> ANALOG STYLE CLOCK with continuous seconds hand </h3>
+<h3> ANALOG STYLE CLOCK </h3>
 <canvas id="canvas" width="400" height="400"
 style="background-color:#333">
 </canvas>
@@ -12,7 +12,7 @@ var ctx = canvas.getContext("2d");
 var radius = canvas.height / 2;
 ctx.translate(radius, radius);
 radius = radius * 0.90
-setInterval(drawClock, 100);
+setInterval(drawClock, 10);
 
 function drawClock() {
   drawFace(ctx, radius);
@@ -66,6 +66,7 @@ function drawTime(ctx, radius){
     var seconds = 1000
     var secs_float = (now / seconds);
     var secs_mantissa = second + (secs_float%1);
+    //var secs_mantissa = (second + (secs_float%1)).toFixed(2)
     
     //hour
     hour=hour%12;
@@ -114,7 +115,7 @@ function drawHand(ctx, pos, length, width) {
 
 
 <script>
-function myFunction() {
+function checkMath() {
   var seconds = 1000
   var minutes = 1000 * 60;
   var hours = minutes * 60;
@@ -127,7 +128,7 @@ function myFunction() {
   var hrs = (n % 12) || 12;
   var secs = d.getSeconds();
   var secs_float = (t / seconds);
-  var secs_mantissa = secs + (secs_float%1);
+  var secs_mantissa = (secs + (secs_float%1)).toFixed(2)
   var hrs_float = (t / hours);
   var hrs_mantissa = hrs + (hrs_float%1);
   var mins_float = (t / minutes);
@@ -146,7 +147,7 @@ function myFunction() {
 
 
 }
-setInterval(myFunction, 100);
+setInterval(checkMath, 100);
 </script>
 
 </body>
