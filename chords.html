@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<body style="text-align:center;">
+	<h1 style="color:green;">
+		CHORDS 
+	</h1>
+
+	<p>
+     Enter your chord to check 
+	</p>
+
+	Name:<input type="text" id="myText" value="C,E,G">
+	<button type="button" onclick="myFunction()">Try it</button>
+	<p id="demo"></p>
+
+	
+	<script>
+
+var chords = {
+  "C,E,G": "C",
+  "Db,F,Ab": "Db",
+  "C#,F,G#" : "C#" 
+};
+	
+	// Here the value is stored in new variable x
+	function myFunction() {
+		var x = document.getElementById("myText").value;
+        var chord_name = chords[x];
+        if(chord_name){
+		    document.getElementById("demo").innerHTML = chord_name;}
+        else{
+            document.getElementById("demo").innerHTML =  "chord not found"
+        }
+	}
+	</script>
+</body>
+
+</html>
+
+</html>
