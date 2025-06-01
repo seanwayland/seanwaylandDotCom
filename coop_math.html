@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sean's NYC Co-op Calculator</title>
+  <h3>Orange inputs at top red outputs below</h3>
+
+  <style>
+    body {
+      background-color: black;
+      font-family: Arial, sans-serif;
+      color: white;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: lightgreen;
+      font-weight: bold;
+    }
+    .form-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .form-group label {
+      width: 180px;
+      color: orange;
+      text-align: right;
+      margin-right: 10px;
+    }
+    .form-group.red label {
+      color: red;
+    }
+    .form-group input {
+  width: 100%;
+  padding: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+@media (min-width: 600px) {
+  .form-group input {
+    width: 40%;
+  }
+}
+
+@media (min-width: 1000px) {
+  .form-group input {
+    width: 20%;
+  }
+}
+
+
+
+    
+  </style>
+</head>
+<body>
+
+  <h1>Sean's NYC Co-op Maths Calculator</h1>
+
+  <div class="form-group"><label>monthly tax plus coop charges:</label><input id="monthlies" type="number"></div>
+  <div class="form-group"><label>Interest Rate %:</label><input id="interestRate" type="number"></div>
+  <div class="form-group"><label>Annual Income:</label><input id="annualIncome" type="number"></div>
+  <div class="form-group"><label>Coop Max DTI %:</label><input id="buildingDTI" type="number"></div>
+  <div class="form-group"><label>Offer Amount:</label><input id="offerAmount" type="number"></div>
+  <div class="form-group"><label>Down Payment:</label><input id="downPayment" type="number"></div>
+  <div class="form-group"><label>Closing Costs:</label><input id="closingCosts" type="number"></div>
+  <div class="form-group"><label>Liquid Assets:</label><input id="liquidAssets" type="number"></div>
+
+  <div class="form-group red"><label>Mortgage Pmt:</label><input id="mortgagePayment" type="number" readonly></div>
+  <div class="form-group red"><label>Monthly Pmt:</label><input id="monthlyPayment" type="number" readonly></div>
+  <div class="form-group red"><label>Max payment limit monthly from DTI:</label><input id="DTImax" type="number" readonly></div>
+  <div class="form-group red"><label>Loan Amount:</label><input id="loanAmount" type="number" readonly></div>
+  <div class="form-group red"><label>DTI Calculated:</label><input id="DTIcalculated" type="number" readonly></div>
+  <div class="form-group red"><label>Down Payment %:</label><input id="downPaymentPercent" type="number" readonly></div>
+  <div class="form-group red"><label>2 yrs Reserves needed after closing:</label><input id="twoYearsReserveAmount" type="number" readonly></div>
+  <div class="form-group red"><label>Reserves after closing:</label><input id="reservesAfterClosing" type="number" readonly></div>
+
+  <script>
+    const ids = [
+      'monthlies', 'interestRate', 'annualIncome', 'buildingDTI',
+      'offerAmount', 'downPayment', 'closingCosts', 'liquidAssets'
+    ];
+
+    ids.forEach(id => {
+      document.getElementById(id).addEventListener('input', calculate);
+    });
+
+    function calculate() {
+      const getVal = id => parseFloat(document.getElementById(id).value) || 0;
+
+      let monthlies = getVal('monthlies');
+      let interestRate = getVal('interestRate');
+      let annualIncome = getVal('annualIncome');
+      let buildingDTI = getVal('buildingDTI');
+      let offerAmount = getVal('offerAmount');
+      let downPayment = getVal('downPayment');
+      let closingCosts = getVal('closingCosts');
+      let liquidAssets = getVal('liquidAssets');
+
+      let monthlyIncome = annualIncome / 12;
+      let loanAmount = offerAmount - downPayment;
+      let monthlyInterestRate = interestRate / 100 / 12;
+      let power = Math.pow(1 + monthlyInterestRate, 360);
+
+      // Mortgage formula
+      let mortgagePayment = 0;
+      if (monthlyInterestRate > 0 && loanAmount > 0) {
+        mortgagePayment = loanAmount * monthlyInterestRate * (power / (power - 1));
+      }
+
+      // Round
+      mortgagePayment = Math.round(mortgagePayment * 100) / 100;
+      let monthlyPayment = Math.round((mortgagePayment + monthlies) * 100) / 100;
+      let DTImax = Math.round((monthlyIncome * buildingDTI / 100) * 100) / 100;
+      let DTIcalculated = Math.round(((mortgagePayment + monthlies) / monthlyIncome) * 100);
+      let maxLoanAllowed = 0;
+      if (monthlyInterestRate > 0 && power !== 1) {
+        maxLoanAllowed = (DTImax - monthlies) / (monthlyInterestRate * (power / (power - 1)));
+        maxLoanAllowed = Math.round(maxLoanAllowed * 100) / 100;
+      }
+
+      let downPaymentPercent = 0;
+      if (offerAmount > 0) {
+        downPaymentPercent = Math.round((downPayment / offerAmount) * 10000) / 100;
+      }
+
+      let twoYearsReserveAmount = Math.round((mortgagePayment + monthlies) * 24 * 100) / 100;
+      let reservesAfterClosing = Math.round((liquidAssets - closingCosts - downPayment) * 100) / 100;
+
+      // Output
+      const setVal = (id, val) => document.getElementById(id).value = isNaN(val) ? '' : val;
+
+      setVal('mortgagePayment', mortgagePayment);
+      setVal('monthlyPayment', monthlyPayment);
+      setVal('DTImax', DTImax);
+      setVal('loanAmount', loanAmount);
+      setVal('DTIcalculated', DTIcalculated);
+      setVal('downPaymentPercent', downPaymentPercent);
+      setVal('twoYearsReserveAmount', twoYearsReserveAmount);
+      setVal('reservesAfterClosing', reservesAfterClosing);
+    }
+  </script>
+</body>
+</html>
