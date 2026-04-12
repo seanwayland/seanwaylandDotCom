@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circular Invaders</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @font-face {
+            font-family: 'Invaders';
+            src: url('./invaders-font/Invaders-6RY1.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #title {
+            font-family: 'Courier New', monospace;
+            font-size: 48px;
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00;
+            margin-bottom: 20px;
+            letter-spacing: 4px;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(to bottom, #001a4d, #000);
+            border: 2px solid #00ff00;
+            overflow: hidden;
+        }
+
+        #player {
+            position: absolute;
+            bottom: 20px;
+            left: 375px;
+            width: 50px;
+            height: 40px;
+            background-image: url('invader.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 100;
+        }
+
+        .projectile {
+            position: absolute;
+            width: 4px;
+            height: 12px;
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .enemy {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 50%;
+            background-image: url('dt.png');
+            z-index: 50;
+            border: 2px solid #ff6b00;
+        }
+
+        .enemy::before {
+            display: none;
+        }
+
+        #hud {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: #00ff00;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 200;
+            text-shadow: 0 0 10px #00ff00;
+            align-items: center;
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .speed-control label {
+            color: #ffff00;
+            font-size: 14px;
+            text-shadow: 0 0 10px #ffff00;
+        }
+
+        .speed-control input[type="range"] {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #00ff00;
+            padding: 40px;
+            text-align: center;
+            border: 3px solid #00ff00;
+            z-index: 300;
+            display: none;
+            border-radius: 10px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        #gameOver h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        #gameOver p {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        #gameOver button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 18px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        #gameOver button:hover {
+            background: #00cc00;
+        }
+
+        #gameOver button:active {
+            background: #009900;
+        }
+
+        .wave-indicator {
+            position: absolute;
+            bottom: 70px;
+            right: 20px;
+            color: #ffff00;
+            font-size: 14px;
+            text-shadow: 0 0 10px #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div id="title">DONALD INVADERS</div>
+    <div id="gameContainer">
+        <div id="hud">
+            <div>SCORE: <span id="score">0</span></div>
+            <div>LIVES: <span id="lives">3</span></div>
+            <div>DONALDS: <span id="enemyCount">0</span></div>
+            <div class="speed-control">
+                <label for="speedSlider">Speed:</label>
+                <input type="range" id="speedSlider" min="0.5" max="3" step="0.1" value="2.5">
+                <span id="speedValue">2.5x</span>
+            </div>
+        </div>
+        <div id="player"></div>
+        <div class="wave-indicator">Wave: <span id="wave">1</span></div>
+        <div id="gameOver">
+            <h1>GAME OVER</h1>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p id="defeatMessage"></p>
+            <button onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const playerElement = document.getElementById('player');
+        const scoreDisplay = document.getElementById('score');
+        const livesDisplay = document.getElementById('lives');
+        const enemyCountDisplay = document.getElementById('enemyCount');
+        const waveDisplay = document.getElementById('wave');
+        const gameOverScreen = document.getElementById('gameOver');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const defeatMessage = document.getElementById('defeatMessage');
+
+        // Game state
+        const game = {
+            score: 0,
+            lives: 3,
+            wave: 1,
+            gameOver: false,
+            speedMultiplier: 2.5,
+            containerWidth: 800,
+            containerHeight: 600,
+            playerSpeed: 6,
+            projectileSpeed: 8,
+            enemySpeed: 2,
+            circleYOffset: -100,
+            circleYVelocity: 0.15
+        };
+
+        // Player state
+        const player = {
+            x: 375,
+            y: 540,
+            width: 50,
+            height: 40,
+            speed: 6,
+            projectiles: []
+        };
+
+        // Enemy circles
+        const circles = [
+            { radius: 200, rotation: 0, enemies: [], yOffset: -100, yVelocity: 0.15 },
+            { radius: 130, rotation: 0, enemies: [], yOffset: -100, yVelocity: 0.15 },
+            { radius: 60, rotation: 0, enemies: [], yOffset: -100, yVelocity: 0.15 }
+        ];
+
+        // Input handling
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ') {
+                e.preventDefault();
+                shoot();
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Speed slider
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            game.speedMultiplier = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = game.speedMultiplier.toFixed(1) + 'x';
+        });
+
+        // Initialize game
+        function init() {
+            // Create enemies in circles
+            for (let c = 0; c < circles.length; c++) {
+                const circle = circles[c];
+                const enemyCount = 12 - c * 2; // 12, 10, 8 enemies per circle
+                circle.enemies = [];
+
+                for (let i = 0; i < enemyCount; i++) {
+                    const enemy = {
+                        element: document.createElement('div'),
+                        angle: (i / enemyCount) * Math.PI * 2,
+                        radius: circle.radius,
+                        circleIndex: c,
+                        health: 1
+                    };
+                    enemy.element.className = 'enemy';
+                    gameContainer.appendChild(enemy.element);
+                    circle.enemies.push(enemy);
+                }
+            }
+            updateEnemyCount();
+        }
+
+        function shoot() {
+            if (game.gameOver) return;
+            
+            const projectile = {
+                element: document.createElement('div'),
+                x: player.x + player.width / 2 - 2,
+                y: player.y,
+                vx: 0,
+                vy: -game.projectileSpeed
+            };
+            projectile.element.className = 'projectile';
+            gameContainer.appendChild(projectile.element);
+            player.projectiles.push(projectile);
+        }
+
+        function updatePlayer() {
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                player.x = Math.max(0, player.x - player.speed);
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                player.x = Math.min(game.containerWidth - player.width, player.x + player.speed);
+            }
+
+            playerElement.style.left = player.x + 'px';
+        }
+
+        function updateProjectiles() {
+            for (let i = player.projectiles.length - 1; i >= 0; i--) {
+                const proj = player.projectiles[i];
+                proj.y += proj.vy * game.speedMultiplier;
+                proj.element.style.left = proj.x + 'px';
+                proj.element.style.top = proj.y + 'px';
+
+                if (proj.y < 0) {
+                    proj.element.remove();
+                    player.projectiles.splice(i, 1);
+                }
+            }
+        }
+
+        function updateEnemies() {
+            const centerX = game.containerWidth / 2;
+            const centerY = game.containerHeight / 2;
+
+            for (let c = 0; c < circles.length; c++) {
+                const circle = circles[c];
+                circle.rotation += 0.02 * game.speedMultiplier;
+                circle.yOffset += circle.yVelocity * game.speedMultiplier;
+
+                for (let e = 0; e < circle.enemies.length; e++) {
+                    const enemy = circle.enemies[e];
+                    
+                    // Calculate position on circle
+                    const x = centerX + Math.cos(enemy.angle + circle.rotation) * circle.radius - 15;
+                    const y = centerY + Math.sin(enemy.angle + circle.rotation) * circle.radius - 15 + circle.yOffset;
+
+                    enemy.element.style.left = x + 'px';
+                    enemy.element.style.top = y + 'px';
+
+                    // Check collision with player
+                    if (checkCollision(player.x, player.y, player.width, player.height, x + 15, y + 15, 30, 30)) {
+                        game.lives--;
+                        livesDisplay.textContent = game.lives;
+                        circle.yOffset += 20; // Push circle down when hit
+                        circle.yVelocity = 0.15;
+
+                        if (game.lives <= 0) {
+                            endGame('The Donald got you!');
+                        }
+                    }
+                }
+            }
+        }
+
+        function checkCollision(x1, y1, w1, h1, x2, y2, w2, h2) {
+            return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
+        }
+
+        function checkProjectileCollisions() {
+            for (let i = player.projectiles.length - 1; i >= 0; i--) {
+                const proj = player.projectiles[i];
+                let hit = false;
+
+                for (let c = 0; c < circles.length; c++) {
+                    const circle = circles[c];
+                    for (let e = circle.enemies.length - 1; e >= 0; e--) {
+                        const enemy = circle.enemies[e];
+                        const centerX = game.containerWidth / 2;
+                        const centerY = game.containerHeight / 2;
+                        
+                        const enemyX = centerX + Math.cos(enemy.angle + circle.rotation) * circle.radius;
+                        const enemyY = centerY + Math.sin(enemy.angle + circle.rotation) * circle.radius + circle.yOffset;
+
+                        const dist = Math.sqrt((proj.x - enemyX) ** 2 + (proj.y - enemyY) ** 2);
+                        if (dist < 25) {
+                            enemy.element.remove();
+                            circle.enemies.splice(e, 1);
+                            game.score += 100 * (3 - c); // Outer circles worth more
+                            scoreDisplay.textContent = game.score;
+                            hit = true;
+                        }
+                    }
+                }
+
+                if (hit) {
+                    proj.element.remove();
+                    player.projectiles.splice(i, 1);
+                }
+            }
+        }
+
+        function updateEnemyCount() {
+            let count = 0;
+            for (let c = 0; c < circles.length; c++) {
+                count += circles[c].enemies.length;
+            }
+            enemyCountDisplay.textContent = count;
+            return count;
+        }
+
+        function checkWaveComplete() {
+            const totalEnemies = updateEnemyCount();
+            if (totalEnemies === 0) {
+                nextWave();
+            }
+        }
+
+        function nextWave() {
+            game.wave++;
+            waveDisplay.textContent = game.wave;
+            game.projectileSpeed += 0.5;
+            game.circleYVelocity += 0.05;
+
+            // Reset circles and add more enemies
+            for (let c = 0; c < circles.length; c++) {
+                const circle = circles[c];
+                circle.rotation = 0;
+                circle.yOffset = -100;
+                circle.yVelocity = game.circleYVelocity;
+                circle.enemies = [];
+
+                const baseEnemyCount = 12 - c * 2;
+                const enemyCount = baseEnemyCount + Math.floor(game.wave / 2);
+
+                for (let i = 0; i < enemyCount; i++) {
+                    const enemy = {
+                        element: document.createElement('div'),
+                        angle: (i / enemyCount) * Math.PI * 2,
+                        radius: circle.radius,
+                        circleIndex: c,
+                        health: 1
+                    };
+                    enemy.element.className = 'enemy';
+                    gameContainer.appendChild(enemy.element);
+                    circle.enemies.push(enemy);
+                }
+            }
+            updateEnemyCount();
+        }
+
+        function endGame(message) {
+            game.gameOver = true;
+            gameOverScreen.style.display = 'block';
+            finalScoreDisplay.textContent = game.score;
+            defeatMessage.textContent = message;
+        }
+
+        function resetGame() {
+            // Clear all enemies from DOM
+            document.querySelectorAll('.enemy').forEach(el => el.remove());
+            document.querySelectorAll('.projectile').forEach(el => el.remove());
+
+            // Reset game state
+            game.score = 0;
+            game.lives = 3;
+            game.wave = 1;
+            game.gameOver = false;
+            game.speedMultiplier = 2.5;
+            game.projectileSpeed = 8;
+            game.circleYVelocity = 0.15;
+
+            // Reset slider
+            document.getElementById('speedSlider').value = 2.5;
+            document.getElementById('speedValue').textContent = '2.5x';
+
+            // Reset player
+            player.x = 375;
+            player.y = 540;
+            player.projectiles = [];
+            playerElement.style.left = player.x + 'px';
+
+            // Reset circles
+            for (let c = 0; c < circles.length; c++) {
+                circles[c].rotation = 0;
+                circles[c].enemies = [];
+                circles[c].yOffset = -100;
+                circles[c].yVelocity = 0.15;
+            }
+
+            // Update displays
+            scoreDisplay.textContent = game.score;
+            livesDisplay.textContent = game.lives;
+            waveDisplay.textContent = game.wave;
+            gameOverScreen.style.display = 'none';
+
+            // Reinitialize and restart
+            init();
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (game.gameOver) return;
+
+            updatePlayer();
+            updateProjectiles();
+            updateEnemies();
+            checkProjectileCollisions();
+            checkWaveComplete();
+
+            // Check if circles reached bottom
+            if (circles[0].yOffset > 150) {
+                endGame('The Donald invaded!');
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game
+        init();
+        gameLoop();
+    </script>
+</body>
+</html>
