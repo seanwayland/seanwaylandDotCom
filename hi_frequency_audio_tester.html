@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sine + Controlled Noise Burst</title>
+</head>
+
+<body style="font-family: sans-serif; padding: 20px;">
+
+<h2>Sine + Controlled Noise Burst</h2>
+
+<button onclick="start()">Start</button>
+<button onclick="stop()">Stop</button>
+<button onclick="triggerTransient()">Trigger Noise Burst</button>
+
+<br><br>
+
+<label>Frequency (Hz)</label>
+<input id="freq" type="number" value="440" min="1" max="30000">
+
+<br><br>
+
+<label>Sine Volume (max 0.25)</label>
+<input id="vol" type="range" min="0" max="0.25" step="0.001" value="0.05">
+
+<br><br>
+
+<label>Sine Timbre</label>
+<input id="drive" type="range" min="0" max="5" step="0.01" value="0">
+
+<br><br>
+
+<label>Noise Burst Level (max 0.25)</label>
+<input id="noiseVol" type="range" min="0" max="0.25" step="0.001" value="0.1">
+
+<p id="info"></p>
+
+<script>
+let ctx;
+let osc;
+let shaper;
+let sineGain;
+let masterGain;
+
+let running = false;
+let raf;
+
+function makeCurve(amount) {
+    const size = 2048;
+    const curve = new Float32Array(size);
+
+    for (let i = 0; i < size; i++) {
+        let x = (i / size) * 2 - 1;
+        curve[i] = Math.tanh(x * (1 + amount));
+    }
+
+    return curve;
+}
+
+function start() {
+    if (running) return;
+
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    document.getElementById("info").innerText =
+        "Audio rate: " + ctx.sampleRate + " Hz";
+
+    // MASTER BUS (global limiter)
+    masterGain = ctx.createGain();
+    masterGain.gain.value = 0.8;
+    masterGain.connect(ctx.destination);
+
+    // SINE CHAIN
+    osc = ctx.createOscillator();
+    osc.type = "sine";
+
+    shaper = ctx.createWaveShaper();
+    shaper.curve = makeCurve(0);
+
+    sineGain = ctx.createGain();
+    sineGain.gain.value = 0.05;
+
+    osc.connect(shaper);
+    shaper.connect(sineGain);
+    sineGain.connect(masterGain);
+
+    osc.start();
+
+    running = true;
+    update();
+}
+
+function update() {
+    if (!ctx || !running) return;
+
+    const now = ctx.currentTime;
+
+    const freq = parseFloat(document.getElementById("freq").value);
+    const drive = parseFloat(document.getElementById("drive").value);
+    const vol = parseFloat(document.getElementById("vol").value);
+
+    osc.frequency.setTargetAtTime(freq, now, 0.01);
+    sineGain.gain.setTargetAtTime(vol, now, 0.02);
+
+    shaper.curve = makeCurve(drive);
+
+    raf = requestAnimationFrame(update);
+}
+
+function triggerTransient() {
+    if (!ctx || !running) return;
+
+    const now = ctx.currentTime;
+    const noiseVol = parseFloat(document.getElementById("noiseVol").value);
+
+    // 500ms white noise buffer
+    const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1);
+    }
+
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+
+    // IMPORTANT: dedicated gain stage WITH LIMIT
+    const gain = ctx.createGain();
+
+    // cap behaviour consistent with sine domain (~0.25 max system feel)
+    gain.gain.setValueAtTime(noiseVol, now);
+
+    src.connect(gain);
+    gain.connect(masterGain);
+
+    src.start(now);
+    src.stop(now + 0.5);
+}
+
+function stop() {
+    if (!ctx || !running) return;
+
+    running = false;
+
+    const now = ctx.currentTime;
+
+    masterGain.gain.cancelScheduledValues(now);
+    masterGain.gain.setTargetAtTime(0.0001, now, 0.03);
+
+    osc.stop(now + 0.05);
+
+    setTimeout(() => {
+        ctx.close();
+        ctx = null;
+    }, 150);
+}
+</script>
+
+</body>
+</html>
