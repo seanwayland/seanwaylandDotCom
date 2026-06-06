@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daisy Pod Unified Editor</title>
+  <style>
+    body { background: #181825; color: #e0e0e0; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; padding: 40px 0; font-size: 18px; margin: 0; overflow-x: hidden; }
+    .container { max-width: 980px; margin: 0 0 0 32px; background: transparent; padding: 32px 0; }
+    .sticky-top { position: sticky; top: 0; z-index: 20; width: 100%; background: rgba(24, 24, 37, 0.96); backdrop-filter: blur(8px); border-bottom: 1px solid #333; box-sizing: border-box; }
+    .sticky-inner { max-width: 980px; margin: 0 0 0 32px; padding: 18px 24px 16px 0; }
+    .title-block { text-align: center; }
+    h1 { color: #22c55e; font-size: 34px; margin-bottom: 12px; letter-spacing: 0.04em; }
+    h2 { color: #22c55e; font-size: 24px; margin: 28px 0 12px 0; }
+    .patch-list { margin: 0 0 24px 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 18px; }
+    .rotator-grid { margin-top: 10px; display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .patch-row { display: flex; align-items: center; margin-bottom: 10px; }
+    .patch-row label { flex: 1; font-size: 18px; }
+    .patch-row input[type=checkbox] { width: 20px; height: 20px; accent-color: #22c55e; }
+    .param-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 18px; }
+    .row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    label.param { width: 190px; font-size: 18px; color: #ccc; flex-shrink: 0; }
+    input[type=range] { flex: 1; accent-color: #22c55e; height: 6px; cursor: pointer; }
+    input[type=number] { width: 92px; background: #111827; border: 1px solid #374151; color: #e5e7eb; border-radius: 6px; padding: 8px 10px; font-size: 16px; }
+    input[type=text] { width: 100%; background: #111827; border: 1px solid #374151; color: #e5e7eb; border-radius: 6px; padding: 10px 12px; font-size: 17px; }
+    .val { width: 58px; text-align: right; font-size: 17px; color: #22c55e; font-variant-numeric: tabular-nums; }
+    .btns { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .top-btns { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .top-btns button { width: 100%; padding: 12px 10px; font-size: 15px; }
+    button { padding: 12px 20px; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; background: #22c55e; color: #181825; transition: opacity 0.15s; white-space: nowrap; }
+    .mini-btn { padding: 7px 12px; font-size: 13px; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status { margin-top: 12px; margin-bottom: 32px; font-size: 13px; background: #232347; border: 1px solid #333; border-radius: 6px; padding: 12px 14px; min-height: 42px; max-height: 400px; overflow: auto; white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, monospace; user-select: text; }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: #4ade80; }
+    .dot.off { background: #ef4444; }
+    .subtitle { color: #888; font-size: 18px; margin-bottom: 18px; }
+    .tab-nav { display: flex; gap: 10px; margin-bottom: 16px; border-bottom: 2px solid #333; }
+    .tab-btn { background: transparent; color: #888; border: none; border-bottom: 3px solid transparent; padding: 12px 16px; font-size: 16px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn:hover { color: #bbb; }
+    .tab-btn.active { color: #22c55e; border-bottom-color: #22c55e; background: transparent; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .chord-scales-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 24px; }
+    .chord-scale-card { background: #1e1e2e; border: 1px solid #333; border-radius: 8px; padding: 18px; }
+    .chord-scale-card h3 { color: #22c55e; margin: 0 0 12px 0; font-size: 18px; }
+    .chord-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+    .chord-cell { background: #111827; border: 1px solid #374151; border-radius: 4px; padding: 10px; font-size: 12px; color: #ccc; }
+    .chord-cell.root { color: #22c55e; font-weight: bold; }
+    .chord-input { width: 100%; background: #0a0e27; border: 1px solid #374151; color: #e5e7eb; border-radius: 3px; padding: 6px 8px; font-size: 12px; font-family: monospace; }
+    .chord-note { display: inline-block; margin-right: 4px; }
+    .piano-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+    .piano-modal.active { display: flex; }
+    .piano-container { background: #1e1e2e; border: 2px solid #22c55e; border-radius: 12px; padding: 24px; max-width: 90vw; max-height: 90vh; overflow: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+    .piano-header { color: #22c55e; font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+    .piano-keys { display: flex; gap: 2px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+    .piano-key { width: 36px; height: 72px; border: 1px solid #444; border-radius: 4px; background: #2a2a3e; color: #aaa; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.15s; user-select: none; }
+    .piano-key:hover { background: #3a3a4e; }
+    .piano-key.active { background: #22c55e; color: #000; font-weight: bold; }
+    .piano-key-note { font-size: 10px; margin-bottom: 2px; }
+    .piano-key-midi { font-size: 9px; color: #666; }
+    .piano-key.active .piano-key-midi { color: #000; }
+    .piano-buttons { display: flex; gap: 10px; justify-content: center; }
+    .piano-buttons button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .piano-save { background: #22c55e; color: #181825; }
+    .piano-cancel { background: #444; color: #e0e0e0; }
+    .piano-save:hover { background: #34d399; }
+    .piano-cancel:hover { background: #555; }
+    .piano-keyboard { display: flex; gap: 0; position: relative; padding: 20px 0; justify-content: flex-start; flex-wrap: nowrap; min-width: min-content; }
+    .piano-octave { display: flex; position: relative; gap: 0; }
+    .white-key { width: 40px; height: 140px; background: #f5f5f5; border: 2px solid #333; border-radius: 0 0 8px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 8px; font-size: 11px; font-weight: 600; color: #000; transition: all 0.1s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); position: relative; }
+    .white-key:hover { background: #ddd; }
+    .white-key.active { background: #22c55e; }
+    .black-key { width: 26px; height: 90px; background: #1a1a1a; border: 2px solid #000; border-radius: 0 0 6px 6px; cursor: pointer; position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 6px; font-size: 9px; font-weight: 600; color: #aaa; transition: all 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.6); z-index: 10; }
+    .black-key:hover { background: #333; }
+    .black-key.active { background: #22c55e; color: #000; }
+    .black-key.c-sharp { left: 30px; }
+    .black-key.d-sharp { left: 72px; }
+    .black-key.f-sharp { left: 159px; }
+    .black-key.g-sharp { left: 203px; }
+    .black-key.a-sharp { left: 244px; }
+    .key-label { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .key-note { font-size: 10px; }
+    .key-midi { font-size: 8px; color: #666; opacity: 0.7; }
+    .black-key .key-midi { color: #999; }
+
+  </style>
+</head>
+<body>
+  <div class="sticky-top">
+    <div class="sticky-inner">
+      <div class="title-block">
+        <img src="https://raw.githubusercontent.com/seanwayland/seanwaylandDotCom/master/waylinator.png" alt="Waylinator" style="max-height:80px; margin-bottom:8px;">
+        <h1>WAYLINATOR EDITOR</h1>
+        <p class="subtitle">Patch toggles and parameter editor in one page</p>
+      </div>
+      <div class="top-btns">
+        <button id="btn-defaults">Defaults</button>
+        <button id="btn-export">Export as CSV</button>
+        <button id="btn-import">Import from CSV</button>
+        <button id="btn-connect">Connect</button>
+        <button id="btn-read" disabled>Read from Device</button>
+        <button id="btn-write" disabled>Write to Device</button>
+      </div>
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="params">Parameters</button>
+        <button class="tab-btn" data-tab="patches">Patches</button>
+        <button class="tab-btn" data-tab="chords">Chord Editor</button>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <!-- PARAMETERS TAB -->
+    <div id="tab-params" class="tab-content active">
+      <h2>Parameters</h2>
+      <div id="params" class="param-grid">
+      <div class="row">
+        <label class="param">Attack Env</label>
+        <input type="range" id="attackEnv" min="0" max="1" step="0.001" value="0.035">
+        <input type="number" id="attackEnv-num" min="0" max="1" step="0.001" value="0.035">
+        <span class="val" id="attackEnv-val">0.035</span>
+        <button id="attackEnv-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">Release Env</label>
+        <input type="range" id="releaseEnv" min="0" max="1" step="0.001" value="0.110">
+        <input type="number" id="releaseEnv-num" min="0" max="1" step="0.001" value="0.110">
+        <span class="val" id="releaseEnv-val">0.110</span>
+        <button id="releaseEnv-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">Attack Filter</label>
+        <input type="range" id="attackFilter" min="0" max="1" step="0.001" value="0.035">
+        <input type="number" id="attackFilter-num" min="0" max="1" step="0.001" value="0.035">
+        <span class="val" id="attackFilter-val">0.035</span>
+        <button id="attackFilter-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">Release Filter</label>
+        <input type="range" id="releaseFilter" min="0" max="1" step="0.001" value="0.110">
+        <input type="number" id="releaseFilter-num" min="0" max="1" step="0.001" value="0.110">
+        <span class="val" id="releaseFilter-val">0.110</span>
+        <button id="releaseFilter-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">Chorus Depth Scale</label>
+        <input type="range" id="chorusDepthScale" min="0" max="10" step="0.001" value="3.000">
+        <input type="number" id="chorusDepthScale-num" min="0" max="10" step="0.001" value="3.000">
+        <span class="val" id="chorusDepthScale-val">3.000</span>
+        <button id="chorusDepthScale-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">Chorus Speed Scale</label>
+        <input type="range" id="chorusSpeedScale" min="0" max="10" step="0.001" value="3.000">
+        <input type="number" id="chorusSpeedScale-num" min="0" max="10" step="0.001" value="3.000">
+        <span class="val" id="chorusSpeedScale-val">3.000</span>
+        <button id="chorusSpeedScale-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">Chord Volume</label>
+        <input type="range" id="chordVolume" min="0" max="1" step="0.001" value="0.800">
+        <input type="number" id="chordVolume-num" min="0" max="1" step="0.001" value="0.800">
+        <span class="val" id="chordVolume-val">0.800</span>
+        <button id="chordVolume-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Attack Interp (s)</label>
+        <input type="range" id="ewiMinAmplitude" min="0" max="10" step="0.001" value="0.200">
+        <input type="number" id="ewiMinAmplitude-num" min="0" max="10" step="0.001" value="0.200">
+        <span class="val" id="ewiMinAmplitude-val">0.200</span>
+        <button id="ewiMinAmplitude-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Bend Up (st)</label>
+        <input type="range" id="ewiMaxAmplitude" min="0" max="12" step="0.001" value="2.000">
+        <input type="number" id="ewiMaxAmplitude-num" min="0" max="12" step="0.001" value="2.000">
+        <span class="val" id="ewiMaxAmplitude-val">2.000</span>
+        <button id="ewiMaxAmplitude-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Bend Down (st)</label>
+        <input type="range" id="ewiBreathSensitivity" min="0" max="12" step="0.001" value="2.000">
+        <input type="number" id="ewiBreathSensitivity-num" min="0" max="12" step="0.001" value="2.000">
+        <span class="val" id="ewiBreathSensitivity-val">2.000</span>
+        <button id="ewiBreathSensitivity-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Lowest Note</label>
+        <input type="range" id="ewiLowestNote" min="0" max="127" step="1" value="24">
+        <input type="number" id="ewiLowestNote-num" min="0" max="127" step="1" value="24">
+        <span class="val" id="ewiLowestNote-val">24</span>
+        <button id="ewiLowestNote-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Portamento (ms)</label>
+        <input type="range" id="ewiPortamentoMs" min="0" max="1000" step="1" value="5">
+        <input type="number" id="ewiPortamentoMs-num" min="0" max="1000" step="1" value="5">
+        <span class="val" id="ewiPortamentoMs-val">5</span>
+        <button id="ewiPortamentoMs-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Breath Attack (ms)</label>
+        <input type="range" id="ewiAttackMs" min="0" max="500" step="1" value="33">
+        <input type="number" id="ewiAttackMs-num" min="0" max="500" step="1" value="33">
+        <span class="val" id="ewiAttackMs-val">33</span>
+        <button id="ewiAttackMs-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Breath Release (ms)</label>
+        <input type="range" id="ewiReleaseMs" min="0" max="2000" step="1" value="100">
+        <input type="number" id="ewiReleaseMs-num" min="0" max="2000" step="1" value="100">
+        <span class="val" id="ewiReleaseMs-val">100</span>
+        <button id="ewiReleaseMs-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Filter Min (Hz)</label>
+        <input type="range" id="ewiFilterMinHz" min="20" max="18000" step="1" value="800">
+        <input type="number" id="ewiFilterMinHz-num" min="20" max="18000" step="1" value="800">
+        <span class="val" id="ewiFilterMinHz-val">800</span>
+        <button id="ewiFilterMinHz-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Filter Max (Hz)</label>
+        <input type="range" id="ewiFilterMaxHz" min="20" max="18000" step="1" value="6000">
+        <input type="number" id="ewiFilterMaxHz-num" min="20" max="18000" step="1" value="6000">
+        <span class="val" id="ewiFilterMaxHz-val">6000</span>
+        <button id="ewiFilterMaxHz-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Filter Sensitivity</label>
+        <input type="range" id="ewiFilterSensitivity" min="0.1" max="5" step="0.01" value="1.00">
+        <input type="number" id="ewiFilterSensitivity-num" min="0.1" max="5" step="0.01" value="1.00">
+        <span class="val" id="ewiFilterSensitivity-val">1.00</span>
+        <button id="ewiFilterSensitivity-default" class="mini-btn">Default</button>
+      </div>
+      <div class="row">
+        <label class="param">EWI Amp Sensitivity</label>
+        <input type="range" id="ewiAmpSensitivity" min="0.1" max="5" step="0.01" value="1.00">
+        <input type="number" id="ewiAmpSensitivity-num" min="0.1" max="5" step="0.01" value="1.00">
+        <span class="val" id="ewiAmpSensitivity-val">1.00</span>
+        <button id="ewiAmpSensitivity-default" class="mini-btn">Default</button>
+      </div>
+      
+      <!-- SQUARE_SAW_LFO Settings Section - Full Width Container -->
+      <div style="width: 100%; clear: both; display: block;">
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">SQUARE_SAW_LFO Settings</h3>
+        
+        <!-- LFO Depth Left -->
+        <div class="row">
+          <label class="param">LFO Depth Left (cents)</label>
+          <input type="range" id="squareSawLFODepthLeft" min="0" max="20" step="0.1" value="5">
+          <input type="number" id="squareSawLFODepthLeft-num" min="0" max="20" step="0.1" value="5">
+          <span class="val" id="squareSawLFODepthLeft-val">5</span>
+          <span class="default-val" id="squareSawLFODepthLeft-default-val" style="font-size: 0.85em; color: #888; margin-left: 8px;">(Default: 5)</span>
+          <button id="squareSawLFODepthLeft-default" class="mini-btn">Reset</button>
+        </div>
+        
+        <!-- LFO Depth Right -->
+        <div class="row">
+          <label class="param">LFO Depth Right (cents)</label>
+          <input type="range" id="squareSawLFODepthRight" min="0" max="20" step="0.1" value="6">
+          <input type="number" id="squareSawLFODepthRight-num" min="0" max="20" step="0.1" value="6">
+          <span class="val" id="squareSawLFODepthRight-val">6</span>
+          <span class="default-val" id="squareSawLFODepthRight-default-val" style="font-size: 0.85em; color: #888; margin-left: 8px;">(Default: 6)</span>
+          <button id="squareSawLFODepthRight-default" class="mini-btn">Reset</button>
+        </div>
+        
+        <!-- LFO Speed Left -->
+        <div class="row">
+          <label class="param">LFO Speed Left (Hz)</label>
+          <input type="range" id="squareSawLFOSpeedLeft" min="0.01" max="2.0" step="0.01" value="0.05">
+          <input type="number" id="squareSawLFOSpeedLeft-num" min="0.01" max="2.0" step="0.01" value="0.05">
+          <span class="val" id="squareSawLFOSpeedLeft-val">0.05</span>
+          <span class="default-val" id="squareSawLFOSpeedLeft-default-val" style="font-size: 0.85em; color: #888; margin-left: 8px;">(Default: 0.05)</span>
+          <button id="squareSawLFOSpeedLeft-default" class="mini-btn">Reset</button>
+        </div>
+        
+        <!-- LFO Speed Right -->
+        <div class="row">
+          <label class="param">LFO Speed Right (Hz)</label>
+          <input type="range" id="squareSawLFOSpeedRight" min="0.01" max="2.0" step="0.01" value="0.06">
+          <input type="number" id="squareSawLFOSpeedRight-num" min="0.01" max="2.0" step="0.01" value="0.06">
+          <span class="val" id="squareSawLFOSpeedRight-val">0.06</span>
+          <span class="default-val" id="squareSawLFOSpeedRight-default-val" style="font-size: 0.85em; color: #888; margin-left: 8px;">(Default: 0.06)</span>
+          <button id="squareSawLFOSpeedRight-default" class="mini-btn">Reset</button>
+        </div>
+      </div>
+
+      <!-- DUAL_WAVE_LFO Settings Section -->
+      <div style="width: 100%; clear: both; display: block;">
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">DUAL_WAVE_LFO Settings</h3>
+        <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Waveform per side — square modes use the same key-tracking and velocity PW modulation as SQUARE_SAW_LFO but from a different base duty cycle.</p>
+        <div class="row">
+          <label class="param">Left Waveform</label>
+          <select id="dualWaveLFOWaveLeft" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
+            <option value="0">SAW (PolyBLEP Sawtooth)</option>
+            <option value="1">SINE</option>
+            <option value="2">SQUARE 50% (Traditional)</option>
+            <option value="3" selected>SQUARE 75% (Pulse)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label class="param">Right Waveform</label>
+          <select id="dualWaveLFOWaveRight" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
+            <option value="0" selected>SAW (PolyBLEP Sawtooth)</option>
+            <option value="1">SINE</option>
+            <option value="2">SQUARE 50% (Traditional)</option>
+            <option value="3">SQUARE 75% (Pulse)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- PATCHES TAB -->
+    <div id="tab-patches" class="tab-content">
+      <h2>Patch List</h2>
+      <div class="btns">
+        <button id="btn-patches-all">Select All Patches</button>
+        <button id="btn-patches-none">Unselect All Patches</button>
+      </div>
+      <div class="patch-list" id="patchList"></div>
+    </div>
+
+    <!-- CHORD EDITOR TAB -->
+    <div id="tab-chords" class="tab-content">
+      <h2>Chord Editor</h2>
+      <p style="color: #888; margin-bottom: 20px;">Edit transposed chord scales for the 5 CHORD_SCALE patches</p>
+      
+      <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <button id="btn-send-chords">Send to Device</button>
+        <button id="btn-read-chords">Read from Device</button>
+        <button id="btn-export-csv">Export CSV</button>
+        <button id="btn-import-csv">Import CSV</button>
+        <button id="btn-midi-csv">MIDI→CSV</button>
+      </div>
+      
+      <div class="chord-scales-grid" id="chordScalesContainer">
+        <!-- Chord scales will be rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ROTATORS & DEVICE LOG (always visible, outside tabs) -->
+  <div class="container">
+    <h2>Rotator Chords</h2>
+    <div class="btns">
+      <button id="btn-rotator-defaults">Rotator Defaults</button>
+      <button id="btn-diatonic-defaults">Diatonic Defaults</button>
+    </div>
+    <div class="rotator-grid">
+      <div>
+        <label class="param">MIDIROTATOR (m1,m2,m3,m4)</label>
+        <input type="text" id="rot-midi" value="7,-10,-7,-8,-2">
+      </div>
+      <div>
+        <label class="param">CHORDROTATOR (c0,c1,c2,c3)</label>
+        <input type="text" id="rot-chord" value="7,3,5,4,2">
+      </div>
+      <div>
+        <label class="param">CDG_ROTATOR (d0,d1,d2)</label>
+        <input type="text" id="rot-cdg" value="7,0,2,7,12">
+      </div>
+      <div>
+        <label class="param">EFC_ROTATOR (e0,e1,e2)</label>
+        <input type="text" id="rot-efc" value="7,4,5,12,-5">
+      </div>
+      <div>
+        <label class="param">DIATONIC Degrees (dd0..dd4)</label>
+        <input type="text" id="dia-degrees" value="0,5,2,3,0">
+      </div>
+      <div>
+        <label class="param">DIATONIC Octaves (do0..do4)</label>
+        <input type="text" id="dia-octaves" value="3,3,4,4,5">
+      </div>
+    </div>
+    <h2 style="margin-top:32px;">Device Log</h2>
+    <div id="status">Ready.</div>
+  </div>
+  
+  <!-- MIDI IMPORT MODAL -->
+  <div id="midiModal" class="piano-modal">
+    <div class="piano-container" style="min-width: 360px; max-width: 500px;">
+      <div class="piano-header">Import MIDI as Chord Scale</div>
+      <div style="margin-bottom: 16px;">
+        <label style="color: #ccc; display: block; margin-bottom: 8px; font-size: 15px;">Target Scale:</label>
+        <select id="midiScaleSelect" style="width: 100%; background: #111827; border: 1px solid #374151; color: #e5e7eb; border-radius: 6px; padding: 10px 12px; font-size: 15px;">
+          <option value="0">CHORD_SCALE1</option>
+          <option value="1">CHORD_SCALE2</option>
+          <option value="2">CHORD_SCALE3</option>
+          <option value="3">CHORD_SCALE4</option>
+          <option value="4">CHORD_SCALE5</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+        <button id="midiFileBtn" style="white-space: nowrap;">Choose MIDI File</button>
+        <span id="midiFileName" style="color: #888; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">No file chosen</span>
+      </div>
+      <div id="midiPreview" style="background: #111827; border: 1px solid #374151; border-radius: 6px; padding: 12px; font-size: 13px; font-family: ui-monospace, monospace; color: #aaa; min-height: 60px; max-height: 200px; overflow-y: auto; margin-bottom: 16px; white-space: pre-wrap; word-break: break-all;"></div>
+      <div style="margin-bottom: 16px;">
+        <label style="color: #ccc; display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+          <input type="checkbox" id="midiDownloadCsv" style="width: 16px; height: 16px; accent-color: #22c55e;">
+          Also download as CSV file
+        </label>
+      </div>
+      <div class="piano-buttons">
+        <button class="piano-save" id="midiImportBtn" disabled>Load into Scale</button>
+        <button class="piano-cancel" id="midiCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIANO KEYBOARD MODAL FOR CHORD EDITING -->
+  <div id="pianoModal" class="piano-modal">
+    <div class="piano-container">
+      <div class="piano-header">Edit Chord: <span id="pianoChordName"></span></div>
+      <div class="piano-keys" id="pianoKeys"></div>
+      <div class="piano-buttons">
+        <button class="piano-save" id="pianoSave">Save Chord</button>
+        <button class="piano-cancel" id="pianoCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+        // --- Web Serial State ---
+        let port = null, reader = null, writer = null, readBuffer = '';
+        const DEFAULT_PARAMS = {
+          attackEnv: 0.035,
+          releaseEnv: 0.110,
+          attackFilter: 0.035,
+          releaseFilter: 0.110,
+          chorusDepthScale: 3.000,
+          chorusSpeedScale: 3.000,
+          chordVolume: 0.800,
+          ewiMinAmplitude: 0.200,
+          ewiMaxAmplitude: 2.000,
+          ewiBreathSensitivity: 2.000,
+          ewiLowestNote: 24,
+          ewiPortamentoMs: 5,
+          ewiAttackMs: 33,
+          ewiReleaseMs: 100,
+          ewiFilterMinHz: 800,
+          ewiFilterMaxHz: 6000,
+          ewiFilterSensitivity: 1.0,
+          ewiAmpSensitivity: 1.0,
+          squareSawLFODepthLeft: 5,
+          squareSawLFODepthRight: 6,
+          squareSawLFOSpeedLeft: 0.05,
+          squareSawLFOSpeedRight: 0.06,
+        };
+        const btnConnect = document.getElementById('btn-connect');
+        const btnRead    = document.getElementById('btn-read');
+        const btnWrite   = document.getElementById('btn-write');
+        const btnDefaults = document.getElementById('btn-defaults');
+        const btnRotatorDefaults = document.getElementById('btn-rotator-defaults');
+        const btnDiatonicDefaults = document.getElementById('btn-diatonic-defaults');
+        const status     = document.getElementById('status');
+
+        const ROT_DEFAULTS = {
+          // Format: [static, rot0, rot1, rot2, rot3]
+          midi:  [7, -10, -7, -8, -2],
+          chord: [7, 3, 5, 4, 2],
+          cdg:   [7, 0, 2, 7, 12],
+          efc:   [7, 4, 5, 12, -5],
+        };
+        const DIATONIC_DEFAULTS = {
+          degrees: [0, 5, 2, 3, 0],
+          octaves: [3, 3, 4, 4, 5],
+        };
+        function clamp127(v) {
+          return Math.max(0, Math.min(127, Number.isFinite(v) ? v : 0));
+        }
+
+        function parseIntList(text, expected) {
+          const parts = text.split(',').map(s => s.trim()).filter(s => s.length > 0);
+          if (parts.length !== expected) return null;
+          const vals = parts.map(v => parseInt(v, 10));
+          if (vals.some(v => Number.isNaN(v))) return null;
+          return vals;
+        }
+
+        function setRotatorInputs(d) {
+          document.getElementById('rot-midi').value = d.midi.join(',');
+          document.getElementById('rot-chord').value = d.chord.join(',');
+          document.getElementById('rot-cdg').value = d.cdg.join(',');
+          document.getElementById('rot-efc').value = d.efc.join(',');
+        }
+        function setDiatonicInputs(d) {
+          document.getElementById('dia-degrees').value = d.degrees.join(',');
+          document.getElementById('dia-octaves').value = d.octaves.join(',');
+        }
+        setRotatorInputs(ROT_DEFAULTS);
+        setDiatonicInputs(DIATONIC_DEFAULTS);
+        const statusLog = [];
+        const STATUS_LOG_LIMIT = 6;
+        function setStatus(msg) {
+          statusLog.push(msg);
+          if (statusLog.length > STATUS_LOG_LIMIT) statusLog.shift();
+          status.textContent = statusLog.join('\n\n');
+          status.scrollTop = status.scrollHeight;
+        }
+        function clampParam(id, v) {
+          const input = document.getElementById(id);
+          const min = Number(input.min);
+          const max = Number(input.max);
+          return Math.min(max, Math.max(min, v));
+        }
+        function setParamValue(id, value) {
+          const v = clampParam(id, Number(value));
+          if(Number.isNaN(v)) return;
+          const step = Number(document.getElementById(id).step || '0');
+          const formatted = step >= 1 ? String(Math.round(v)) : v.toFixed(3);
+          document.getElementById(id).value = formatted;
+          document.getElementById(id + '-num').value = formatted;
+          document.getElementById(id + '-val').textContent = formatted;
+        }
+        function getParamValue(id) {
+          return clampParam(id, parseFloat(document.getElementById(id).value));
+        }
+        function setConnected(connected) {
+          btnConnect.textContent = connected ? 'Disconnect' : 'Connect';
+          btnRead.disabled  = !connected;
+          btnWrite.disabled = !connected;
+        }
+        async function readLoop() {
+          const decoder = new TextDecoder();
+          if (!port || !port.readable) return;
+          if (reader) return; // Prevent duplicate readers
+          
+          try {
+            reader = port.readable.getReader();
+            try {
+              while (port && port.readable) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                readBuffer += decoder.decode(value, { stream: true });
+                let nl;
+                while ((nl = readBuffer.indexOf('\n')) !== -1) {
+                  const line = readBuffer.slice(0, nl).trim();
+                  readBuffer = readBuffer.slice(nl + 1);
+                  if (line) handleDeviceMessage(line);
+                }
+                if (readBuffer.length > 65536) readBuffer = readBuffer.slice(-1024);
+              }
+            } finally {
+              try { reader.releaseLock(); } catch (_) {}
+              reader = null;
+            }
+          } catch (e) { setStatus('Read error: ' + e.message); reader = null; }
+        }
+        function handleDeviceMessage(line) {
+          // Try to parse JSON first (minimal processing)
+          let obj;
+          try {
+            obj = JSON.parse(line);
+          } catch (_) {
+            // Not JSON, just display raw line
+            setStatus('← ' + line);
+            return;
+          }
+
+          // Pretty-print for status display
+          try {
+            const pretty = JSON.stringify(obj, null, 2);
+            setStatus('← ' + pretty);
+          } catch (_) {
+            setStatus('← ' + line);
+          }
+
+          try {
+            // Patch toggles
+            if ('p' in obj && typeof obj.p === 'string') {
+              const bits = obj.p;
+              patchState = PATCHES.map((_, i) => bits[i] === '1');
+              enforceRemovedPatchState();
+              renderPatchList();
+            } else if ('m' in obj) {
+              const mask = Number(obj.m);
+              patchState = PATCHES.map((_, i) => Math.floor(mask / Math.pow(2, i)) % 2 === 1);
+              enforceRemovedPatchState();
+              renderPatchList();
+            }
+            // Parameter values
+            if ('a' in obj || 'r' in obj || 'f' in obj || 'g' in obj) {
+              if ('a' in obj) setParamValue('attackEnv', Number(obj.a) / 1000);
+              if ('r' in obj) setParamValue('releaseEnv', Number(obj.r) / 1000);
+              if ('f' in obj) setParamValue('attackFilter', Number(obj.f) / 1000);
+              if ('g' in obj) setParamValue('releaseFilter', Number(obj.g) / 1000);
+              if ('d' in obj) setParamValue('chorusDepthScale', Number(obj.d) / 1000);
+              if ('s' in obj) setParamValue('chorusSpeedScale', Number(obj.s) / 1000);
+              if ('cv' in obj) setParamValue('chordVolume', Number(obj.cv) / 1000);
+              if ('ea' in obj) setParamValue('ewiMinAmplitude', Number(obj.ea) / 1000);
+              if ('emax' in obj) setParamValue('ewiMaxAmplitude', Number(obj.emax) / 1000);
+              if ('es' in obj) setParamValue('ewiBreathSensitivity', Number(obj.es) / 1000);
+              if ('eln' in obj) setParamValue('ewiLowestNote', Number(obj.eln));
+              if ('ep' in obj) setParamValue('ewiPortamentoMs', Number(obj.ep));
+              if ('eatt' in obj) setParamValue('ewiAttackMs', Number(obj.eatt));
+              if ('erel' in obj) setParamValue('ewiReleaseMs', Number(obj.erel));
+              if ('efmin' in obj) setParamValue('ewiFilterMinHz', Number(obj.efmin));
+              if ('efmax' in obj) setParamValue('ewiFilterMaxHz', Number(obj.efmax));
+              if ('efsen' in obj) setParamValue('ewiFilterSensitivity', Number(obj.efsen) / 1000);
+              if ('easen' in obj) setParamValue('ewiAmpSensitivity', Number(obj.easen) / 1000);
+              if ('sqsldepth' in obj) setParamValue('squareSawLFODepthLeft', Number(obj.sqsldepth));
+              if ('sqsrdepth' in obj) setParamValue('squareSawLFODepthRight', Number(obj.sqsrdepth));
+              if ('sqslspeed' in obj) setParamValue('squareSawLFOSpeedLeft', Number(obj.sqslspeed) / 1000);
+              if ('sqsrspeed' in obj) setParamValue('squareSawLFOSpeedRight', Number(obj.sqsrspeed) / 1000);
+              if ('dwlwl' in obj) document.getElementById('dualWaveLFOWaveLeft').value = String(Number(obj.dwlwl));
+              if ('dwlwr' in obj) document.getElementById('dualWaveLFOWaveRight').value = String(Number(obj.dwlwr));
+            }
+            if ('m0' in obj && 'm1' in obj && 'm2' in obj && 'm3' in obj && 'm4' in obj) {
+              document.getElementById('rot-midi').value = [obj.m0, obj.m1, obj.m2, obj.m3, obj.m4].join(',');
+            }
+            if ('c0' in obj && 'c1' in obj && 'c2' in obj && 'c3' in obj && 'c4' in obj) {
+              document.getElementById('rot-chord').value = [obj.c0, obj.c1, obj.c2, obj.c3, obj.c4].join(',');
+            }
+            if ('d0' in obj && 'd1' in obj && 'd2' in obj && 'd3' in obj && 'd4' in obj) {
+              document.getElementById('rot-cdg').value = [obj.d0, obj.d1, obj.d2, obj.d3, obj.d4].join(',');
+            }
+            if ('e0' in obj && 'e1' in obj && 'e2' in obj && 'e3' in obj && 'e4' in obj) {
+              document.getElementById('rot-efc').value = [obj.e0, obj.e1, obj.e2, obj.e3, obj.e4].join(',');
+            }
+            if ('dd0' in obj && 'dd1' in obj && 'dd2' in obj && 'dd3' in obj && 'dd4' in obj) {
+              document.getElementById('dia-degrees').value = [obj.dd0, obj.dd1, obj.dd2, obj.dd3, obj.dd4].join(',');
+            }
+            if ('do0' in obj && 'do1' in obj && 'do2' in obj && 'do3' in obj && 'do4' in obj) {
+              document.getElementById('dia-octaves').value = [obj.do0, obj.do1, obj.do2, obj.do3, obj.do4].join(',');
+            }
+            // Chord-scale read response: {"cs":<idx>,"data":[[size,n1..n6],...]}
+            if ('cs' in obj && 'data' in obj && Array.isArray(obj.data)) {
+              const scaleIdx = Number(obj.cs);
+              if (scaleIdx >= 0 && scaleIdx < 5) {
+                for (let c = 0; c < 36 && c < obj.data.length; c++) {
+                  const chord = obj.data[c];
+                  if (Array.isArray(chord) && chord.length >= 1) {
+                    const padded = [...chord, 0, 0, 0, 0, 0, 0, 0].slice(0, 7);
+                    CHORD_SCALES[scaleIdx][c] = padded;
+                  }
+                }
+                if (scaleIdx === 4 && typeof initChordEditor === 'function') {
+                  initChordEditor();
+                }
+              }
+            }
+            // Ack from sendChords
+            if ('chordsAck' in obj) {
+              setStatus('Device accepted ' + obj.chordsAck + ' chords.');
+            }
+          } catch (_) { /* parsing error */ }
+        }
+        async function sendCommand(json) {
+          if (!writer) { setStatus('Not connected.'); return; }
+          const enc = new TextEncoder();
+          await writer.write(enc.encode(json + '\n'));
+          setStatus('→ ' + json);
+        }
+        btnConnect.onclick = async function() {
+          if (port) {
+            try {
+              if (reader) { try { await reader.cancel(); } catch (_) {} reader = null; }
+              if (writer) { try { writer.releaseLock(); } catch (_) {} writer = null; }
+              await port.close();
+            } catch (_) {}
+            port = null;
+            setConnected(false);
+            setStatus('Disconnected.');
+            return;
+          }
+          if (!navigator.serial) {
+            setStatus('Web Serial not supported. Use Chrome/Edge and open via http://');
+            return;
+          }
+          try {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            writer = port.writable.getWriter();
+            setConnected(true);
+            setStatus('Connected. Click "Read from Device".');
+            readLoop();
+          } catch (e) {
+            port = null;
+            setStatus('Connection failed: ' + e.message);
+          }
+        };
+        btnRead.onclick = async function() {
+          await sendCommand('{"cmd":"r"}');
+          await sendCommand('{"cmd":"gp"}');
+        };
+        btnWrite.onclick = async function() {
+          // Send parameters
+          const obj = {
+            cmd: 'w',
+            a: getParamValue('attackEnv'),
+            r: getParamValue('releaseEnv'),
+            f: getParamValue('attackFilter'),
+            g: getParamValue('releaseFilter'),
+            d: getParamValue('chorusDepthScale'),
+            s: getParamValue('chorusSpeedScale'),
+            cv: getParamValue('chordVolume'),
+            ea: getParamValue('ewiMinAmplitude'),
+            emax: getParamValue('ewiMaxAmplitude'),
+            es: getParamValue('ewiBreathSensitivity'),
+            eln: Math.round(getParamValue('ewiLowestNote')),
+            ep: Math.round(getParamValue('ewiPortamentoMs')),
+            eatt: Math.round(getParamValue('ewiAttackMs')),
+            erel: Math.round(getParamValue('ewiReleaseMs')),
+            efmin: Math.round(getParamValue('ewiFilterMinHz')),
+            efmax: Math.round(getParamValue('ewiFilterMaxHz')),
+            efsen: Math.round(getParamValue('ewiFilterSensitivity') * 1000),
+            easen: Math.round(getParamValue('ewiAmpSensitivity') * 1000),
+            sqsldepth: Math.round(getParamValue('squareSawLFODepthLeft')),
+            sqsrdepth: Math.round(getParamValue('squareSawLFODepthRight')),
+            sqslspeed: Math.round(getParamValue('squareSawLFOSpeedLeft') * 1000),
+            sqsrspeed: Math.round(getParamValue('squareSawLFOSpeedRight') * 1000),
+            dwlwl: parseInt(document.getElementById('dualWaveLFOWaveLeft').value, 10),
+            dwlwr: parseInt(document.getElementById('dualWaveLFOWaveRight').value, 10)
+          };
+
+          const midi = parseIntList(document.getElementById('rot-midi').value, 5);
+          const chord = parseIntList(document.getElementById('rot-chord').value, 5);
+          const cdg = parseIntList(document.getElementById('rot-cdg').value, 5);
+          const efc = parseIntList(document.getElementById('rot-efc').value, 5);
+          const diatonicDegrees = parseIntList(document.getElementById('dia-degrees').value, 5);
+          const diatonicOctaves = parseIntList(document.getElementById('dia-octaves').value, 5);
+          if (!midi || !chord || !cdg || !efc || !diatonicDegrees || !diatonicOctaves) {
+            setStatus('Rotator values invalid. Use comma-separated integers with exact counts.');
+            return;
+          }
+
+          diatonicDegrees.forEach((v, i) => { obj['dd' + i] = v; });
+          diatonicOctaves.forEach((v, i) => { obj['do' + i] = v; });
+
+          enforceRemovedPatchState();
+          const patchBits = patchState.map(enabled => enabled ? '1' : '0').join('');
+
+          await sendCommand(JSON.stringify(obj));
+          await sendCommand(`p:${patchBits}`);
+          await sendCommand(`t:${midi.join(',')}|${chord.join(',')}|${cdg.join(',')}|${efc.join(',')}`);
+          await sendCommand('{"cmd":"r"}');
+          await sendCommand('{"cmd":"gp"}');
+        };
+    // Patch names — must match #defines in Midi.cpp
+    // Indices 38=AUDIO_INPUT_FX (ANALOG_A3/A4 were removed for memory)
+    const PATCHES = [
+      "DUAL_SQUARE","RESERVED_1","RESERVED_2","SQUARE_SAW","RESERVED_4","WAYLO_TRANS","ZAWINUL","SAMCHILI","MIDIROTATOR","CHORDROTATOR","CDG_ROTATOR","EFC_ROTATOR","CHORD_SEQUENCER","DIATONIC_CHORDS","DIATONIC_FOURTHS","FIFTH_UP","FIFTH_UP_FOURTH_DOWN","PITCH_BEND_CHORDS","SELECTIVE_PITCH_BEND_2NOTES","SINE_FM_PIANO","SINE_FM_PIANO_ADJ","DUAL_SQUARE_CHRS_DLY","RESERVED_22","RESERVED_23","WAYLO_FM","WAYLO_XFADE","RESERVED_26","WAYLO_XFADE2","WAYLO_XFADE2_LINEAR","WAYLO_XFADE2_QUARTIC","DUAL_SQUARE_QUARTIC","SQUARE_SAW_QUARTIC","FIXED_PULSE_SQUARE","FIXED_PULSE_SAW","FIXED_PULSE_PARABOLA","DUAL_SQUARE_FIXED_PULSE","ANALOG_A1","ANALOG_A2","AUDIO_INPUT_FX","RESERVED_39","RESERVED_40","RESERVED_41","EWI_MONO_SQUARE_SAW","CHORD_SCALE1","CHORD_SCALE2","CHORD_SCALE3","CHORD_SCALE4","CHORD_SCALE5","EWI_MONO_DUAL_SAW","SQUARE_SAW_LFO","GUITAR_INPUT_FX","DUAL_WAVE_LFO"
+    ];
+    const REMOVED_PATCH_IDS = new Set([1, 2, 4, 22, 23, 26, 39, 40, 41]);
+    const VISIBLE_PATCH_IDS = PATCHES.map((_, i) => i).filter(i => !REMOVED_PATCH_IDS.has(i));
+    let patchState = Array(PATCHES.length).fill(false);
+    function enforceRemovedPatchState() {
+      REMOVED_PATCH_IDS.forEach(i => { patchState[i] = false; });
+    }
+    enforceRemovedPatchState();
+    const btnPatchesAll = document.getElementById('btn-patches-all');
+    const btnPatchesNone = document.getElementById('btn-patches-none');
+    const patchList = document.getElementById('patchList');
+    function renderPatchList() {
+      patchList.innerHTML = '';
+      VISIBLE_PATCH_IDS.forEach((i) => {
+        const name = PATCHES[i];
+        const row = document.createElement('div');
+        row.className = 'patch-row';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = patchState[i];
+        cb.addEventListener('change', () => { patchState[i] = cb.checked; });
+        const label = document.createElement('label');
+        label.textContent = `${i}: ${name}`;
+        row.appendChild(cb);
+        row.appendChild(label);
+        patchList.appendChild(row);
+      });
+    }
+    renderPatchList();
+    btnPatchesAll.addEventListener('click', () => {
+      patchState = Array(PATCHES.length).fill(true);
+      enforceRemovedPatchState();
+      renderPatchList();
+      setStatus('All patches selected.');
+    });
+    btnPatchesNone.addEventListener('click', () => {
+      patchState = Array(PATCHES.length).fill(false);
+      enforceRemovedPatchState();
+      renderPatchList();
+      setStatus('All patches unselected.');
+    });
+    // Parameter slider display
+    const PARAMS = ['attackEnv','releaseEnv','attackFilter','releaseFilter','chorusDepthScale','chorusSpeedScale','chordVolume','ewiMinAmplitude','ewiMaxAmplitude','ewiBreathSensitivity','ewiLowestNote','ewiPortamentoMs','ewiAttackMs','ewiReleaseMs','ewiFilterMinHz','ewiFilterMaxHz','ewiFilterSensitivity','ewiAmpSensitivity','squareSawLFODepthLeft','squareSawLFODepthRight','squareSawLFOSpeedLeft','squareSawLFOSpeedRight'];
+    const LFO_PARAMS = ['squareSawLFODepthLeft','squareSawLFODepthRight','squareSawLFOSpeedLeft','squareSawLFOSpeedRight'];
+    const paramUpdateLocks = {}; // Prevent cascading updates
+    
+    // Initialize default value displays for LFO parameters
+    LFO_PARAMS.forEach(id => {
+      const defaultDisplay = document.getElementById(id + '-default-val');
+      if (defaultDisplay) {
+        const step = Number(document.getElementById(id).step || '0');
+        const formatted = step >= 1 ? String(Math.round(DEFAULT_PARAMS[id])) : DEFAULT_PARAMS[id].toFixed(3);
+        defaultDisplay.textContent = '(Default: ' + formatted + ')';
+      }
+    });
+    
+    PARAMS.forEach(id => {
+      try {
+        const slider = document.getElementById(id);
+        const number = document.getElementById(id + '-num');
+        const display = document.getElementById(id + '-val');
+        const defaultBtn = document.getElementById(id + '-default');
+        
+        // Check if all required elements exist before attaching listeners
+        if (!slider || !number || !display || !defaultBtn) {
+          console.warn('Parameter elements missing for: ' + id);
+          return;
+        }
+        
+        paramUpdateLocks[id] = false;
+        
+        // Use event delegation to prevent duplicate listeners
+        slider.addEventListener('input', function() {
+          if (paramUpdateLocks[id]) return; // Skip if already updating
+          paramUpdateLocks[id] = true;
+          
+          const v = clampParam(id, parseFloat(slider.value));
+          const step = Number(slider.step || '0');
+          const formatted = step >= 1 ? String(Math.round(v)) : v.toFixed(3);
+          number.value = formatted;
+          display.textContent = formatted;
+          
+          paramUpdateLocks[id] = false;
+        }, false);
+        
+        number.addEventListener('input', function() {
+          if (paramUpdateLocks[id]) return; // Skip if already updating
+          paramUpdateLocks[id] = true;
+          
+          const v = clampParam(id, parseFloat(number.value));
+          if(Number.isNaN(v)) {
+            paramUpdateLocks[id] = false;
+            return;
+          }
+          const step = Number(slider.step || '0');
+          const formatted = step >= 1 ? String(Math.round(v)) : v.toFixed(3);
+          slider.value = formatted;
+          display.textContent = formatted;
+          
+          paramUpdateLocks[id] = false;
+        }, false);
+        
+        number.addEventListener('blur', function() {
+          const v = clampParam(id, parseFloat(number.value));
+          if(Number.isNaN(v)) {
+            number.value = slider.value;
+            return;
+          }
+          const step = Number(slider.step || '0');
+          const formatted = step >= 1 ? String(Math.round(v)) : v.toFixed(3);
+          number.value = formatted;
+          slider.value = formatted;
+          display.textContent = formatted;
+        }, false);
+        
+        defaultBtn.addEventListener('click', function() {
+          setParamValue(id, DEFAULT_PARAMS[id]);
+          setStatus(id + ' reset to default.');
+        }, false);
+      } catch(e) {
+        console.error('Error setting up parameter ' + id + ':', e);
+      }
+    });
+    btnDefaults.onclick = () => {
+      PARAMS.forEach(id => setParamValue(id, DEFAULT_PARAMS[id]));
+      setStatus('Defaults applied (click Write to Device to send).');
+    };
+    btnRotatorDefaults.onclick = () => {
+      setRotatorInputs(ROT_DEFAULTS);
+      setStatus('Rotator defaults applied (click Write to Device to send).');
+    };
+    btnDiatonicDefaults.onclick = () => {
+      setDiatonicInputs(DIATONIC_DEFAULTS);
+      setStatus('Diatonic defaults applied (click Write to Device to send).');
+    };
+    // Export as CSV
+    document.getElementById('btn-export').onclick = () => {
+      const rows = [];
+      rows.push(['key', 'value']);
+      
+      // Add parameters
+      PARAMS.forEach(id => {
+        const value = document.getElementById(id).value;
+        rows.push([id, value]);
+      });
+      
+      // Add rotators
+      rows.push(['dualWaveLFOWaveLeft', document.getElementById('dualWaveLFOWaveLeft').value]);
+      rows.push(['dualWaveLFOWaveRight', document.getElementById('dualWaveLFOWaveRight').value]);
+      rows.push(['rot-midi', document.getElementById('rot-midi').value]);
+      rows.push(['rot-chord', document.getElementById('rot-chord').value]);
+      rows.push(['rot-cdg', document.getElementById('rot-cdg').value]);
+      rows.push(['rot-efc', document.getElementById('rot-efc').value]);
+      rows.push(['dia-degrees', document.getElementById('dia-degrees').value]);
+      rows.push(['dia-octaves', document.getElementById('dia-octaves').value]);
+      
+      // Add patch state
+      PATCHES.forEach((patch, i) => {
+        rows.push([`patch-${patch}`, patchState[i] ? '1' : '0']);
+      });
+      
+      // Convert to CSV string
+      const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+      
+      // Trigger download
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `waylinator-settings-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      document.getElementById('status').textContent = 'Exported settings as CSV.';
+    };
+    
+    // Import from CSV
+    document.getElementById('btn-import').onclick = () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.csv';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const csv = event.target.result;
+            const lines = csv.trim().split('\n');
+            const data = {};
+            
+            // Parse CSV (simple parser for unquoted values)
+            for (let i = 1; i < lines.length; i++) {
+              const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g, ''));
+              if (parts.length >= 2) {
+                data[parts[0]] = parts[1];
+              }
+            }
+            
+            // Load parameters
+            PARAMS.forEach(id => {
+              if (data[id] !== undefined) {
+                setParamValue(id, parseFloat(data[id]));
+              }
+            });
+            
+            // Load rotators
+            if (data['dualWaveLFOWaveLeft'] !== undefined) document.getElementById('dualWaveLFOWaveLeft').value = data['dualWaveLFOWaveLeft'];
+            if (data['dualWaveLFOWaveRight'] !== undefined) document.getElementById('dualWaveLFOWaveRight').value = data['dualWaveLFOWaveRight'];
+            if (data['rot-midi']) document.getElementById('rot-midi').value = data['rot-midi'];
+            if (data['rot-chord']) document.getElementById('rot-chord').value = data['rot-chord'];
+            if (data['rot-cdg']) document.getElementById('rot-cdg').value = data['rot-cdg'];
+            if (data['rot-efc']) document.getElementById('rot-efc').value = data['rot-efc'];
+            if (data['dia-degrees']) document.getElementById('dia-degrees').value = data['dia-degrees'];
+            if (data['dia-octaves']) document.getElementById('dia-octaves').value = data['dia-octaves'];
+            
+            // Load patch state
+            patchState = Array(PATCHES.length).fill(true);
+            PATCHES.forEach((patch, i) => {
+              if (data[`patch-${patch}`] !== undefined) {
+                patchState[i] = data[`patch-${patch}`] === '1';
+              }
+            });
+            enforceRemovedPatchState();
+            renderPatchList();
+            
+            document.getElementById('status').textContent = 'Imported settings from CSV.';
+          } catch(err) {
+            document.getElementById('status').textContent = 'Error importing CSV: ' + err.message;
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    };
+    
+    // --- TAB SWITCHING ---
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.getAttribute('data-tab');
+        
+        // Remove active class from all buttons and contents
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked button and corresponding content
+        btn.classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+      });
+    });
+    
+    // --- CHORD EDITOR INITIALIZATION ---
+    const CHORD_SCALE_NAMES = ['CHORD_SCALE1', 'CHORD_SCALE2', 'CHORD_SCALE3', 'CHORD_SCALE4', 'CHORD_SCALE5'];
+    const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    
+    // Chord scale data embedded from defaults_generated.h
+    const CHORD_SCALES = [
+      // CHORD_SCALE1 (+1 semitone)
+      [[3,61,65,68,0,0,0],[3,62,66,69,0,0,0],[3,63,67,70,0,0,0],[3,64,68,71,0,0,0],[3,65,69,72,0,0,0],[3,66,70,73,0,0,0],[3,67,71,74,0,0,0],[3,68,72,75,0,0,0],[3,69,73,76,0,0,0],[3,70,74,77,0,0,0],[3,71,75,78,0,0,0],[3,72,76,79,0,0,0],[3,73,77,80,0,0,0],[3,74,78,81,0,0,0],[3,75,79,82,0,0,0],[3,76,80,83,0,0,0],[3,77,81,84,0,0,0],[3,78,82,85,0,0,0],[3,79,83,86,0,0,0],[3,80,84,87,0,0,0],[3,81,85,88,0,0,0],[3,82,86,89,0,0,0],[3,83,87,90,0,0,0],[3,84,88,91,0,0,0],[3,85,89,92,0,0,0],[3,86,90,93,0,0,0],[3,87,91,94,0,0,0],[3,88,92,95,0,0,0],[3,89,93,96,0,0,0],[3,90,94,97,0,0,0],[3,91,95,98,0,0,0],[3,92,96,99,0,0,0],[3,93,97,100,0,0,0],[3,94,98,101,0,0,0],[3,95,99,102,0,0,0],[3,96,100,103,0,0,0]],
+      // CHORD_SCALE2 (+2 semitones)
+      [[3,62,66,69,0,0,0],[3,63,67,70,0,0,0],[3,64,68,71,0,0,0],[3,65,69,72,0,0,0],[3,66,70,73,0,0,0],[3,67,71,74,0,0,0],[3,68,72,75,0,0,0],[3,69,73,76,0,0,0],[3,70,74,77,0,0,0],[3,71,75,78,0,0,0],[3,72,76,79,0,0,0],[3,73,77,80,0,0,0],[3,74,78,81,0,0,0],[3,75,79,82,0,0,0],[3,76,80,83,0,0,0],[3,77,81,84,0,0,0],[3,78,82,85,0,0,0],[3,79,83,86,0,0,0],[3,80,84,87,0,0,0],[3,81,85,88,0,0,0],[3,82,86,89,0,0,0],[3,83,87,90,0,0,0],[3,84,88,91,0,0,0],[3,85,89,92,0,0,0],[3,86,90,93,0,0,0],[3,87,91,94,0,0,0],[3,88,92,95,0,0,0],[3,89,93,96,0,0,0],[3,90,94,97,0,0,0],[3,91,95,98,0,0,0],[3,92,96,99,0,0,0],[3,93,97,100,0,0,0],[3,94,98,101,0,0,0],[3,95,99,102,0,0,0],[3,96,100,103,0,0,0],[3,97,101,104,0,0,0]],
+      // CHORD_SCALE3 (+3 semitones)
+      [[3,63,67,70,0,0,0],[3,64,68,71,0,0,0],[3,65,69,72,0,0,0],[3,66,70,73,0,0,0],[3,67,71,74,0,0,0],[3,68,72,75,0,0,0],[3,69,73,76,0,0,0],[3,70,74,77,0,0,0],[3,71,75,78,0,0,0],[3,72,76,79,0,0,0],[3,73,77,80,0,0,0],[3,74,78,81,0,0,0],[3,75,79,82,0,0,0],[3,76,80,83,0,0,0],[3,77,81,84,0,0,0],[3,78,82,85,0,0,0],[3,79,83,86,0,0,0],[3,80,84,87,0,0,0],[3,81,85,88,0,0,0],[3,82,86,89,0,0,0],[3,83,87,90,0,0,0],[3,84,88,91,0,0,0],[3,85,89,92,0,0,0],[3,86,90,93,0,0,0],[3,87,91,94,0,0,0],[3,88,92,95,0,0,0],[3,89,93,96,0,0,0],[3,90,94,97,0,0,0],[3,91,95,98,0,0,0],[3,92,96,99,0,0,0],[3,93,97,100,0,0,0],[3,94,98,101,0,0,0],[3,95,99,102,0,0,0],[3,96,100,103,0,0,0],[3,97,101,104,0,0,0],[3,98,102,105,0,0,0]],
+      // CHORD_SCALE4 (+4 semitones)
+      [[3,64,68,71,0,0,0],[3,65,69,72,0,0,0],[3,66,70,73,0,0,0],[3,67,71,74,0,0,0],[3,68,72,75,0,0,0],[3,69,73,76,0,0,0],[3,70,74,77,0,0,0],[3,71,75,78,0,0,0],[3,72,76,79,0,0,0],[3,73,77,80,0,0,0],[3,74,78,81,0,0,0],[3,75,79,82,0,0,0],[3,76,80,83,0,0,0],[3,77,81,84,0,0,0],[3,78,82,85,0,0,0],[3,79,83,86,0,0,0],[3,80,84,87,0,0,0],[3,81,85,88,0,0,0],[3,82,86,89,0,0,0],[3,83,87,90,0,0,0],[3,84,88,91,0,0,0],[3,85,89,92,0,0,0],[3,86,90,93,0,0,0],[3,87,91,94,0,0,0],[3,88,92,95,0,0,0],[3,89,93,96,0,0,0],[3,90,94,97,0,0,0],[3,91,95,98,0,0,0],[3,92,96,99,0,0,0],[3,93,97,100,0,0,0],[3,94,98,101,0,0,0],[3,95,99,102,0,0,0],[3,96,100,103,0,0,0],[3,97,101,104,0,0,0],[3,98,102,105,0,0,0],[3,99,103,106,0,0,0]],
+      // CHORD_SCALE5 (+5 semitones)
+      [[3,65,69,72,0,0,0],[3,66,70,73,0,0,0],[3,67,71,74,0,0,0],[3,68,72,75,0,0,0],[3,69,73,76,0,0,0],[3,70,74,77,0,0,0],[3,71,75,78,0,0,0],[3,72,76,79,0,0,0],[3,73,77,80,0,0,0],[3,74,78,81,0,0,0],[3,75,79,82,0,0,0],[3,76,80,83,0,0,0],[3,77,81,84,0,0,0],[3,78,82,85,0,0,0],[3,79,83,86,0,0,0],[3,80,84,87,0,0,0],[3,81,85,88,0,0,0],[3,82,86,89,0,0,0],[3,83,87,90,0,0,0],[3,84,88,91,0,0,0],[3,85,89,92,0,0,0],[3,86,90,93,0,0,0],[3,87,91,94,0,0,0],[3,88,92,95,0,0,0],[3,89,93,96,0,0,0],[3,90,94,97,0,0,0],[3,91,95,98,0,0,0],[3,92,96,99,0,0,0],[3,93,97,100,0,0,0],[3,94,98,101,0,0,0],[3,95,99,102,0,0,0],[3,96,100,103,0,0,0],[3,97,101,104,0,0,0],[3,98,102,105,0,0,0],[3,99,103,106,0,0,0],[3,100,104,107,0,0,0]]
+    ];
+    
+    function getMidiNoteName(midiNote) {
+      // Standard MIDI: 60 = C4, octave changes at C
+      const octave = Math.floor(midiNote / 12) - 1;
+      const noteName = NOTE_NAMES[midiNote % 12];
+      return `${noteName}${octave}`;
+    }
+    
+    let currentEditingChord = null;
+    let currentEditingScaleIdx = null;
+    let currentEditingChordIdx = null;
+    let currentChordNotes = [];
+    
+    const pianoModal = document.getElementById('pianoModal');
+    const pianoChordName = document.getElementById('pianoChordName');
+    const pianoKeys = document.getElementById('pianoKeys');
+    const pianoSave = document.getElementById('pianoSave');
+    const pianoCancel = document.getElementById('pianoCancel');
+    
+    function renderPianoKeyboard() {
+      pianoKeys.innerHTML = '';
+      pianoKeys.className = 'piano-keyboard';
+      
+      // Piano range: C0 (MIDI 0) to C8 (MIDI 108)
+      let startOctave = -1;
+      let endOctave = 8;
+      
+      for (let octave = startOctave; octave <= endOctave; octave++) {
+        const octaveDiv = document.createElement('div');
+        octaveDiv.className = 'piano-octave';
+        
+        // Determine which notes to show for this octave
+        let startNote = 0;
+        let endNote = 11;
+        
+        // C0 starts at C (note 0)
+        if (octave === -1) startNote = 0;
+        
+        // C8 ends at C (note 0), so only show C in octave 8
+        if (octave === 8) endNote = 0;
+        
+        // White keys for this octave: C, D, E, F, G, A, B
+        const whiteNotes = [0, 2, 4, 5, 7, 9, 11]; // C, D, E, F, G, A, B
+        const whiteKeyElements = {};
+        
+        whiteNotes.forEach(noteNum => {
+          // Skip if outside range for this octave
+          if (noteNum < startNote || noteNum > endNote) return;
+          
+          const midiNote = (octave + 1) * 12 + noteNum;
+          
+          const whiteKey = document.createElement('div');
+          whiteKey.className = 'white-key';
+          if (currentChordNotes.includes(midiNote)) {
+            whiteKey.classList.add('active');
+          }
+          
+          const label = document.createElement('div');
+          label.className = 'key-label';
+          
+          const noteLbl = document.createElement('div');
+          noteLbl.className = 'key-note';
+          noteLbl.textContent = getMidiNoteName(midiNote);
+          label.appendChild(noteLbl);
+          
+          const midiLbl = document.createElement('div');
+          midiLbl.className = 'key-midi';
+          midiLbl.textContent = midiNote;
+          label.appendChild(midiLbl);
+          
+          whiteKey.appendChild(label);
+          
+          whiteKey.addEventListener('click', () => toggleNote(midiNote, whiteKey));
+          
+          octaveDiv.appendChild(whiteKey);
+          whiteKeyElements[noteNum] = whiteKey;
+        });
+        
+        // Black keys for this octave: C#, D#, F#, G#, A#
+        const blackNotes = [1, 3, 6, 8, 10]; // C#, D#, F#, G#, A#
+        const blackPositions = {
+          1: 'c-sharp',   // C#
+          3: 'd-sharp',   // D#
+          6: 'f-sharp',   // F#
+          8: 'g-sharp',   // G#
+          10: 'a-sharp'   // A#
+        };
+        
+        blackNotes.forEach(noteNum => {
+          // Skip if outside range for this octave
+          if (noteNum < startNote || noteNum > endNote) return;
+          
+          const midiNote = (octave + 1) * 12 + noteNum;
+          
+          const blackKey = document.createElement('div');
+          blackKey.className = `black-key ${blackPositions[noteNum]}`;
+          if (currentChordNotes.includes(midiNote)) {
+            blackKey.classList.add('active');
+          }
+          
+          const label = document.createElement('div');
+          label.className = 'key-label';
+          
+          const noteLbl = document.createElement('div');
+          noteLbl.className = 'key-note';
+          noteLbl.textContent = getMidiNoteName(midiNote);
+          label.appendChild(noteLbl);
+          
+          const midiLbl = document.createElement('div');
+          midiLbl.className = 'key-midi';
+          midiLbl.textContent = midiNote;
+          label.appendChild(midiLbl);
+          
+          blackKey.appendChild(label);
+          
+          blackKey.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNote(midiNote, blackKey);
+          });
+          
+          octaveDiv.appendChild(blackKey);
+        });
+        
+        pianoKeys.appendChild(octaveDiv);
+      }
+      
+      // Scroll to top-left to show octave -1 (lowest notes)
+      const pianoContainer = document.querySelector('.piano-container');
+      if (pianoContainer) {
+        setTimeout(() => {
+          pianoContainer.scrollLeft = 0;
+          pianoContainer.scrollTop = 0;
+        }, 0);
+      }
+    }
+    
+    function toggleNote(midiNote, keyElement) {
+      if (currentChordNotes.includes(midiNote)) {
+        currentChordNotes = currentChordNotes.filter(n => n !== midiNote);
+        keyElement.classList.remove('active');
+      } else {
+        currentChordNotes.push(midiNote);
+        currentChordNotes.sort((a, b) => a - b);
+        keyElement.classList.add('active');
+      }
+    }
+    
+    function openChordEditor(scaleIdx, chordIdx) {
+      const chordData = CHORD_SCALES[scaleIdx][chordIdx];
+      const chordSize = chordData[0];
+      currentChordNotes = [];
+      for (let i = 1; i <= chordSize; i++) {
+        if (chordData[i] > 0) {
+          currentChordNotes.push(chordData[i]);
+        }
+      }
+      currentChordNotes.sort((a, b) => a - b);
+      
+      currentEditingScaleIdx = scaleIdx;
+      currentEditingChordIdx = chordIdx;
+      
+      // Chord indices 0-35 map to:
+      // 0-11: C4-B4, 12-23: C5-B5, 24-35: C6-B6
+      const rootOctave = 4 + Math.floor(chordIdx / 12);
+      const rootNote = chordIdx % 12;
+      const chordName = `${NOTE_NAMES[rootNote]}${rootOctave}`;
+      pianoChordName.textContent = chordName;
+      
+      renderPianoKeyboard();
+      pianoModal.classList.add('active');
+    }
+    
+    pianoSave.addEventListener('click', () => {
+      if (currentEditingScaleIdx !== null && currentEditingChordIdx !== null) {
+        // Update chord data
+        const newChord = [currentChordNotes.length, ...currentChordNotes, ...Array(4).fill(0)].slice(0, 7);
+        CHORD_SCALES[currentEditingScaleIdx][currentEditingChordIdx] = newChord;
+        
+        // Re-render the grid to show updated chord
+        initChordEditor();
+      }
+      pianoModal.classList.remove('active');
+    });
+    
+    pianoCancel.addEventListener('click', () => {
+      pianoModal.classList.remove('active');
+    });
+    
+    // Close modal when clicking outside
+    pianoModal.addEventListener('click', (e) => {
+      if (e.target === pianoModal) {
+        pianoModal.classList.remove('active');
+      }
+    });
+    
+    function initChordEditor() {
+      const container = document.getElementById('chordScalesContainer');
+      container.innerHTML = '';
+      
+      CHORD_SCALE_NAMES.forEach((scaleName, scaleIdx) => {
+        const card = document.createElement('div');
+        card.className = 'chord-scale-card';
+        
+        const title = document.createElement('h3');
+        title.textContent = `${scaleIdx + 1}. ${scaleName}`;
+        card.appendChild(title);
+        
+        const description = document.createElement('p');
+        description.style.color = '#888';
+        description.style.fontSize = '13px';
+        description.style.margin = '0 0 12px 0';
+        description.textContent = `Transposed +${scaleIdx + 1} semitone(s) from base scale`;
+        card.appendChild(description);
+        
+        const grid = document.createElement('div');
+        grid.className = 'chord-grid';
+        
+        // Show chords C-B for octaves 4, 5, 6 (36 total chords)
+        for (let chordIdx = 0; chordIdx < 36; chordIdx++) {
+          const octave = 4 + Math.floor(chordIdx / 12);
+          const noteIdx = chordIdx % 12;
+          const noteName = NOTE_NAMES[noteIdx];
+          const chordName = `${noteName}${octave}`;
+          const cell = document.createElement('div');
+          cell.className = 'chord-cell';
+          cell.style.cursor = 'pointer';
+          
+          // Show current notes in chord
+          const chordData = CHORD_SCALES[scaleIdx][chordIdx];
+          const chordSize = chordData[0];
+          const notes = [];
+          for (let i = 1; i <= chordSize; i++) {
+            if (chordData[i] > 0) {
+              notes.push(getMidiNoteName(chordData[i]));
+            }
+          }
+          
+          cell.innerHTML = `<div style="font-weight: bold;">${chordName}</div><div style="font-size: 11px; color: #666; margin-top: 4px;">${notes.join(', ')}</div>`;
+          cell.addEventListener('click', () => openChordEditor(scaleIdx, chordIdx));
+          cell.addEventListener('mouseenter', () => { cell.style.background = '#232347'; });
+          cell.addEventListener('mouseleave', () => { cell.style.background = '#111827'; });
+          
+          grid.appendChild(cell);
+        }
+        
+        card.appendChild(grid);
+        container.appendChild(card);
+      });
+    }
+    
+    // --- CHORD SCALE SEND/READ/IMPORT/EXPORT ---
+    
+    // Send chord scales to device via USB serial
+    document.getElementById('btn-send-chords').addEventListener('click', async () => {
+      if (!writer) { setStatus('Not connected.'); return; }
+
+      try {
+        // Build data array inline (avoid intermediate objects)
+        const enc = new TextEncoder();
+        let jsonStr = '{"cmd":"sendChords","data":[';
+
+        for (let s = 0; s < 5; s++) {
+          for (let c = 0; c < 36; c++) {
+            if (s > 0 || c > 0) jsonStr += ',';
+            const chord = CHORD_SCALES[s][c];
+            jsonStr += '[' + chord.join(',') + ']';
+          }
+        }
+        jsonStr += ']}';
+
+        await writer.write(enc.encode(jsonStr + '\n'));
+        setStatus('Chord scales sent to device.');
+      } catch (err) {
+        setStatus('Error sending chord scales: ' + err.message);
+      }
+    });
+    
+    // Read chord scales from device
+    document.getElementById('btn-read-chords').addEventListener('click', async () => {
+      if (!writer) { setStatus('Not connected.'); return; }
+      
+      try {
+        await sendCommand(JSON.stringify({ cmd: 'readChords' }));
+        setStatus('Requesting chord scales from device...');
+      } catch (err) {
+        setStatus('Error reading chord scales: ' + err.message);
+      }
+    });
+    
+    // Export chord scales to CSV
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      try {
+        let csv = 'Scale,ChordIndex,ChordSize,Note1,Note2,Note3,Note4,Note5,Note6\n';
+        
+        for (let s = 0; s < 5; s++) {
+          for (let c = 0; c < 36; c++) {
+            const chord = CHORD_SCALES[s][c];
+            const scaleName = CHORD_SCALE_NAMES[s];
+            const row = [scaleName, c, ...chord].join(',');
+            csv += row + '\n';
+          }
+        }
+        
+        // Download CSV
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `chord-scales-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        setStatus('Chord scales exported to CSV.');
+      } catch (err) {
+        setStatus('Error exporting chord scales: ' + err.message);
+      }
+    });
+    
+    // Import chord scales from CSV
+    document.getElementById('btn-import-csv').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.csv';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const csv = event.target.result;
+            const lines = csv.trim().split('\n');
+            
+            // Skip header line
+            for (let i = 1; i < lines.length; i++) {
+              const parts = lines[i].split(',').map(p => p.trim());
+              if (parts.length >= 3) {
+                const scaleName = parts[0];
+                const chordIndex = parseInt(parts[1], 10);
+                const chord = parts.slice(2, 9).map(v => parseInt(v, 10));
+                
+                // Find scale index
+                const scaleIdx = CHORD_SCALE_NAMES.indexOf(scaleName);
+                if (scaleIdx !== -1 && chordIndex >= 0 && chordIndex < 36) {
+                  CHORD_SCALES[scaleIdx][chordIndex] = chord;
+                }
+              }
+            }
+            
+            initChordEditor();
+            setStatus('Chord scales imported from CSV.');
+          } catch (err) {
+            setStatus('Error importing chord scales: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    });
+    
+    // Initialize chord editor
+    initChordEditor();
+
+    // --- MIDI → CSV IMPORT ---
+
+    function parseMidi(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let pos = 0;
+
+      function readUint32() {
+        const v = ((bytes[pos] << 24) | (bytes[pos+1] << 16) | (bytes[pos+2] << 8) | bytes[pos+3]) >>> 0;
+        pos += 4; return v;
+      }
+      function readUint16() {
+        const v = (bytes[pos] << 8) | bytes[pos+1];
+        pos += 2; return v;
+      }
+      function readVarLen() {
+        let v = 0, b;
+        do { b = bytes[pos++]; v = (v << 7) | (b & 0x7F); } while (b & 0x80);
+        return v;
+      }
+
+      const hdr = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+      if (hdr !== 'MThd') throw new Error('Not a valid MIDI file (missing MThd header)');
+      pos = 4;
+      readUint32(); // header length (always 6)
+      readUint16(); // format
+      const numTracks = readUint16();
+      const timeDivision = readUint16();
+      if (timeDivision & 0x8000) throw new Error('SMPTE time division not supported — use PPQ MIDI files');
+      const ticksPerQN = timeDivision;
+
+      const noteEvents = [];
+
+      for (let t = 0; t < numTracks; t++) {
+        // Scan forward for next MTrk tag
+        while (pos + 4 <= bytes.length) {
+          if (bytes[pos] === 0x4D && bytes[pos+1] === 0x54 && bytes[pos+2] === 0x72 && bytes[pos+3] === 0x6B) break;
+          pos++;
+        }
+        if (pos + 8 > bytes.length) break;
+        pos += 4; // skip 'MTrk'
+        const trackLen = readUint32();
+        const trackEnd = pos + trackLen;
+
+        let absoluteTick = 0;
+        let running = 0;
+
+        while (pos < trackEnd) {
+          const delta = readVarLen();
+          absoluteTick += delta;
+
+          let status = bytes[pos];
+          if (status & 0x80) { running = status; pos++; }
+          else { status = running; }
+
+          const type = status & 0xF0;
+
+          if (type === 0x90) {
+            const note = bytes[pos++], vel = bytes[pos++];
+            if (vel > 0) noteEvents.push({ tick: absoluteTick, note });
+          } else if (type === 0x80) {
+            pos += 2;
+          } else if (type === 0xA0 || type === 0xB0 || type === 0xE0) {
+            pos += 2;
+          } else if (type === 0xC0 || type === 0xD0) {
+            pos += 1;
+          } else if (status === 0xFF) {
+            pos++; // meta type
+            const mlen = readVarLen();
+            pos += mlen;
+            running = 0;
+          } else if (status === 0xF0 || status === 0xF7) {
+            const slen = readVarLen();
+            pos += slen;
+            running = 0;
+          } else {
+            pos++;
+          }
+        }
+        pos = trackEnd;
+      }
+
+      return { ticksPerQN, noteEvents };
+    }
+
+    function extractChordsFromMidi(noteEvents, ticksPerQN) {
+      if (noteEvents.length === 0) return [];
+      noteEvents.sort((a, b) => a.tick - b.tick);
+
+      // Group simultaneous notes (within 10% of a quarter note)
+      const TOL = Math.max(1, Math.round(ticksPerQN * 0.1));
+      const groups = [];
+      let cur = null;
+      for (const ev of noteEvents) {
+        if (!cur || ev.tick - cur.tick > TOL) {
+          cur = { tick: ev.tick, notes: [ev.note] };
+          groups.push(cur);
+        } else {
+          cur.notes.push(ev.note);
+        }
+      }
+
+      // Quantize each group to nearest quarter-note beat, merge collisions
+      const beatMap = new Map();
+      for (const g of groups) {
+        const beat = Math.round(g.tick / ticksPerQN);
+        if (!beatMap.has(beat)) beatMap.set(beat, []);
+        beatMap.get(beat).push(...g.notes);
+      }
+
+      const beats = [...beatMap.keys()].sort((a, b) => a - b).slice(0, 36);
+      return beats.map(beat => {
+        const notes = [...new Set(beatMap.get(beat))].sort((a, b) => a - b).slice(0, 6);
+        return notes;
+      });
+    }
+
+    let midiParsedChords = null;
+
+    const midiModal = document.getElementById('midiModal');
+    const midiImportBtn = document.getElementById('midiImportBtn');
+    const midiCancelBtn = document.getElementById('midiCancelBtn');
+    const midiFileBtn = document.getElementById('midiFileBtn');
+    const midiFileName = document.getElementById('midiFileName');
+    const midiPreview = document.getElementById('midiPreview');
+    const midiScaleSelect = document.getElementById('midiScaleSelect');
+
+    document.getElementById('btn-midi-csv').addEventListener('click', () => {
+      midiParsedChords = null;
+      midiImportBtn.disabled = true;
+      midiFileName.textContent = 'No file chosen';
+      midiPreview.textContent = 'Choose a MIDI file to preview its chords.';
+      midiModal.classList.add('active');
+    });
+
+    midiFileBtn.addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = '.mid,.midi';
+      inp.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        midiFileName.textContent = file.name;
+        const fr = new FileReader();
+        fr.onload = (ev) => {
+          try {
+            const { ticksPerQN, noteEvents } = parseMidi(ev.target.result);
+            midiParsedChords = extractChordsFromMidi(noteEvents, ticksPerQN);
+
+            if (midiParsedChords.length === 0) {
+              midiPreview.textContent = 'No note-on events found in this MIDI file.';
+              midiImportBtn.disabled = true;
+              return;
+            }
+
+            const NOTE_NAMES_LOCAL = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+            const lines = [`Found ${midiParsedChords.length} chord(s)  (ticks/QN: ${ticksPerQN})\n`];
+            midiParsedChords.forEach((notes, i) => {
+              const noteStr = notes.map(n => {
+                const oct = Math.floor(n / 12) - 1;
+                return NOTE_NAMES_LOCAL[n % 12] + oct + '(' + n + ')';
+              }).join('  ');
+              lines.push(`Chord ${i+1}: ${noteStr}`);
+            });
+            midiPreview.textContent = lines.join('\n');
+            midiImportBtn.disabled = false;
+          } catch (err) {
+            midiPreview.textContent = 'Error parsing MIDI: ' + err.message;
+            midiImportBtn.disabled = true;
+            midiParsedChords = null;
+          }
+        };
+        fr.readAsArrayBuffer(file);
+      };
+      inp.click();
+    });
+
+    midiImportBtn.addEventListener('click', () => {
+      if (!midiParsedChords) return;
+      const scaleIdx = parseInt(midiScaleSelect.value, 10);
+      const scaleName = CHORD_SCALE_NAMES[scaleIdx];
+
+      // Fill chord slots 0..N-1 with MIDI chords; leave remaining slots unchanged
+      for (let c = 0; c < midiParsedChords.length; c++) {
+        const notes = midiParsedChords[c];
+        CHORD_SCALES[scaleIdx][c] = [notes.length, ...notes, ...Array(6 - notes.length).fill(0)];
+      }
+
+      if (document.getElementById('midiDownloadCsv').checked) {
+        let csv = 'Scale,ChordIndex,ChordSize,Note1,Note2,Note3,Note4,Note5,Note6\n';
+        for (let c = 0; c < 36; c++) {
+          const chord = CHORD_SCALES[scaleIdx][c];
+          csv += [scaleName, c, ...chord].join(',') + '\n';
+        }
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${scaleName}-from-midi-${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      initChordEditor();
+      midiModal.classList.remove('active');
+      setStatus(`Loaded ${midiParsedChords.length} MIDI chord(s) into ${scaleName}.`);
+      midiParsedChords = null;
+    });
+
+    midiCancelBtn.addEventListener('click', () => {
+      midiModal.classList.remove('active');
+      midiParsedChords = null;
+    });
+
+    midiModal.addEventListener('click', (e) => {
+      if (e.target === midiModal) {
+        midiModal.classList.remove('active');
+        midiParsedChords = null;
+      }
+    });
+  </script>
+</body>
+</html>
