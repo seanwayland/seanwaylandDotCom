@@ -213,8 +213,8 @@
       </div>
       <div class="row">
         <label class="param">EWI Filter Min (Hz)</label>
-        <input type="range" id="ewiFilterMinHz" min="20" max="18000" step="1" value="800">
-        <input type="number" id="ewiFilterMinHz-num" min="20" max="18000" step="1" value="800">
+        <input type="range" id="ewiFilterMinHz" min="0" max="18000" step="1" value="800">
+        <input type="number" id="ewiFilterMinHz-num" min="0" max="18000" step="1" value="800">
         <span class="val" id="ewiFilterMinHz-val">800</span>
         <button id="ewiFilterMinHz-default" class="mini-btn">Default</button>
       </div>
@@ -285,10 +285,17 @@
         </div>
       </div>
 
-      <!-- DUAL_WAVE_LFO Settings Section -->
+      <!-- DUAL_WAVE_LFO Settings Section (patch 51) -->
       <div style="width: 100%; clear: both; display: block;">
-        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">DUAL_WAVE_LFO Settings</h3>
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">DUAL_WAVE_LFO Settings (Patch 51)</h3>
         <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Waveform per side — square modes use the same key-tracking and velocity PW modulation as SQUARE_SAW_LFO but from a different base duty cycle.</p>
+        <div class="row">
+          <label class="param">Noise Volume (0-100)</label>
+          <input type="range" id="dualWaveLFONoiseVol" min="0" max="100" step="1" value="0">
+          <input type="number" id="dualWaveLFONoiseVol-num" min="0" max="100" step="1" value="0">
+          <span class="val" id="dualWaveLFONoiseVol-val">0</span>
+          <button id="dualWaveLFONoiseVol-default" class="mini-btn">Default</button>
+        </div>
         <div class="row">
           <label class="param">Left Waveform</label>
           <select id="dualWaveLFOWaveLeft" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
@@ -296,6 +303,7 @@
             <option value="1">SINE</option>
             <option value="2">SQUARE 50% (Traditional)</option>
             <option value="3" selected>SQUARE 75% (Pulse)</option>
+            <option value="4">TRIANGLE</option>
           </select>
         </div>
         <div class="row">
@@ -305,6 +313,73 @@
             <option value="1">SINE</option>
             <option value="2">SQUARE 50% (Traditional)</option>
             <option value="3">SQUARE 75% (Pulse)</option>
+            <option value="4">TRIANGLE</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- DUAL_WAVE_LFO2 Settings Section (patch 52) -->
+      <div style="width: 100%; clear: both; display: block;">
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">DUAL_WAVE_LFO2 Settings (Patch 52)</h3>
+        <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Independent copy of DUAL_WAVE_LFO with its own waveform and noise settings.</p>
+        <div class="row">
+          <label class="param">Noise Volume (0-100)</label>
+          <input type="range" id="dualWaveLFO2NoiseVol" min="0" max="100" step="1" value="0">
+          <input type="number" id="dualWaveLFO2NoiseVol-num" min="0" max="100" step="1" value="0">
+          <span class="val" id="dualWaveLFO2NoiseVol-val">0</span>
+          <button id="dualWaveLFO2NoiseVol-default" class="mini-btn">Default</button>
+        </div>
+        <div class="row">
+          <label class="param">Left Waveform</label>
+          <select id="dualWaveLFO2WaveLeft" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
+            <option value="0">SAW (PolyBLEP Sawtooth)</option>
+            <option value="1">SINE</option>
+            <option value="2">SQUARE 50% (Traditional)</option>
+            <option value="3" selected>SQUARE 75% (Pulse)</option>
+            <option value="4">TRIANGLE</option>
+          </select>
+        </div>
+        <div class="row">
+          <label class="param">Right Waveform</label>
+          <select id="dualWaveLFO2WaveRight" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
+            <option value="0" selected>SAW (PolyBLEP Sawtooth)</option>
+            <option value="1">SINE</option>
+            <option value="2">SQUARE 50% (Traditional)</option>
+            <option value="3">SQUARE 75% (Pulse)</option>
+            <option value="4">TRIANGLE</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- DUAL_WAVE_LFO3 Settings Section (patch 53) -->
+      <div style="width: 100%; clear: both; display: block;">
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">DUAL_WAVE_LFO3 Settings (Patch 53)</h3>
+        <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Independent copy of DUAL_WAVE_LFO with its own waveform and noise settings.</p>
+        <div class="row">
+          <label class="param">Noise Volume (0-100)</label>
+          <input type="range" id="dualWaveLFO3NoiseVol" min="0" max="100" step="1" value="0">
+          <input type="number" id="dualWaveLFO3NoiseVol-num" min="0" max="100" step="1" value="0">
+          <span class="val" id="dualWaveLFO3NoiseVol-val">0</span>
+          <button id="dualWaveLFO3NoiseVol-default" class="mini-btn">Default</button>
+        </div>
+        <div class="row">
+          <label class="param">Left Waveform</label>
+          <select id="dualWaveLFO3WaveLeft" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
+            <option value="0">SAW (PolyBLEP Sawtooth)</option>
+            <option value="1">SINE</option>
+            <option value="2">SQUARE 50% (Traditional)</option>
+            <option value="3" selected>SQUARE 75% (Pulse)</option>
+            <option value="4">TRIANGLE</option>
+          </select>
+        </div>
+        <div class="row">
+          <label class="param">Right Waveform</label>
+          <select id="dualWaveLFO3WaveRight" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
+            <option value="0" selected>SAW (PolyBLEP Sawtooth)</option>
+            <option value="1">SINE</option>
+            <option value="2">SQUARE 50% (Traditional)</option>
+            <option value="3">SQUARE 75% (Pulse)</option>
+            <option value="4">TRIANGLE</option>
           </select>
         </div>
       </div>
@@ -447,6 +522,9 @@
           squareSawLFODepthRight: 6,
           squareSawLFOSpeedLeft: 0.05,
           squareSawLFOSpeedRight: 0.06,
+          dualWaveLFONoiseVol: 0,
+          dualWaveLFO2NoiseVol: 0,
+          dualWaveLFO3NoiseVol: 0,
         };
         const btnConnect = document.getElementById('btn-connect');
         const btnRead    = document.getElementById('btn-read');
@@ -606,6 +684,13 @@
               if ('sqsrspeed' in obj) setParamValue('squareSawLFOSpeedRight', Number(obj.sqsrspeed) / 1000);
               if ('dwlwl' in obj) document.getElementById('dualWaveLFOWaveLeft').value = String(Number(obj.dwlwl));
               if ('dwlwr' in obj) document.getElementById('dualWaveLFOWaveRight').value = String(Number(obj.dwlwr));
+              if ('dwlnv' in obj) setParamValue('dualWaveLFONoiseVol', Number(obj.dwlnv));
+              if ('dwl2wl' in obj) document.getElementById('dualWaveLFO2WaveLeft').value = String(Number(obj.dwl2wl));
+              if ('dwl2wr' in obj) document.getElementById('dualWaveLFO2WaveRight').value = String(Number(obj.dwl2wr));
+              if ('dwl2nv' in obj) setParamValue('dualWaveLFO2NoiseVol', Number(obj.dwl2nv));
+              if ('dwl3wl' in obj) document.getElementById('dualWaveLFO3WaveLeft').value = String(Number(obj.dwl3wl));
+              if ('dwl3wr' in obj) document.getElementById('dualWaveLFO3WaveRight').value = String(Number(obj.dwl3wr));
+              if ('dwl3nv' in obj) setParamValue('dualWaveLFO3NoiseVol', Number(obj.dwl3nv));
             }
             if ('m0' in obj && 'm1' in obj && 'm2' in obj && 'm3' in obj && 'm4' in obj) {
               document.getElementById('rot-midi').value = [obj.m0, obj.m1, obj.m2, obj.m3, obj.m4].join(',');
@@ -712,7 +797,14 @@
             sqslspeed: Math.round(getParamValue('squareSawLFOSpeedLeft') * 1000),
             sqsrspeed: Math.round(getParamValue('squareSawLFOSpeedRight') * 1000),
             dwlwl: parseInt(document.getElementById('dualWaveLFOWaveLeft').value, 10),
-            dwlwr: parseInt(document.getElementById('dualWaveLFOWaveRight').value, 10)
+            dwlwr: parseInt(document.getElementById('dualWaveLFOWaveRight').value, 10),
+            dwlnv: Math.round(getParamValue('dualWaveLFONoiseVol')),
+            dwl2wl: parseInt(document.getElementById('dualWaveLFO2WaveLeft').value, 10),
+            dwl2wr: parseInt(document.getElementById('dualWaveLFO2WaveRight').value, 10),
+            dwl2nv: Math.round(getParamValue('dualWaveLFO2NoiseVol')),
+            dwl3wl: parseInt(document.getElementById('dualWaveLFO3WaveLeft').value, 10),
+            dwl3wr: parseInt(document.getElementById('dualWaveLFO3WaveRight').value, 10),
+            dwl3nv: Math.round(getParamValue('dualWaveLFO3NoiseVol'))
           };
 
           const midi = parseIntList(document.getElementById('rot-midi').value, 5);
@@ -741,7 +833,7 @@
     // Patch names — must match #defines in Midi.cpp
     // Indices 38=AUDIO_INPUT_FX (ANALOG_A3/A4 were removed for memory)
     const PATCHES = [
-      "DUAL_SQUARE","RESERVED_1","RESERVED_2","SQUARE_SAW","RESERVED_4","WAYLO_TRANS","ZAWINUL","SAMCHILI","MIDIROTATOR","CHORDROTATOR","CDG_ROTATOR","EFC_ROTATOR","CHORD_SEQUENCER","DIATONIC_CHORDS","DIATONIC_FOURTHS","FIFTH_UP","FIFTH_UP_FOURTH_DOWN","PITCH_BEND_CHORDS","SELECTIVE_PITCH_BEND_2NOTES","SINE_FM_PIANO","SINE_FM_PIANO_ADJ","DUAL_SQUARE_CHRS_DLY","RESERVED_22","RESERVED_23","WAYLO_FM","WAYLO_XFADE","RESERVED_26","WAYLO_XFADE2","WAYLO_XFADE2_LINEAR","WAYLO_XFADE2_QUARTIC","DUAL_SQUARE_QUARTIC","SQUARE_SAW_QUARTIC","FIXED_PULSE_SQUARE","FIXED_PULSE_SAW","FIXED_PULSE_PARABOLA","DUAL_SQUARE_FIXED_PULSE","ANALOG_A1","ANALOG_A2","AUDIO_INPUT_FX","RESERVED_39","RESERVED_40","RESERVED_41","EWI_MONO_SQUARE_SAW","CHORD_SCALE1","CHORD_SCALE2","CHORD_SCALE3","CHORD_SCALE4","CHORD_SCALE5","EWI_MONO_DUAL_SAW","SQUARE_SAW_LFO","GUITAR_INPUT_FX","DUAL_WAVE_LFO"
+      "DUAL_SQUARE","RESERVED_1","RESERVED_2","SQUARE_SAW","RESERVED_4","WAYLO_TRANS","ZAWINUL","SAMCHILI","MIDIROTATOR","CHORDROTATOR","CDG_ROTATOR","EFC_ROTATOR","CHORD_SEQUENCER","DIATONIC_CHORDS","DIATONIC_FOURTHS","FIFTH_UP","FIFTH_UP_FOURTH_DOWN","PITCH_BEND_CHORDS","SELECTIVE_PITCH_BEND_2NOTES","SINE_FM_PIANO","SINE_FM_PIANO_ADJ","DUAL_SQUARE_CHRS_DLY","RESERVED_22","RESERVED_23","WAYLO_FM","WAYLO_XFADE","RESERVED_26","WAYLO_XFADE2","WAYLO_XFADE2_LINEAR","WAYLO_XFADE2_QUARTIC","DUAL_SQUARE_QUARTIC","SQUARE_SAW_QUARTIC","FIXED_PULSE_SQUARE","FIXED_PULSE_SAW","FIXED_PULSE_PARABOLA","DUAL_SQUARE_FIXED_PULSE","ANALOG_A1","ANALOG_A2","AUDIO_INPUT_FX","RESERVED_39","RESERVED_40","RESERVED_41","EWI_MONO_SQUARE_SAW","CHORD_SCALE1","CHORD_SCALE2","CHORD_SCALE3","CHORD_SCALE4","CHORD_SCALE5","EWI_MONO_DUAL_SAW","SQUARE_SAW_LFO","GUITAR_INPUT_FX","DUAL_WAVE_LFO","DUAL_WAVE_LFO2","DUAL_WAVE_LFO3"
     ];
     const REMOVED_PATCH_IDS = new Set([1, 2, 4, 22, 23, 26, 39, 40, 41]);
     const VISIBLE_PATCH_IDS = PATCHES.map((_, i) => i).filter(i => !REMOVED_PATCH_IDS.has(i));
@@ -784,7 +876,7 @@
       setStatus('All patches unselected.');
     });
     // Parameter slider display
-    const PARAMS = ['attackEnv','releaseEnv','attackFilter','releaseFilter','chorusDepthScale','chorusSpeedScale','chordVolume','ewiMinAmplitude','ewiMaxAmplitude','ewiBreathSensitivity','ewiLowestNote','ewiPortamentoMs','ewiAttackMs','ewiReleaseMs','ewiFilterMinHz','ewiFilterMaxHz','ewiFilterSensitivity','ewiAmpSensitivity','squareSawLFODepthLeft','squareSawLFODepthRight','squareSawLFOSpeedLeft','squareSawLFOSpeedRight'];
+    const PARAMS = ['attackEnv','releaseEnv','attackFilter','releaseFilter','chorusDepthScale','chorusSpeedScale','chordVolume','ewiMinAmplitude','ewiMaxAmplitude','ewiBreathSensitivity','ewiLowestNote','ewiPortamentoMs','ewiAttackMs','ewiReleaseMs','ewiFilterMinHz','ewiFilterMaxHz','ewiFilterSensitivity','ewiAmpSensitivity','squareSawLFODepthLeft','squareSawLFODepthRight','squareSawLFOSpeedLeft','squareSawLFOSpeedRight','dualWaveLFONoiseVol','dualWaveLFO2NoiseVol','dualWaveLFO3NoiseVol'];
     const LFO_PARAMS = ['squareSawLFODepthLeft','squareSawLFODepthRight','squareSawLFOSpeedLeft','squareSawLFOSpeedRight'];
     const paramUpdateLocks = {}; // Prevent cascading updates
     
@@ -891,6 +983,10 @@
       // Add rotators
       rows.push(['dualWaveLFOWaveLeft', document.getElementById('dualWaveLFOWaveLeft').value]);
       rows.push(['dualWaveLFOWaveRight', document.getElementById('dualWaveLFOWaveRight').value]);
+      rows.push(['dualWaveLFO2WaveLeft', document.getElementById('dualWaveLFO2WaveLeft').value]);
+      rows.push(['dualWaveLFO2WaveRight', document.getElementById('dualWaveLFO2WaveRight').value]);
+      rows.push(['dualWaveLFO3WaveLeft', document.getElementById('dualWaveLFO3WaveLeft').value]);
+      rows.push(['dualWaveLFO3WaveRight', document.getElementById('dualWaveLFO3WaveRight').value]);
       rows.push(['rot-midi', document.getElementById('rot-midi').value]);
       rows.push(['rot-chord', document.getElementById('rot-chord').value]);
       rows.push(['rot-cdg', document.getElementById('rot-cdg').value]);
@@ -954,6 +1050,10 @@
             // Load rotators
             if (data['dualWaveLFOWaveLeft'] !== undefined) document.getElementById('dualWaveLFOWaveLeft').value = data['dualWaveLFOWaveLeft'];
             if (data['dualWaveLFOWaveRight'] !== undefined) document.getElementById('dualWaveLFOWaveRight').value = data['dualWaveLFOWaveRight'];
+            if (data['dualWaveLFO2WaveLeft'] !== undefined) document.getElementById('dualWaveLFO2WaveLeft').value = data['dualWaveLFO2WaveLeft'];
+            if (data['dualWaveLFO2WaveRight'] !== undefined) document.getElementById('dualWaveLFO2WaveRight').value = data['dualWaveLFO2WaveRight'];
+            if (data['dualWaveLFO3WaveLeft'] !== undefined) document.getElementById('dualWaveLFO3WaveLeft').value = data['dualWaveLFO3WaveLeft'];
+            if (data['dualWaveLFO3WaveRight'] !== undefined) document.getElementById('dualWaveLFO3WaveRight').value = data['dualWaveLFO3WaveRight'];
             if (data['rot-midi']) document.getElementById('rot-midi').value = data['rot-midi'];
             if (data['rot-chord']) document.getElementById('rot-chord').value = data['rot-chord'];
             if (data['rot-cdg']) document.getElementById('rot-cdg').value = data['rot-cdg'];
