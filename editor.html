@@ -95,8 +95,9 @@
       </div>
       <div class="top-btns">
         <button id="btn-defaults">Defaults</button>
-        <button id="btn-export">Export as CSV</button>
-        <button id="btn-import">Import from CSV</button>
+        <button id="btn-factory-reset" style="background:#7f1d1d; color:#fca5a5;">Factory Reset</button>
+        <button id="btn-export">Full Backup CSV</button>
+        <button id="btn-import">Full Restore CSV</button>
         <button id="btn-connect">Connect</button>
         <button id="btn-read" disabled>Read from Device</button>
         <button id="btn-write" disabled>Write to Device</button>
@@ -105,6 +106,7 @@
         <button class="tab-btn active" data-tab="params">Parameters</button>
         <button class="tab-btn" data-tab="patches">Patches</button>
         <button class="tab-btn" data-tab="chords">Chord Editor</button>
+        <button class="tab-btn" data-tab="lick">Lick Chords</button>
       </div>
     </div>
   </div>
@@ -206,9 +208,9 @@
       </div>
       <div class="row">
         <label class="param">EWI Breath Release (ms)</label>
-        <input type="range" id="ewiReleaseMs" min="0" max="2000" step="1" value="100">
-        <input type="number" id="ewiReleaseMs-num" min="0" max="2000" step="1" value="100">
-        <span class="val" id="ewiReleaseMs-val">100</span>
+        <input type="range" id="ewiReleaseMs" min="0" max="2000" step="1" value="50">
+        <input type="number" id="ewiReleaseMs-num" min="0" max="2000" step="1" value="50">
+        <span class="val" id="ewiReleaseMs-val">50</span>
         <button id="ewiReleaseMs-default" class="mini-btn">Default</button>
       </div>
       <div class="row">
@@ -220,9 +222,9 @@
       </div>
       <div class="row">
         <label class="param">EWI Filter Max (Hz)</label>
-        <input type="range" id="ewiFilterMaxHz" min="20" max="18000" step="1" value="6000">
-        <input type="number" id="ewiFilterMaxHz-num" min="20" max="18000" step="1" value="6000">
-        <span class="val" id="ewiFilterMaxHz-val">6000</span>
+        <input type="range" id="ewiFilterMaxHz" min="20" max="18000" step="1" value="3000">
+        <input type="number" id="ewiFilterMaxHz-num" min="20" max="18000" step="1" value="3000">
+        <span class="val" id="ewiFilterMaxHz-val">3000</span>
         <button id="ewiFilterMaxHz-default" class="mini-btn">Default</button>
       </div>
       <div class="row">
@@ -247,10 +249,10 @@
         <!-- LFO Depth Left -->
         <div class="row">
           <label class="param">LFO Depth Left (cents)</label>
-          <input type="range" id="squareSawLFODepthLeft" min="0" max="20" step="0.1" value="5">
-          <input type="number" id="squareSawLFODepthLeft-num" min="0" max="20" step="0.1" value="5">
-          <span class="val" id="squareSawLFODepthLeft-val">5</span>
-          <span class="default-val" id="squareSawLFODepthLeft-default-val" style="font-size: 0.85em; color: #888; margin-left: 8px;">(Default: 5)</span>
+          <input type="range" id="squareSawLFODepthLeft" min="0" max="20" step="0.1" value="15">
+          <input type="number" id="squareSawLFODepthLeft-num" min="0" max="20" step="0.1" value="15">
+          <span class="val" id="squareSawLFODepthLeft-val">15</span>
+          <span class="default-val" id="squareSawLFODepthLeft-default-val" style="font-size: 0.85em; color: #888; margin-left: 8px;">(Default: 15)</span>
           <button id="squareSawLFODepthLeft-default" class="mini-btn">Reset</button>
         </div>
         
@@ -267,10 +269,10 @@
         <!-- LFO Speed Left -->
         <div class="row">
           <label class="param">LFO Speed Left (Hz)</label>
-          <input type="range" id="squareSawLFOSpeedLeft" min="0.01" max="2.0" step="0.01" value="0.05">
-          <input type="number" id="squareSawLFOSpeedLeft-num" min="0.01" max="2.0" step="0.01" value="0.05">
-          <span class="val" id="squareSawLFOSpeedLeft-val">0.05</span>
-          <span class="default-val" id="squareSawLFOSpeedLeft-default-val" style="font-size: 0.85em; color: #888; margin-left: 8px;">(Default: 0.05)</span>
+          <input type="range" id="squareSawLFOSpeedLeft" min="0.01" max="2.0" step="0.01" value="1.5">
+          <input type="number" id="squareSawLFOSpeedLeft-num" min="0.01" max="2.0" step="0.01" value="1.5">
+          <span class="val" id="squareSawLFOSpeedLeft-val">1.5</span>
+          <span class="default-val" id="squareSawLFOSpeedLeft-default-val" style="font-size: 0.85em; color: #888; margin-left: 8px;">(Default: 1.5)</span>
           <button id="squareSawLFOSpeedLeft-default" class="mini-btn">Reset</button>
         </div>
         
@@ -285,9 +287,9 @@
         </div>
       </div>
 
-      <!-- DUAL_WAVE_LFO Settings Section (patch 51) -->
+      <!-- EWI_DUAL_WAVE_LFO Settings Section (patch 51) -->
       <div style="width: 100%; clear: both; display: block;">
-        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">DUAL_WAVE_LFO Settings (Patch 51)</h3>
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">EWI_DUAL_WAVE_LFO Settings (Patch 51)</h3>
         <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Waveform per side — square modes use the same key-tracking and velocity PW modulation as SQUARE_SAW_LFO but from a different base duty cycle.</p>
         <div class="row">
           <label class="param">Noise Volume (0-100)</label>
@@ -318,10 +320,10 @@
         </div>
       </div>
 
-      <!-- DUAL_WAVE_LFO2 Settings Section (patch 52) -->
+      <!-- EWI_DUAL_WAVE_LFO2 Settings Section (patch 52) -->
       <div style="width: 100%; clear: both; display: block;">
-        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">DUAL_WAVE_LFO2 Settings (Patch 52)</h3>
-        <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Independent copy of DUAL_WAVE_LFO with its own waveform and noise settings.</p>
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">EWI_DUAL_WAVE_LFO2 Settings (Patch 52)</h3>
+        <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Independent copy of EWI_DUAL_WAVE_LFO with its own waveform and noise settings.</p>
         <div class="row">
           <label class="param">Noise Volume (0-100)</label>
           <input type="range" id="dualWaveLFO2NoiseVol" min="0" max="100" step="1" value="0">
@@ -351,10 +353,10 @@
         </div>
       </div>
 
-      <!-- DUAL_WAVE_LFO3 Settings Section (patch 53) -->
+      <!-- EWI_DUAL_WAVE_LFO3 Settings Section (patch 53) -->
       <div style="width: 100%; clear: both; display: block;">
-        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">DUAL_WAVE_LFO3 Settings (Patch 53)</h3>
-        <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Independent copy of DUAL_WAVE_LFO with its own waveform and noise settings.</p>
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">EWI_DUAL_WAVE_LFO3 Settings (Patch 53)</h3>
+        <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Independent copy of EWI_DUAL_WAVE_LFO with its own waveform and noise settings.</p>
         <div class="row">
           <label class="param">Noise Volume (0-100)</label>
           <input type="range" id="dualWaveLFO3NoiseVol" min="0" max="100" step="1" value="0">
@@ -383,6 +385,39 @@
           </select>
         </div>
       </div>
+
+      <!-- SQUARE_SAW_LFO2 Settings Section (patch 54) -->
+      <div style="width: 100%; clear: both; display: block;">
+        <h3 style="color: #22c55e; margin-top: 28px; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 12px;">SQUARE_SAW_LFO2 Settings (Patch 54)</h3>
+        <p style="color: #888; font-size: 14px; margin-bottom: 16px;">Copy of SQUARE_SAW_LFO (patch 49) with selectable waveforms. Shares the same LFO speed and depth sliders.</p>
+        <div class="row">
+          <label class="param">Noise Volume (0-100)</label>
+          <input type="range" id="squareSawLFO2NoiseVol" min="0" max="100" step="1" value="0">
+          <input type="number" id="squareSawLFO2NoiseVol-num" min="0" max="100" step="1" value="0">
+          <span class="val" id="squareSawLFO2NoiseVol-val">0</span>
+          <button id="squareSawLFO2NoiseVol-default" class="mini-btn">Default</button>
+        </div>
+        <div class="row">
+          <label class="param">Left Waveform</label>
+          <select id="squareSawLFO2WaveLeft" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
+            <option value="0">SAW (PolyBLEP Sawtooth)</option>
+            <option value="1">SINE</option>
+            <option value="2">SQUARE 50% (Traditional)</option>
+            <option value="3" selected>SQUARE 75% (Pulse)</option>
+            <option value="4">TRIANGLE</option>
+          </select>
+        </div>
+        <div class="row">
+          <label class="param">Right Waveform</label>
+          <select id="squareSawLFO2WaveRight" style="flex:1; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px 10px; font-size:15px;">
+            <option value="0" selected>SAW (PolyBLEP Sawtooth)</option>
+            <option value="1">SINE</option>
+            <option value="2">SQUARE 50% (Traditional)</option>
+            <option value="3">SQUARE 75% (Pulse)</option>
+            <option value="4">TRIANGLE</option>
+          </select>
+        </div>
+      </div>
     </div>
     </div>
 
@@ -394,6 +429,76 @@
         <button id="btn-patches-none">Unselect All Patches</button>
       </div>
       <div class="patch-list" id="patchList"></div>
+    </div>
+
+    <!-- LICK CHORDS TAB -->
+    <div id="tab-lick" class="tab-content">
+      <h2>Lick Chords</h2>
+      <p style="color:#888; margin-bottom:16px;">
+        Patches 28 (WAYLO_LICK_CHORD_1) and 29 (WAYLO_LICK_CHORD_2) play chords whose notes move through a
+        melody ("lick"). Playing a note at C4 or above selects a chord position (C4=0, C#4=1, D4=2 …).
+        Each voice has a <em>chord note</em> (actual MIDI note with octave) and a <em>starting position</em> in the melody.
+        At position 0 each voice plays its chord note; as position advances the voice follows the melody,
+        transposed by <code>chordNote − melody[startPos]</code> to stay in its octave.
+        Notes below C4 silently set transposition (same as CHORD_SCALE patches).
+        <br><br>
+        <strong>MIDI import format:</strong> Bar 1 whole notes = actual chord notes (with octave).
+        Quarter notes = melody/lick in order. Half notes = starting position per voice,
+        encoded as <code>note % 12</code> (C=0, C#=1, D=2, D#=3, E=4, F=5 …).
+      </p>
+
+      <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+        <button id="btn-lick-send">Send to Device</button>
+        <button id="btn-lick-read">Read from Device</button>
+        <button id="btn-lick-defaults">Restore Defaults</button>
+        <button id="btn-lick-midi">MIDI → Lick</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+        <!-- Patch 0 -->
+        <div style="background:#1e1e2e; border:1px solid #333; border-radius:8px; padding:18px;">
+          <h3 style="color:#22c55e; margin:0 0 12px 0;">Patch 28 — WAYLO_LICK_CHORD_1</h3>
+          <label style="color:#9ca3af; font-size:13px;">Melody (comma-separated MIDI notes, max 32)</label>
+          <textarea id="lick0-melody" rows="3" style="width:100%; box-sizing:border-box; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px; font-family:monospace; font-size:13px; margin-top:6px; resize:vertical;">60,61,62,63,64,67,65,66,67,68,69,70,71,74,72</textarea>
+          <div style="margin-top:10px;">
+            <label style="color:#9ca3af; font-size:13px;">Voices (1–6)</label>
+            <input id="lick0-voices" type="number" min="1" max="6" value="4" style="width:60px; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:6px; margin-left:8px;">
+          </div>
+          <div style="margin-top:10px;">
+            <label style="color:#9ca3af; font-size:13px;">Chord notes — actual MIDI notes per voice (defines octave, e.g. 48,52,55 = C3 E3 G3)</label>
+            <input id="lick0-chordnotes" type="text" value="40,47,49,64" style="width:100%; box-sizing:border-box; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px; font-family:monospace; font-size:13px; margin-top:6px;">
+          </div>
+          <div style="margin-top:10px;">
+            <label style="color:#9ca3af; font-size:13px;">Starting positions per voice (comma-separated, 0-indexed into melody)</label>
+            <input id="lick0-startpos" type="text" value="4,12,1,4" style="width:100%; box-sizing:border-box; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px; font-family:monospace; font-size:13px; margin-top:6px;">
+          </div>
+          <div id="lick0-preview" style="margin-top:12px; color:#6b7280; font-size:12px; font-family:monospace;"></div>
+        </div>
+        <!-- Patch 1 -->
+        <div style="background:#1e1e2e; border:1px solid #333; border-radius:8px; padding:18px;">
+          <h3 style="color:#22c55e; margin:0 0 12px 0;">Patch 29 — WAYLO_LICK_CHORD_2</h3>
+          <label style="color:#9ca3af; font-size:13px;">Melody (comma-separated MIDI notes, max 32)</label>
+          <textarea id="lick1-melody" rows="3" style="width:100%; box-sizing:border-box; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px; font-family:monospace; font-size:13px; margin-top:6px; resize:vertical;">60,61,62,63,64,67,65,66,67,68,69,70,71,74,72</textarea>
+          <div style="margin-top:10px;">
+            <label style="color:#9ca3af; font-size:13px;">Voices (1–6)</label>
+            <input id="lick1-voices" type="number" min="1" max="6" value="4" style="width:60px; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:6px; margin-left:8px;">
+          </div>
+          <div style="margin-top:10px;">
+            <label style="color:#9ca3af; font-size:13px;">Chord notes — actual MIDI notes per voice (defines octave, e.g. 48,51,55 = C3 Eb3 G3)</label>
+            <input id="lick1-chordnotes" type="text" value="60,64,67,69" style="width:100%; box-sizing:border-box; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px; font-family:monospace; font-size:13px; margin-top:6px;">
+          </div>
+          <div style="margin-top:10px;">
+            <label style="color:#9ca3af; font-size:13px;">Starting positions per voice (comma-separated, 0-indexed into melody)</label>
+            <input id="lick1-startpos" type="text" value="0,4,5,10" style="width:100%; box-sizing:border-box; background:#111827; border:1px solid #374151; color:#e5e7eb; border-radius:6px; padding:8px; font-family:monospace; font-size:13px; margin-top:6px;">
+          </div>
+          <div id="lick1-preview" style="margin-top:12px; color:#6b7280; font-size:12px; font-family:monospace;"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <h3 style="color:#22c55e; margin-bottom:12px;">Voice leading preview — first 8 positions</h3>
+        <div id="lick-chord-preview" style="font-family:monospace; font-size:12px; color:#9ca3af; background:#111827; border:1px solid #374151; border-radius:6px; padding:12px;"></div>
+      </div>
     </div>
 
     <!-- CHORD EDITOR TAB -->
@@ -513,18 +618,19 @@
           ewiLowestNote: 24,
           ewiPortamentoMs: 5,
           ewiAttackMs: 33,
-          ewiReleaseMs: 100,
+          ewiReleaseMs: 50,
           ewiFilterMinHz: 800,
-          ewiFilterMaxHz: 6000,
+          ewiFilterMaxHz: 3000,
           ewiFilterSensitivity: 1.0,
           ewiAmpSensitivity: 1.0,
-          squareSawLFODepthLeft: 5,
+          squareSawLFODepthLeft: 15,
           squareSawLFODepthRight: 6,
-          squareSawLFOSpeedLeft: 0.05,
+          squareSawLFOSpeedLeft: 1.5,
           squareSawLFOSpeedRight: 0.06,
           dualWaveLFONoiseVol: 0,
           dualWaveLFO2NoiseVol: 0,
           dualWaveLFO3NoiseVol: 0,
+          squareSawLFO2NoiseVol: 0,
         };
         const btnConnect = document.getElementById('btn-connect');
         const btnRead    = document.getElementById('btn-read');
@@ -691,6 +797,9 @@
               if ('dwl3wl' in obj) document.getElementById('dualWaveLFO3WaveLeft').value = String(Number(obj.dwl3wl));
               if ('dwl3wr' in obj) document.getElementById('dualWaveLFO3WaveRight').value = String(Number(obj.dwl3wr));
               if ('dwl3nv' in obj) setParamValue('dualWaveLFO3NoiseVol', Number(obj.dwl3nv));
+              if ('ssl2wl' in obj) document.getElementById('squareSawLFO2WaveLeft').value = String(Number(obj.ssl2wl));
+              if ('ssl2wr' in obj) document.getElementById('squareSawLFO2WaveRight').value = String(Number(obj.ssl2wr));
+              if ('ssl2nv' in obj) setParamValue('squareSawLFO2NoiseVol', Number(obj.ssl2nv));
             }
             if ('m0' in obj && 'm1' in obj && 'm2' in obj && 'm3' in obj && 'm4' in obj) {
               document.getElementById('rot-midi').value = [obj.m0, obj.m1, obj.m2, obj.m3, obj.m4].join(',');
@@ -729,6 +838,24 @@
             // Ack from sendChords
             if ('chordsAck' in obj) {
               setStatus('Device accepted ' + obj.chordsAck + ' chords.');
+            }
+            // Lick chord read response: {"lc":<0|1>,"melLen":<n>,"mel":[...],"voices":<n>,"sp":[...],"cn":[...]}
+            if ('lc' in obj && 'mel' in obj) {
+              const pi = Number(obj.lc);
+              if (pi === 0 || pi === 1) {
+                document.getElementById(`lick${pi}-melody`).value = obj.mel.join(',');
+                document.getElementById(`lick${pi}-voices`).value = obj.voices || 1;
+                if (obj.cn && obj.cn.length > 0)
+                  document.getElementById(`lick${pi}-chordnotes`).value = obj.cn.join(',');
+                document.getElementById(`lick${pi}-startpos`).value = (obj.sp || []).join(',');
+                if (pi === 1) updateLickPreview();
+                if (pi === 0) setStatus('Lick chord data read from device…');
+                else setStatus('Lick chord data loaded from device.');
+              }
+            }
+            // Ack from sendLickChords
+            if ('lickAck' in obj) {
+              setStatus('Lick chord patch ' + (Number(obj.lickAck) === 0 ? '28' : '29') + ' written to device.');
             }
           } catch (_) { /* parsing error */ }
         }
@@ -804,7 +931,10 @@
             dwl2nv: Math.round(getParamValue('dualWaveLFO2NoiseVol')),
             dwl3wl: parseInt(document.getElementById('dualWaveLFO3WaveLeft').value, 10),
             dwl3wr: parseInt(document.getElementById('dualWaveLFO3WaveRight').value, 10),
-            dwl3nv: Math.round(getParamValue('dualWaveLFO3NoiseVol'))
+            dwl3nv: Math.round(getParamValue('dualWaveLFO3NoiseVol')),
+            ssl2wl: parseInt(document.getElementById('squareSawLFO2WaveLeft').value, 10),
+            ssl2wr: parseInt(document.getElementById('squareSawLFO2WaveRight').value, 10),
+            ssl2nv: Math.round(getParamValue('squareSawLFO2NoiseVol'))
           };
 
           const midi = parseIntList(document.getElementById('rot-midi').value, 5);
@@ -833,7 +963,7 @@
     // Patch names — must match #defines in Midi.cpp
     // Indices 38=AUDIO_INPUT_FX (ANALOG_A3/A4 were removed for memory)
     const PATCHES = [
-      "DUAL_SQUARE","RESERVED_1","RESERVED_2","SQUARE_SAW","RESERVED_4","WAYLO_TRANS","ZAWINUL","SAMCHILI","MIDIROTATOR","CHORDROTATOR","CDG_ROTATOR","EFC_ROTATOR","CHORD_SEQUENCER","DIATONIC_CHORDS","DIATONIC_FOURTHS","FIFTH_UP","FIFTH_UP_FOURTH_DOWN","PITCH_BEND_CHORDS","SELECTIVE_PITCH_BEND_2NOTES","SINE_FM_PIANO","SINE_FM_PIANO_ADJ","DUAL_SQUARE_CHRS_DLY","RESERVED_22","RESERVED_23","WAYLO_FM","WAYLO_XFADE","RESERVED_26","WAYLO_XFADE2","WAYLO_XFADE2_LINEAR","WAYLO_XFADE2_QUARTIC","DUAL_SQUARE_QUARTIC","SQUARE_SAW_QUARTIC","FIXED_PULSE_SQUARE","FIXED_PULSE_SAW","FIXED_PULSE_PARABOLA","DUAL_SQUARE_FIXED_PULSE","ANALOG_A1","ANALOG_A2","AUDIO_INPUT_FX","RESERVED_39","RESERVED_40","RESERVED_41","EWI_MONO_SQUARE_SAW","CHORD_SCALE1","CHORD_SCALE2","CHORD_SCALE3","CHORD_SCALE4","CHORD_SCALE5","EWI_MONO_DUAL_SAW","SQUARE_SAW_LFO","GUITAR_INPUT_FX","DUAL_WAVE_LFO","DUAL_WAVE_LFO2","DUAL_WAVE_LFO3"
+      "DUAL_SQUARE","RESERVED_1","RESERVED_2","SQUARE_SAW","RESERVED_4","WAYLO_TRANS","ZAWINUL","SAMCHILI","MIDIROTATOR","CHORDROTATOR","CDG_ROTATOR","EFC_ROTATOR","CHORD_SEQUENCER","DIATONIC_CHORDS","DIATONIC_FOURTHS","FIFTH_UP","FIFTH_UP_FOURTH_DOWN","PITCH_BEND_CHORDS","SELECTIVE_PITCH_BEND_2NOTES","SINE_FM_PIANO","SINE_FM_PIANO_ADJ","DUAL_SQUARE_CHRS_DLY","RESERVED_22","RESERVED_23","WAYLO_FM","WAYLO_XFADE","RESERVED_26","WAYLO_XFADE2","WAYLO_LICK_CHORD_1","WAYLO_LICK_CHORD_2","DUAL_SQUARE_QUARTIC","SQUARE_SAW_QUARTIC","FIXED_PULSE_SQUARE","FIXED_PULSE_SAW","FIXED_PULSE_PARABOLA","DUAL_SQUARE_FIXED_PULSE","ANALOG_A1","ANALOG_A2","AUDIO_INPUT_FX","RESERVED_39","RESERVED_40","RESERVED_41","EWI_MONO_SQUARE_SAW","CHORD_SCALE1","CHORD_SCALE2","CHORD_SCALE3","CHORD_SCALE4","CHORD_SCALE5","EWI_MONO_DUAL_SAW","SQUARE_SAW_LFO","GUITAR_INPUT_FX","EWI_DUAL_WAVE_LFO","EWI_DUAL_WAVE_LFO2","EWI_DUAL_WAVE_LFO3","SQUARE_SAW_LFO2"
     ];
     const REMOVED_PATCH_IDS = new Set([1, 2, 4, 22, 23, 26, 39, 40, 41]);
     const VISIBLE_PATCH_IDS = PATCHES.map((_, i) => i).filter(i => !REMOVED_PATCH_IDS.has(i));
@@ -876,7 +1006,7 @@
       setStatus('All patches unselected.');
     });
     // Parameter slider display
-    const PARAMS = ['attackEnv','releaseEnv','attackFilter','releaseFilter','chorusDepthScale','chorusSpeedScale','chordVolume','ewiMinAmplitude','ewiMaxAmplitude','ewiBreathSensitivity','ewiLowestNote','ewiPortamentoMs','ewiAttackMs','ewiReleaseMs','ewiFilterMinHz','ewiFilterMaxHz','ewiFilterSensitivity','ewiAmpSensitivity','squareSawLFODepthLeft','squareSawLFODepthRight','squareSawLFOSpeedLeft','squareSawLFOSpeedRight','dualWaveLFONoiseVol','dualWaveLFO2NoiseVol','dualWaveLFO3NoiseVol'];
+    const PARAMS = ['attackEnv','releaseEnv','attackFilter','releaseFilter','chorusDepthScale','chorusSpeedScale','chordVolume','ewiMinAmplitude','ewiMaxAmplitude','ewiBreathSensitivity','ewiLowestNote','ewiPortamentoMs','ewiAttackMs','ewiReleaseMs','ewiFilterMinHz','ewiFilterMaxHz','ewiFilterSensitivity','ewiAmpSensitivity','squareSawLFODepthLeft','squareSawLFODepthRight','squareSawLFOSpeedLeft','squareSawLFOSpeedRight','dualWaveLFONoiseVol','dualWaveLFO2NoiseVol','dualWaveLFO3NoiseVol','squareSawLFO2NoiseVol'];
     const LFO_PARAMS = ['squareSawLFODepthLeft','squareSawLFODepthRight','squareSawLFOSpeedLeft','squareSawLFOSpeedRight'];
     const paramUpdateLocks = {}; // Prevent cascading updates
     
@@ -969,6 +1099,58 @@
       setDiatonicInputs(DIATONIC_DEFAULTS);
       setStatus('Diatonic defaults applied (click Write to Device to send).');
     };
+
+    document.getElementById('btn-factory-reset').onclick = async () => {
+      if (!confirm('Factory reset will overwrite ALL parameters, patch states, rotators, and chord scales with firmware defaults. Continue?')) return;
+
+      // 1 — params
+      PARAMS.forEach(id => setParamValue(id, DEFAULT_PARAMS[id]));
+
+      // 2 — rotators + diatonic
+      setRotatorInputs(ROT_DEFAULTS);
+      setDiatonicInputs(DIATONIC_DEFAULTS);
+
+      // 3 — wave selectors (Left=3 SQUARE75%, Right=0 SAW)
+      ['dualWaveLFOWaveLeft','dualWaveLFO2WaveLeft','dualWaveLFO3WaveLeft','squareSawLFO2WaveLeft']
+        .forEach(id => { document.getElementById(id).value = '3'; });
+      ['dualWaveLFOWaveRight','dualWaveLFO2WaveRight','dualWaveLFO3WaveRight','squareSawLFO2WaveRight']
+        .forEach(id => { document.getElementById(id).value = '0'; });
+
+      // 4 — patch state: all non-removed patches enabled
+      patchState = Array(PATCHES.length).fill(true);
+      enforceRemovedPatchState();
+      renderPatchList();
+
+      // 5 — chord scales: restore factory data
+      for (let s = 0; s < 5; s++)
+        for (let c = 0; c < 36; c++)
+          CHORD_SCALES[s][c] = [...CHORD_SCALES_DEFAULTS[s][c]];
+      initChordEditor();
+
+      // 6 — lick chord defaults
+      LICK_DEFAULTS.forEach((d, p) => {
+        document.getElementById(`lick${p}-melody`).value = d.melody.join(',');
+        document.getElementById(`lick${p}-voices`).value = d.voices;
+        document.getElementById(`lick${p}-chordnotes`).value = d.chordNotes.join(',');
+        document.getElementById(`lick${p}-startpos`).value = d.startPos.join(',');
+      });
+      updateLickPreview();
+
+      if (writer) {
+        try {
+          await btnWrite.onclick();
+          await sendChordsToDevice();
+          await sendLickPatchToDevice(0);
+          await sendLickPatchToDevice(1);
+          setStatus('Factory reset complete — all defaults written to device.');
+        } catch (err) {
+          setStatus('Factory reset loaded but device write failed: ' + err.message);
+        }
+      } else {
+        setStatus('Factory reset applied to editor. Connect and click Write to Device + Send Chords to push.');
+      }
+    };
+
     // Export as CSV
     document.getElementById('btn-export').onclick = () => {
       const rows = [];
@@ -998,22 +1180,37 @@
       PATCHES.forEach((patch, i) => {
         rows.push([`patch-${patch}`, patchState[i] ? '1' : '0']);
       });
-      
+
+      // Add all 180 chord entries (pipe-separated within the value to avoid CSV ambiguity)
+      for (let s = 0; s < 5; s++) {
+        for (let c = 0; c < 36; c++) {
+          rows.push([`chord-s${s}-c${c}`, CHORD_SCALES[s][c].join('|')]);
+        }
+      }
+
+      // Add lick chord data
+      for (let p = 0; p < 2; p++) {
+        rows.push([`lick${p}-melody`, document.getElementById(`lick${p}-melody`).value.replace(/\s/g,'')]);
+        rows.push([`lick${p}-voices`, document.getElementById(`lick${p}-voices`).value]);
+        rows.push([`lick${p}-chordnotes`, document.getElementById(`lick${p}-chordnotes`).value.replace(/\s/g,'')]);
+        rows.push([`lick${p}-startpos`, document.getElementById(`lick${p}-startpos`).value.replace(/\s/g,'')]);
+      }
+
       // Convert to CSV string
       const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-      
+
       // Trigger download
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `waylinator-settings-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `waylinator-full-backup-${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
-      document.getElementById('status').textContent = 'Exported settings as CSV.';
+
+      document.getElementById('status').textContent = `Full backup saved — ${PATCHES.length} patches, ${PARAMS.length} params, 180 chords.`;
     };
     
     // Import from CSV
@@ -1024,9 +1221,9 @@
       input.onchange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
           try {
             const csv = event.target.result;
             const lines = csv.trim().split('\n');
@@ -1070,8 +1267,51 @@
             });
             enforceRemovedPatchState();
             renderPatchList();
-            
-            document.getElementById('status').textContent = 'Imported settings from CSV.';
+
+            // Load chord scales (pipe-separated values)
+            let chordsRestored = 0;
+            for (let s = 0; s < 5; s++) {
+              for (let c = 0; c < 36; c++) {
+                const key = `chord-s${s}-c${c}`;
+                if (data[key] !== undefined) {
+                  const vals = data[key].split('|').map(Number);
+                  if (vals.length === 7 && vals.every(v => !isNaN(v))) {
+                    CHORD_SCALES[s][c] = vals;
+                    chordsRestored++;
+                  }
+                }
+              }
+            }
+            if (chordsRestored > 0) initChordEditor();
+
+            // Load lick chord data
+            for (let p = 0; p < 2; p++) {
+              if (data[`lick${p}-melody`])     document.getElementById(`lick${p}-melody`).value = data[`lick${p}-melody`];
+              if (data[`lick${p}-voices`])     document.getElementById(`lick${p}-voices`).value = data[`lick${p}-voices`];
+              if (data[`lick${p}-chordnotes`]) document.getElementById(`lick${p}-chordnotes`).value = data[`lick${p}-chordnotes`];
+              if (data[`lick${p}-startpos`])   document.getElementById(`lick${p}-startpos`).value = data[`lick${p}-startpos`];
+            }
+            if (typeof updateLickPreview === 'function') updateLickPreview();
+
+            if (writer) {
+              // Connected — push everything to device automatically
+              try {
+                await btnWrite.onclick();
+                if (chordsRestored > 0) await sendChordsToDevice();
+                await sendLickPatchToDevice(0);
+                await sendLickPatchToDevice(1);
+                document.getElementById('status').textContent =
+                  `Full restore complete — all settings + ${chordsRestored} chords + lick chords written to device.`;
+              } catch (err) {
+                document.getElementById('status').textContent =
+                  `Restore loaded OK but device write failed: ${err.message}`;
+              }
+            } else {
+              const chordNote = chordsRestored > 0
+                ? ` + ${chordsRestored} chords loaded. Connect and click Write to Device + Send Chords to push.`
+                : ' (no chord data in file — chords unchanged)';
+              document.getElementById('status').textContent = 'Full restore loaded into editor.' + chordNote;
+            }
           } catch(err) {
             document.getElementById('status').textContent = 'Error importing CSV: ' + err.message;
           }
@@ -1099,6 +1339,193 @@
       });
     });
     
+    // --- LICK CHORDS ---
+    const NOTE_NAMES_LICK = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const LICK_MELODY_DEFAULT = [60,61,62,63,64,67,65,66,67,68,69,70,71,74,72];
+    const LICK_DEFAULTS = [
+      { melody: LICK_MELODY_DEFAULT, voices: 4, chordNotes: [40,47,49,64], startPos: [4,12,1,4] },
+      { melody: LICK_MELODY_DEFAULT, voices: 4, chordNotes: [60,64,67,69], startPos: [0,4,5,10] },
+    ];
+
+    function parseLickMelody(str) {
+      return str.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 0 && n <= 127);
+    }
+    function parseLickStartPos(str) {
+      return str.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 0);
+    }
+    function midiToName(n) {
+      const oct = Math.floor(n / 12) - 1;
+      return NOTE_NAMES_LICK[n % 12] + oct;
+    }
+
+    function parseLickChordNotes(str) {
+      return str.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n >= 0 && n <= 127);
+    }
+
+    function updateLickPreview() {
+      const preview = document.getElementById('lick-chord-preview');
+      let html = '';
+      for (let p = 0; p < 2; p++) {
+        const mel = parseLickMelody(document.getElementById(`lick${p}-melody`).value);
+        const voices = parseInt(document.getElementById(`lick${p}-voices`).value, 10) || 1;
+        const chordNotes = parseLickChordNotes(document.getElementById(`lick${p}-chordnotes`).value);
+        const startPos = parseLickStartPos(document.getElementById(`lick${p}-startpos`).value);
+        if (mel.length === 0) continue;
+        html += `<strong>Patch ${28+p}:</strong> melody=[${mel.map(midiToName).join(', ')}]`;
+        // Show per-voice offsets
+        const offsets = [];
+        for (let v = 0; v < voices; v++) {
+          const sp = startPos[v] || 0;
+          const spIdx = sp % mel.length;
+          const cn = chordNotes[v] !== undefined ? chordNotes[v] : mel[spIdx];
+          offsets.push(cn - mel[spIdx]);
+        }
+        html += `  offsets=[${offsets.map(o => (o >= 0 ? '+' : '') + o).join(', ')}]<br>`;
+        for (let pos = 0; pos < Math.min(8, 36); pos++) {
+          const chord = [];
+          for (let v = 0; v < voices; v++) {
+            const sp = startPos[v] || 0;
+            const spIdx = sp % mel.length;
+            const cn = chordNotes[v] !== undefined ? chordNotes[v] : mel[spIdx];
+            const offset = cn - mel[spIdx];
+            const rawPos = spIdx + pos;
+            const wraps = Math.floor(rawPos / mel.length);
+            const idx = rawPos % mel.length;
+            const n = Math.max(0, Math.min(127, mel[idx] + offset + wraps * 12));
+            chord.push(midiToName(n));
+          }
+          html += `  pos ${pos} (${midiToName(60+pos)}): [${chord.join(', ')}]<br>`;
+        }
+        html += '<br>';
+      }
+      preview.innerHTML = html || '<em>Enter melody, chord notes and voice data to preview chords.</em>';
+    }
+
+    ['lick0-melody','lick0-voices','lick0-chordnotes','lick0-startpos',
+     'lick1-melody','lick1-voices','lick1-chordnotes','lick1-startpos']
+      .forEach(id => document.getElementById(id).addEventListener('input', updateLickPreview));
+    updateLickPreview();
+
+    document.getElementById('btn-lick-defaults').onclick = () => {
+      LICK_DEFAULTS.forEach((d, p) => {
+        document.getElementById(`lick${p}-melody`).value = d.melody.join(',');
+        document.getElementById(`lick${p}-voices`).value = d.voices;
+        document.getElementById(`lick${p}-chordnotes`).value = d.chordNotes.join(',');
+        document.getElementById(`lick${p}-startpos`).value = d.startPos.join(',');
+      });
+      updateLickPreview();
+      setStatus('Lick chord defaults restored.');
+    };
+
+    async function sendLickPatchToDevice(patchIdx) {
+      if (!writer) throw new Error('Not connected');
+      const mel = parseLickMelody(document.getElementById(`lick${patchIdx}-melody`).value);
+      const voices = Math.max(1, Math.min(6, parseInt(document.getElementById(`lick${patchIdx}-voices`).value, 10) || 1));
+      const chordNotes = parseLickChordNotes(document.getElementById(`lick${patchIdx}-chordnotes`).value).slice(0, voices);
+      while (chordNotes.length < voices) chordNotes.push(60);  // fallback: C4 = no offset
+      const startPos = parseLickStartPos(document.getElementById(`lick${patchIdx}-startpos`).value).slice(0, voices);
+      while (startPos.length < voices) startPos.push(0);
+      const payload = JSON.stringify({
+        cmd: 'sendLickChords', patch: patchIdx,
+        melLen: mel.length, mel,
+        voices, cn: chordNotes, sp: startPos
+      });
+      const enc = new TextEncoder();
+      await writer.write(enc.encode(payload + '\n'));
+    }
+
+    document.getElementById('btn-lick-send').addEventListener('click', async () => {
+      if (!writer) { setStatus('Not connected.'); return; }
+      try {
+        await sendLickPatchToDevice(0);
+        await sendLickPatchToDevice(1);
+        setStatus('Lick chord data sent to device.');
+      } catch (err) { setStatus('Error sending lick chords: ' + err.message); }
+    });
+
+    document.getElementById('btn-lick-read').addEventListener('click', async () => {
+      if (!writer) { setStatus('Not connected.'); return; }
+      try {
+        await sendCommand(JSON.stringify({ cmd: 'readLickChords' }));
+        setStatus('Requesting lick chord data from device…');
+      } catch (err) { setStatus('Error reading lick chords: ' + err.message); }
+    });
+
+    // ── MIDI → Lick import ──────────────────────────────────────────────────
+    // Format: bar 1 whole notes = chord (reference), quarter notes = melody,
+    // half notes = starting positions (note % 12 = index).
+    document.getElementById('btn-lick-midi').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.mid,.midi';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          const buf = await file.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          const midi = parseMidi(bytes);  // reuse existing MIDI parser
+
+          // Collect events with absolute ticks
+          const tpb = midi.timeDivision || 480;
+          let wholeLengthTicks = tpb * 4;  // 1 bar in 4/4
+          const allNotes = [];  // {tick, dur, note}
+
+          for (const track of midi.tracks) {
+            let abs = 0;
+            const pending = {};
+            for (const ev of track) {
+              abs += ev.delta;
+              if (ev.type === 0x90 && ev.velocity > 0) pending[ev.note] = abs;
+              else if ((ev.type === 0x80 || (ev.type === 0x90 && ev.velocity === 0)) && pending[ev.note] !== undefined) {
+                allNotes.push({ tick: pending[ev.note], dur: abs - pending[ev.note], note: ev.note });
+                delete pending[ev.note];
+              }
+            }
+          }
+
+          // Bar 1 whole notes (duration ~= tpb*4) → actual chord notes (with octave)
+          // Sort by pitch ascending so voice ordering is lowest → highest
+          const chordNotes = allNotes
+            .filter(n => n.tick < wholeLengthTicks && n.dur >= tpb * 3)
+            .map(n => n.note).sort((a, b) => a - b);
+
+          // Quarter notes after bar 1 (duration ~= tpb) → melody
+          const melNotes = allNotes
+            .filter(n => n.tick >= wholeLengthTicks && n.dur >= tpb * 0.4 && n.dur < tpb * 2.5)
+            .sort((a, b) => a.tick - b.tick)
+            .map(n => n.note)
+            .slice(0, 32);
+
+          // Half notes (duration ~= tpb*2) → starting positions (note % 12 = index)
+          const spNotes = allNotes
+            .filter(n => n.dur >= tpb * 1.5 && n.dur < tpb * 3.5)
+            .sort((a, b) => a.tick - b.tick)
+            .map(n => n.note % 12)
+            .slice(0, 6);
+
+          const numVoices = Math.max(1, chordNotes.length || spNotes.length || 3);
+
+          // Ask which patch to load into
+          const pIdx = confirm(
+            `Found chord=[${chordNotes.map(midiToName).join(', ')}], melody=[${melNotes.map(midiToName).join(', ')}], startPos=[${spNotes.join(',')}]\n\nClick OK to load into Patch 28 (LICK_CHORD_1), Cancel for Patch 29 (LICK_CHORD_2).`
+          ) ? 0 : 1;
+
+          document.getElementById(`lick${pIdx}-melody`).value = melNotes.join(',');
+          document.getElementById(`lick${pIdx}-voices`).value = numVoices;
+          document.getElementById(`lick${pIdx}-chordnotes`).value = chordNotes.length
+            ? chordNotes.slice(0, numVoices).join(',')
+            : LICK_DEFAULTS[pIdx].chordNotes.slice(0, numVoices).join(',');
+          document.getElementById(`lick${pIdx}-startpos`).value = spNotes.length ? spNotes.join(',') : '0,2,4';
+          updateLickPreview();
+          setStatus(`MIDI imported into Patch ${28+pIdx}. Click Send to Device to push.`);
+        } catch (err) { setStatus('MIDI parse error: ' + err.message); }
+      };
+      input.click();
+    });
+
+    // Handle lickAck and lickData responses from device
+    // (Wired into the existing serial receive path below — see "lc" key handler)
+
     // --- CHORD EDITOR INITIALIZATION ---
     const CHORD_SCALE_NAMES = ['CHORD_SCALE1', 'CHORD_SCALE2', 'CHORD_SCALE3', 'CHORD_SCALE4', 'CHORD_SCALE5'];
     const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -1116,7 +1543,9 @@
       // CHORD_SCALE5 (+5 semitones)
       [[3,65,69,72,0,0,0],[3,66,70,73,0,0,0],[3,67,71,74,0,0,0],[3,68,72,75,0,0,0],[3,69,73,76,0,0,0],[3,70,74,77,0,0,0],[3,71,75,78,0,0,0],[3,72,76,79,0,0,0],[3,73,77,80,0,0,0],[3,74,78,81,0,0,0],[3,75,79,82,0,0,0],[3,76,80,83,0,0,0],[3,77,81,84,0,0,0],[3,78,82,85,0,0,0],[3,79,83,86,0,0,0],[3,80,84,87,0,0,0],[3,81,85,88,0,0,0],[3,82,86,89,0,0,0],[3,83,87,90,0,0,0],[3,84,88,91,0,0,0],[3,85,89,92,0,0,0],[3,86,90,93,0,0,0],[3,87,91,94,0,0,0],[3,88,92,95,0,0,0],[3,89,93,96,0,0,0],[3,90,94,97,0,0,0],[3,91,95,98,0,0,0],[3,92,96,99,0,0,0],[3,93,97,100,0,0,0],[3,94,98,101,0,0,0],[3,95,99,102,0,0,0],[3,96,100,103,0,0,0],[3,97,101,104,0,0,0],[3,98,102,105,0,0,0],[3,99,103,106,0,0,0],[3,100,104,107,0,0,0]]
     ];
-    
+    // Deep copy taken at page load — used by factory reset to restore chord scales
+    const CHORD_SCALES_DEFAULTS = CHORD_SCALES.map(scale => scale.map(chord => [...chord]));
+
     function getMidiNoteName(midiNote) {
       // Standard MIDI: 60 = C4, octave changes at C
       const octave = Math.floor(midiNote / 12) - 1;
@@ -1369,24 +1798,24 @@
     // --- CHORD SCALE SEND/READ/IMPORT/EXPORT ---
     
     // Send chord scales to device via USB serial
+    async function sendChordsToDevice() {
+      if (!writer) throw new Error('Not connected');
+      const enc = new TextEncoder();
+      let jsonStr = '{"cmd":"sendChords","data":[';
+      for (let s = 0; s < 5; s++) {
+        for (let c = 0; c < 36; c++) {
+          if (s > 0 || c > 0) jsonStr += ',';
+          jsonStr += '[' + CHORD_SCALES[s][c].join(',') + ']';
+        }
+      }
+      jsonStr += ']}';
+      await writer.write(enc.encode(jsonStr + '\n'));
+    }
+
     document.getElementById('btn-send-chords').addEventListener('click', async () => {
       if (!writer) { setStatus('Not connected.'); return; }
-
       try {
-        // Build data array inline (avoid intermediate objects)
-        const enc = new TextEncoder();
-        let jsonStr = '{"cmd":"sendChords","data":[';
-
-        for (let s = 0; s < 5; s++) {
-          for (let c = 0; c < 36; c++) {
-            if (s > 0 || c > 0) jsonStr += ',';
-            const chord = CHORD_SCALES[s][c];
-            jsonStr += '[' + chord.join(',') + ']';
-          }
-        }
-        jsonStr += ']}';
-
-        await writer.write(enc.encode(jsonStr + '\n'));
+        await sendChordsToDevice();
         setStatus('Chord scales sent to device.');
       } catch (err) {
         setStatus('Error sending chord scales: ' + err.message);
