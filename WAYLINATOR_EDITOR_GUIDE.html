@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Waylinator Editor — User Guide</title>
+  <style>
+    /* ── Screen styles ─────────────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #1a1a2e;
+      background: #f5f5f0;
+      padding: 32px;
+    }
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      background: white;
+      padding: 52px 60px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.12);
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Cover page ────────────────────────────────────────────────────── */
+    .cover {
+      text-align: center;
+      padding: 80px 60px;
+      min-height: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-top: 8px solid #22c55e;
+    }
+    .cover h1 {
+      font-size: 42px;
+      font-weight: 800;
+      color: #16a34a;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+    .cover .subtitle {
+      font-size: 18px;
+      color: #555;
+      margin-bottom: 36px;
+    }
+    .cover .tagline {
+      font-size: 13px;
+      color: #888;
+      max-width: 420px;
+      line-height: 1.7;
+    }
+    .version-badge {
+      display: inline-block;
+      background: #22c55e;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Typography ────────────────────────────────────────────────────── */
+    h1 { font-size: 26px; color: #16a34a; font-weight: 800; margin-bottom: 18px; border-bottom: 3px solid #22c55e; padding-bottom: 10px; }
+    h2 { font-size: 17px; color: #166534; font-weight: 700; margin: 30px 0 12px 0; }
+    h3 { font-size: 14px; color: #15803d; font-weight: 700; margin: 20px 0 8px 0; }
+    p  { margin-bottom: 10px; color: #333; }
+    ul, ol { margin: 8px 0 12px 20px; }
+    li { margin-bottom: 4px; color: #333; }
+    strong { color: #1a1a2e; }
+
+    /* ── Tables ────────────────────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0 20px 0; font-size: 12px; }
+    th { background: #166534; color: white; text-align: left; padding: 7px 10px; font-weight: 600; }
+    td { padding: 6px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    tr:nth-child(even) td { background: #f9fafb; }
+    td:first-child { font-family: 'SF Mono', 'Consolas', monospace; font-size: 11px; color: #15803d; white-space: nowrap; }
+
+    /* ── Callout boxes ─────────────────────────────────────────────────── */
+    .tip, .warn, .info {
+      border-left: 4px solid;
+      padding: 10px 14px;
+      margin: 16px 0;
+      border-radius: 0 4px 4px 0;
+      font-size: 12px;
+    }
+    .tip  { border-color: #22c55e; background: #f0fdf4; }
+    .warn { border-color: #f59e0b; background: #fffbeb; }
+    .info { border-color: #3b82f6; background: #eff6ff; }
+    .tip strong, .warn strong, .info strong { display: block; margin-bottom: 3px; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+    .tip strong  { color: #166534; }
+    .warn strong { color: #92400e; }
+    .info strong { color: #1e40af; }
+
+    /* ── Code / mono ───────────────────────────────────────────────────── */
+    code { font-family: 'SF Mono', 'Consolas', monospace; font-size: 11px; background: #f3f4f6; padding: 1px 5px; border-radius: 3px; color: #15803d; }
+
+    /* ── Workflow steps ────────────────────────────────────────────────── */
+    .steps { counter-reset: step; list-style: none; margin-left: 0; }
+    .steps li {
+      counter-increment: step;
+      padding: 8px 12px 8px 44px;
+      position: relative;
+      margin-bottom: 6px;
+      background: #f9fafb;
+      border-radius: 4px;
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 12px;
+      top: 8px;
+      background: #22c55e;
+      color: white;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* ── Patch grid ────────────────────────────────────────────────────── */
+    .patch-grid { display: grid; grid-template-columns: 60px 1fr; gap: 0; font-size: 12px; margin: 10px 0 18px 0; }
+    .patch-id { background: #166534; color: white; padding: 5px 8px; font-family: monospace; font-size: 11px; display: flex; align-items: center; }
+    .patch-desc { background: #f9fafb; padding: 5px 10px; border-bottom: 1px solid #e5e7eb; }
+    .patch-grid > div:nth-child(4n+1), .patch-grid > div:nth-child(4n+2) { background: white; }
+
+    /* ── Section divider ───────────────────────────────────────────────── */
+    .section-break { border: none; border-top: 1px solid #e5e7eb; margin: 28px 0; }
+
+    /* ── TOC ───────────────────────────────────────────────────────────── */
+    .toc { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 20px 24px; margin: 20px 0; }
+    .toc h2 { margin-top: 0; font-size: 14px; color: #166534; }
+    .toc ol { margin-left: 18px; }
+    .toc li { margin-bottom: 6px; font-size: 13px; }
+
+    /* ── Print styles ──────────────────────────────────────────────────── */
+    @media print {
+      body { background: white; padding: 0; }
+      .page { box-shadow: none; margin: 0; border-radius: 0; page-break-after: always; }
+      .page:last-child { page-break-after: auto; }
+      h1, h2, h3 { page-break-after: avoid; }
+      table, .tip, .warn, .info { page-break-inside: avoid; }
+      @page { margin: 18mm 20mm; size: A4; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ COVER ═══════════════════════════════════════════════════════════════ -->
+<div class="page cover">
+  <div class="version-badge">END USER GUIDE</div>
+  <h1>WAYLINATOR EDITOR</h1>
+  <p class="subtitle">Browser-based editor for the Daisy Pod synthesiser</p>
+  <p class="tagline">
+    This guide explains how to connect to your Waylinator, understand its
+    patches, tune its parameters, build custom chord scales, and import
+    MIDI files — all from a single browser page.
+  </p>
+  <br>
+  <p style="color:#aaa; font-size:11px; margin-top:40px;">
+    Open <strong>editor.html</strong> in Chrome or Edge · Connect via USB · Play
+  </p>
+</div>
+
+<!-- ══ TABLE OF CONTENTS ════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>Contents</h1>
+  <div class="toc">
+    <ol>
+      <li>Overview &amp; Requirements</li>
+      <li>Connecting to the Device</li>
+      <li>Hardware Controls — knobs, buttons, encoder, banks</li>
+      <li>MIDI Controls — pitch bend, mod wheel, CC2/breath</li>
+      <li>Keyboard Zones &amp; Transposition — how the bottom half controls the top</li>
+      <li>Remapping Patches — WAYLO_TRANS, ZAWINUL, SAMCHILI explained</li>
+      <li>Rotator Patches — MIDIROTATOR, CHORDROTATOR and how they work</li>
+      <li>The Editor Layout</li>
+      <li>Parameters Tab — detailed reference</li>
+      <li>Patches Tab</li>
+      <li>Patch Reference — what each patch does</li>
+      <li>Chord Editor Tab</li>
+      <li>Importing Chords from a MIDI File</li>
+      <li>Rotator Chord Settings</li>
+      <li>Saving &amp; Restoring Settings (CSV)</li>
+      <li>EWI / Breath Controller Reference</li>
+      <li>Quick-Start Workflows</li>
+    </ol>
+  </div>
+
+  <h2>1 · Overview &amp; Requirements</h2>
+  <p>
+    The <strong>Waylinator</strong> is a polyphonic synthesiser running on an
+    Electro-Smith <strong>Daisy Pod</strong> hardware module. It is controlled
+    over USB using a browser-based editor that communicates through the
+    <em>Web Serial API</em>.
+  </p>
+  <ul>
+    <li><strong>Browser:</strong> Google Chrome or Microsoft Edge (any recent version). Firefox and Safari do not support Web Serial.</li>
+    <li><strong>Cable:</strong> Micro-USB to your computer — the same cable used to flash firmware.</li>
+    <li><strong>No install required</strong> — open <code>editor.html</code> directly from your file system.</li>
+  </ul>
+
+  <div class="tip">
+    <strong>Tip</strong>
+    If you see "Web Serial not supported" in the status area, switch to Chrome or Edge and make sure you opened the file as <code>file://…/editor.html</code> (not inside another application).
+  </div>
+
+  <h2>2 · Connecting to the Device</h2>
+  <ol class="steps">
+    <li>Plug the Daisy Pod into your computer with USB. Power it on.</li>
+    <li>Open <code>editor.html</code> in Chrome or Edge.</li>
+    <li>Click <strong>Connect</strong> at the top of the page. A browser dialog will appear listing available serial ports — select your Daisy Pod (typically labelled "USB Serial Device" or similar).</li>
+    <li>The button label changes to <strong>Disconnect</strong> and a green dot appears. The editor is now live.</li>
+    <li>Click <strong>Read from Device</strong> to pull the current settings, patch state, and rotator values from the hardware into the editor.</li>
+    <li>After making changes, click <strong>Write to Device</strong> to push everything back. The device acknowledges by echoing its state — you will see the values appear in the Device Log at the bottom of the page.</li>
+  </ol>
+
+  <div class="info">
+    <strong>Note — two separate send operations</strong>
+    <strong>Write to Device</strong> sends parameters, knob settings, patch enable/disable state, and rotator values.
+    It does <em>not</em> send chord-scale data. To update chord scales you must use
+    <strong>Send to Device</strong> inside the Chord Editor tab separately.
+  </div>
+</div>
+
+<!-- ══ HARDWARE CONTROLS ══════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>3 · Hardware Controls</h1>
+  <p>
+    The Daisy Pod has two knobs, two buttons, and one rotary encoder with a push-click.
+    All controls work in real time — you do not need the editor connected to use them.
+  </p>
+
+  <h2>Knob 1 — Chorus</h2>
+  <p>
+    Knob 1 controls the <strong>chorus effect</strong>: turning it clockwise increases both
+    the depth (pitch shimmer amount) and the rate (LFO speed) of the stereo chorus simultaneously.
+    At minimum the effect is dry; at maximum the sound widens noticeably and shimmers.
+    In a few patches (WAYLO_XFADE2 family, FIXED_PULSE group) Knob 1 instead controls
+    a per-voice pitch LFO depth and rate — the same "wider as you turn" feel applies.
+  </p>
+
+  <h2>Knob 2 — Delay</h2>
+  <p>
+    Knob 2 controls the <strong>wet level of the 3-tap LCR delay</strong> (Left-Centre-Right
+    panned repeats). At minimum there are no delay repeats; at maximum the delay is prominent.
+    Knob 2 is independent of Knob 1 — you can have dry chorus + wet delay or vice versa.
+  </p>
+
+  <h2>Button 1 — Decrease Envelope</h2>
+  <p>
+    Each press of Button 1 steps the attack time <strong>down by 5 ms</strong> and the
+    release time <strong>down by 20 ms</strong>. Both the amplitude envelope and the filter
+    envelope are adjusted together. The minimum is 1 ms. This is a quick on-stage way
+    to get a snappier, more percussive feel without opening the editor.
+  </p>
+  <div class="warn">
+    <strong>RAM-only change</strong>
+    Button envelope changes are not written to flash. They are lost on power-off.
+    To make them permanent, set the values in the editor's Parameters tab and click
+    <strong>Write to Device</strong>.
+  </div>
+
+  <h2>Button 2 — Increase Envelope</h2>
+  <p>
+    Each press of Button 2 steps the attack time <strong>up by 5 ms</strong> and release
+    <strong>up by 20 ms</strong>. Maximum is 2 seconds. Use this to add sustain and
+    a slower fade-in for pad-like sounds.
+  </p>
+  <p>
+    <strong>Exception:</strong> on the <em>SINE_FM_PIANO_ADJ</em> patch (patch 20), Button 1
+    and Button 2 control <em>only</em> the FM piano's attack time (not the global envelope),
+    in very fine steps of 0.1 ms up to a maximum of 50 ms.
+  </p>
+  <p>
+    <strong>Note:</strong> buttons have <em>no effect</em> on the SINE_FM_PIANO or
+    SINE_FM_PIANO_ADJ patches for the global envelope — those patches manage their own
+    internal envelope separately.
+  </p>
+
+  <hr class="section-break">
+
+  <h2>Rotary Encoder — Patch Selection</h2>
+  <p>
+    The rotary encoder (the clickable knob, separate from the two analog knobs) navigates
+    patches and switches banks.
+  </p>
+  <table>
+    <tr><th>Action</th><th>What happens</th></tr>
+    <tr><td>Rotate clockwise</td><td>Step forward to the next <em>enabled</em> patch. Skips any patches that are unticked in the editor.</td></tr>
+    <tr><td>Rotate counter-clockwise</td><td>Step backward to the previous enabled patch.</td></tr>
+    <tr><td>Short click (press and release quickly)</td><td>Cycle the <strong>bank</strong> forward: Bank A → Bank B → Bank C → Bank A. All voices are killed on bank change.</td></tr>
+    <tr><td>Long press (~½ second hold)</td><td>Jump immediately to <strong>Patch 0</strong> (DUAL_SQUARE) and kill all active voices. Useful as a "panic" reset on stage.</td></tr>
+  </table>
+
+  <hr class="section-break">
+
+  <h2>Banks — A, B, and C</h2>
+  <p>
+    The Waylinator has three banks that fundamentally change how the current patch behaves.
+    The <strong>LEDs</strong> on the Pod change colour to show which bank is active.
+  </p>
+
+  <h3>Bank A — Standard (default)</h3>
+  <p>
+    Normal polyphonic operation. ADSR envelopes, note-on/note-off, velocity sensitivity.
+    This is the default bank on power-up.
+  </p>
+
+  <h3>Bank B — EWI / Breath Driven</h3>
+  <p>
+    Most patches switch to <strong>monophonic legato</strong> mode. Amplitude and filter
+    cutoff are controlled by breath (CC2 or channel pressure) rather than the ADSR
+    envelope. Phase is preserved across notes so there is no click on legato transitions.
+    Portamento (glide) is active between notes using the <em>EWI Portamento (ms)</em> parameter.
+  </p>
+  <p>
+    In Bank B, the rotator patches (MIDIROTATOR, CHORDROTATOR, CDG_ROTATOR, EFC_ROTATOR,
+    DIATONIC_CHORDS, DIATONIC_FOURTHS, FIFTH_UP, FIFTH_UP_FOURTH_DOWN) switch to a
+    <strong>legato chord update</strong> mode — the chord changes smoothly without a
+    note-off/note-on boundary, giving a wind-instrument feel to harmony patches.
+  </p>
+  <div class="info">
+    <strong>Bank B and keyboard players</strong>
+    Bank B works without a breath controller — if no CC2 is received the breath value
+    defaults to full, so notes simply sustain until released. Dynamics come from a
+    velocity multiplier in this case.
+  </div>
+
+  <h3>Bank C — Audio Input Blend</h3>
+  <p>
+    The Daisy Pod's <strong>audio input</strong> is mixed into the synthesiser output.
+    You can feed a guitar, instrument, or backing track into the Pod and blend it with
+    the synth sound. Bank C behaves like Bank A for all other parameters (polyphonic ADSR).
+  </p>
+  <p>
+    Audio input gain in Bank C is set conservatively (lower gain on WAYLO_XFADE patches
+    which already multiply the output further, higher gain on other patches). Use
+    Knob 2 to set the delay wet to taste; the synth and audio signal both pass through
+    the delay and chorus effects.
+  </p>
+</div>
+
+<!-- ══ MIDI CONTROLS ══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>4 · MIDI Controls</h1>
+
+  <h2>Pitch Bend</h2>
+  <p>
+    Pitch bend is received on any MIDI channel. The behaviour depends on the current patch:
+  </p>
+  <table>
+    <tr><th>Patch type</th><th>Bend range</th><th>Notes</th></tr>
+    <tr><td>All standard polyphonic patches</td><td>±2 semitones</td><td>Applied to all active voices simultaneously.</td></tr>
+    <tr><td>EWI patches (EWI_MONO_*, EWI_DUAL_WAVE_LFO*)</td><td>Asymmetric — set by <em>EWI Bend Up</em> and <em>EWI Bend Down</em> parameters</td><td>Default ±2 st. Upward and downward ranges can differ, matching wind-controller conventions.</td></tr>
+    <tr><td>Bank B (all patches in EWI mode)</td><td>Same asymmetric EWI range</td><td>Applies in Bank B regardless of patch, since Bank B switches all patches to EWI-style control.</td></tr>
+    <tr><td>PITCH_BEND_CHORDS (patch 17)</td><td>±2 semitones on last note only</td><td>Only the most recently triggered note bends; harmony notes stay fixed.</td></tr>
+    <tr><td>SELECTIVE_PITCH_BEND_2NOTES (patch 18)</td><td>±2 semitones on last two notes</td><td>Only the two most recently triggered notes bend.</td></tr>
+  </table>
+
+  <h2>Mod Wheel (CC1)</h2>
+  <p>
+    The mod wheel is a <strong>global filter / FM feedback control</strong>. Its effect
+    varies by patch:
+  </p>
+  <table>
+    <tr><th>Patch type</th><th>Mod wheel effect</th></tr>
+    <tr><td>SINE_FM_PIANO, SINE_FM_PIANO_ADJ, WAYLO_FM</td><td>Controls FM feedback depth (0 → full feedback) and FM modulation index. More mod wheel = brighter, more harmonically complex FM tone. Also feeds into the filter cutoff.</td></tr>
+    <tr><td>All other patches</td><td>Controls the global filter envelope amount. At zero the filter is barely touched by the envelope; at maximum the filter sweeps fully open on each note attack. Also directly sets the base filter cutoff frequency.</td></tr>
+  </table>
+  <div class="tip">
+    <strong>Tip</strong>
+    On polyphonic pad patches, setting the mod wheel to about 50–70% gives a gentle
+    filter swell on every note-on. On SINE_FM_PIANO, sweeping the mod wheel while
+    holding a note changes the timbre dramatically — from sine-pure to metallic and harsh.
+  </div>
+
+  <h2>CC2 / Breath (and Channel Pressure)</h2>
+  <p>
+    CC2 (breath controller) and MIDI channel pressure (aftertouch) both control
+    <strong>breath expression</strong> on EWI patches and Bank B. See section 16 for the
+    full EWI reference. On all other patches in Bank A or C, CC2 is ignored.
+  </p>
+
+  <h2>Note Velocity</h2>
+  <p>
+    In Bank A and C, velocity scales the amplitude of harmony/chord notes via the
+    <em>Chord Volume</em> parameter. The lead (trigger) note always plays at full velocity;
+    harmony notes are attenuated by the Chord Volume multiplier applied to the incoming velocity.
+    In Bank B and EWI patches, velocity is secondary to breath — it contributes a small
+    multiplier but breath drives the main dynamics.
+  </p>
+</div>
+
+<!-- ══ KEYBOARD ZONES ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>5 · Keyboard Zones &amp; Transposition</h1>
+  <p>
+    Several patches split the keyboard into two zones: a <strong>lower control zone</strong>
+    and an <strong>upper playing zone</strong>. Notes in the lower zone set a transposition
+    or base pitch silently; notes in the upper zone trigger sounds using the current
+    transposition state. The split point varies by patch.
+  </p>
+
+  <table>
+    <tr><th>Patch</th><th>Lower zone</th><th>Upper zone</th><th>What lower zone controls</th></tr>
+    <tr><td>WAYLO_TRANS</td><td>Below C4 (MIDI &lt; 60)</td><td>C4 and above</td><td>Sets the global transposition. C3 = 0 st (no shift), C#3 = +1 st, D3 = +2 st … B3 = +11 st. Below C3 gives negative transpositions.</td></tr>
+    <tr><td>SAMCHILI</td><td>C2 and below (MIDI ≤ 36)</td><td>C#2 and above</td><td>Sets the <em>base note</em> (adds 2 octaves to place it in the mid range). The upper zone then offsets cumulatively from this base.</td></tr>
+    <tr><td>CHORD_SCALE1–5</td><td>Below C4 (MIDI &lt; 60)</td><td>C4 and above (MIDI 60–95)</td><td>Sets a transposition offset for the whole chord scale. C3 (MIDI 48) = 0 semitones; each semitone above C3 adds +1 st. Notes below C3 give negative transpositions (<code>transposition = note − 48</code>).</td></tr>
+    <tr><td>CHORD_SEQUENCER</td><td>C2–A#2 (MIDI 36–46)</td><td>Above A#2</td><td>Sets a transposition offset for the sequencer. C2 = −5 st, each semitone up adds +1 st. Notes at C1 and below trigger lick patterns.</td></tr>
+    <tr><td>FIFTH_UP / FIFTH_UP_FOURTH_DOWN</td><td>C2–B2 (MIDI 36–47)</td><td>C3 and above</td><td>Sets the root note for the voicing. C2 maps the root to C4, C#2 to C#4, and so on. The upper zone triggers chords relative to that root.</td></tr>
+    <tr><td>DIATONIC_CHORDS / DIATONIC_FOURTHS</td><td>C2–B2 (MIDI 36–47)</td><td>C5 and above</td><td>Sets the root key. C2 maps to C5, C#2 to C#5, etc. The upper zone triggers diatonic chords relative to the root.</td></tr>
+  </table>
+
+  <div class="info">
+    <strong>Lower zone notes are silent</strong>
+    Pressing a lower-zone key sets state but produces no audio output. The note-on is
+    intercepted and suppressed. Releasing the key also produces no note-off sound.
+    You can hold a lower-zone key to "lock in" a transposition and then play the
+    upper zone freely.
+  </div>
+
+  <hr class="section-break">
+
+  <h1>6 · Remapping Patches</h1>
+
+  <h2>WAYLO_TRANS (patch 5)</h2>
+  <p>
+    <strong>What it sounds like:</strong> Square wave left / Sawtooth right through chorus and delay — same as SQUARE_SAW. The difference is entirely in pitch assignment.
+  </p>
+  <p>
+    <strong>How it works:</strong> The 88-key range is split at C4 (MIDI 60).
+  </p>
+  <ul>
+    <li>Keys <strong>below C4</strong> silently set a transposition amount. C3 (MIDI 48) = 0 semitones offset. Each semitone above C3 adds +1 st; below C3 subtracts.</li>
+    <li>Keys <strong>at or above C4</strong> play a note, but the sounding pitch is the played note <em>plus the transposition minus one octave</em> (<code>output = note + transposition − 12</code>).</li>
+  </ul>
+  <p>
+    Example: hold D3 (transposition = +2), play C4 → sounds as C#3. Hold G3 (transposition = +7), play C4 → sounds as G3 — a fifth above C4 down an octave.
+  </p>
+  <p>
+    <strong>Use it for:</strong> playing in a comfortable upper-register position while your left hand nudges the key of a looped part. Great for transposing melodic lines on the fly.
+  </p>
+
+  <h2>ZAWINUL (patch 6)</h2>
+  <p>
+    <strong>What it sounds like:</strong> Square wave left / Sawtooth right through chorus and delay.
+  </p>
+  <p>
+    <strong>How it works:</strong> Every MIDI note is <strong>mirrored around C4</strong>. Notes below C4 reflect upward; notes above C4 reflect downward. The mapping is: <code>output = 60 + (60 − input)</code> for notes below 60, and <code>output = 60 − (input − 60)</code> for notes above 60. C4 itself stays at C4 (it maps to itself).
+  </p>
+  <p>
+    Example: play E4 (64) → sounds as G#3 (56, four semitones below C4). Play A3 (57) → sounds as Eb4 (63, three semitones above C4). The keyboard is effectively reversed.
+  </p>
+  <p>
+    <strong>Use it for:</strong> Zawinul-style reversed-keyboard voicings where low physical keys play high pitches and vice versa. Familiar patterns produce unexpected harmonic colours.
+  </p>
+
+  <h2>SAMCHILI (patch 7)</h2>
+  <p>
+    <strong>What it sounds like:</strong> Square wave left / Sawtooth right through chorus and delay.
+  </p>
+  <p>
+    <strong>How it works:</strong> SAMCHILI is a <em>cumulative offset</em> system operating within a 4½-octave range (C2 to G6, MIDI 36–91).
+  </p>
+  <ul>
+    <li>Keys at <strong>C2 and below</strong> (MIDI ≤ 36): set the <em>base note</em>. The base note is set to the played key <em>plus two octaves</em>, smart-wrapped into the C2–G6 range if it would fall outside.</li>
+    <li>Keys at <strong>C#2 and above</strong> (MIDI ≥ 37): add a cumulative offset to the base note. The offset is <code>played note − 60</code> (so middle C = 0, D above = +2, B below = −1, etc.). The base note is updated by that amount and then the result is played. Smart wrapping keeps the output inside C2–G6 by folding to the same pitch class in the opposite octave.</li>
+  </ul>
+  <p>
+    <strong>Practical meaning:</strong> your right hand wanders chromatically and the sounding pitch drifts with it — repeated upward motion continuously raises the register, downward motion lowers it — until it wraps. Your left hand resets the base to a specific position.
+  </p>
+  <p>
+    <strong>Use it for:</strong> unusual melodic lines that don't map to standard keyboard geography. The cumulative drift creates phrases that are difficult to play any other way.
+  </p>
+</div>
+
+<!-- ══ ROTATOR PATCHES ════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>7 · Rotator Patches</h1>
+  <p>
+    The four rotator patches (MIDIROTATOR, CHORDROTATOR, CDG_ROTATOR, EFC_ROTATOR) all
+    share the same underlying engine. Each note you play triggers <strong>three simultaneous
+    voices</strong>: the original note, a static harmony, and a <em>rotating</em> harmony
+    that cycles through a sequence of intervals.
+  </p>
+
+  <h2>How a rotator works</h2>
+  <p>
+    Each rotator has a list of five semitone offsets stored in the Rotator Chords fields
+    of the editor. Call them <code>[s, r1, r2, r3, r4]</code>.
+  </p>
+  <ul>
+    <li><strong>Original note</strong> — the MIDI note you pressed, at full velocity.</li>
+    <li><strong>Static voice</strong> — original note <code>+ s</code>. The same interval every note.</li>
+    <li><strong>Rotating voice</strong> — original note <code>+ r1</code> on the 1st note, <code>+ r2</code> on the 2nd, <code>+ r3</code> on the 3rd, <code>+ r4</code> on the 4th, then <code>+ r1</code> again on the 5th, and so on. The index cycles 1 → 2 → 3 → 4 → 1 …</li>
+  </ul>
+  <p>
+    All three voices are released when you release the key. The rotating counter
+    <strong>does not reset</strong> between notes — it keeps cycling continuously, so the
+    harmonic colour of consecutive notes always varies in a predictable sequence.
+  </p>
+
+  <h3>Example — CHORDROTATOR defaults: <code>7, 3, 5, 4, 2</code></h3>
+  <table>
+    <tr><th>Note pressed</th><th>Static voice (+7 st)</th><th>Rotating voice</th><th>3-note chord</th></tr>
+    <tr><td>C4 (60) — 1st</td><td>G4 (+7)</td><td>Eb4 (+3, r1)</td><td>C4 + Eb4 + G4 = Cm</td></tr>
+    <tr><td>C4 (60) — 2nd</td><td>G4 (+7)</td><td>F4 (+5, r2)</td><td>C4 + F4 + G4</td></tr>
+    <tr><td>C4 (60) — 3rd</td><td>G4 (+7)</td><td>E4 (+4, r3)</td><td>C4 + E4 + G4 = C major</td></tr>
+    <tr><td>C4 (60) — 4th</td><td>G4 (+7)</td><td>D4 (+2, r4)</td><td>C4 + D4 + G4</td></tr>
+    <tr><td>C4 (60) — 5th</td><td>G4 (+7)</td><td>Eb4 (+3, r1)</td><td>cycle restarts</td></tr>
+  </table>
+
+  <h2>MIDIROTATOR vs. CHORDROTATOR vs. CDG/EFC</h2>
+  <p>
+    All four patches use the same engine — they just use different interval tables.
+    You can customise each one independently in the Rotator Chords section of the editor.
+  </p>
+  <table>
+    <tr><th>Patch</th><th>Default intervals <code>[s, r1, r2, r3, r4]</code></th><th>Character</th></tr>
+    <tr><td>MIDIROTATOR</td><td>7, −10, −7, −8, −2</td><td>Fifth static voice; rotating voices create downward chromatic movement and sus-chord flavours.</td></tr>
+    <tr><td>CHORDROTATOR</td><td>7, 3, 5, 4, 2</td><td>Fifth static voice; rotating voices cycle through minor third, fourth, major third, major second — modal feel.</td></tr>
+    <tr><td>CDG_ROTATOR</td><td>7, 0, 2, 7, 12</td><td>Fifth static; rotating voices at unison, major second, fifth, octave — open and spacious.</td></tr>
+    <tr><td>EFC_ROTATOR</td><td>7, 4, 5, 12, −5</td><td>Fifth static; rotating through major third, fourth, octave, and a fourth below — wide spread voicings.</td></tr>
+  </table>
+
+  <h2>Bank B + rotator patches</h2>
+  <p>
+    In Bank B, the rotator patches switch to <strong>legato chord update</strong> mode.
+    Instead of a clean note-off / note-on boundary, the three-voice chord transitions
+    smoothly, preserving phase for a slurred, wind-controller feel. This is most effective
+    with slow legato playing — fast passages may overlap slightly.
+  </p>
+
+  <div class="tip">
+    <strong>Customising the rotators</strong>
+    You can set any integers (positive or negative) in the five-value fields.
+    Try <code>0, 12, 7, 5, 3</code> for octave + fifth + fourth + third cycling,
+    or <code>0, −12, −7, −5, −3</code> for downward voicings below the melody.
+    Remember to click <strong>Write to Device</strong> after changing these fields.
+  </div>
+</div>
+
+<!-- ══ LAYOUT + PARAMETERS ══════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>8 · The Editor Layout</h1>
+  <p>The editor has a <strong>sticky header</strong> that stays visible as you scroll. Inside it:</p>
+  <ul>
+    <li><strong>Defaults</strong> — reset all parameters to factory values (does not write to device).</li>
+    <li><strong>Export as CSV / Import from CSV</strong> — save or restore a complete snapshot of all settings.</li>
+    <li><strong>Connect / Disconnect</strong> — manage the serial connection.</li>
+    <li><strong>Read from Device / Write to Device</strong> — sync with hardware (only available when connected).</li>
+    <li><strong>Tab bar</strong> — switch between Parameters, Patches, and Chord Editor.</li>
+  </ul>
+  <p>Below the sticky header the page has two permanent sections always visible regardless of tab:</p>
+  <ul>
+    <li><strong>Rotator Chords</strong> — text fields for the interval sequences used by the MIDIROTATOR, CHORDROTATOR, CDG_ROTATOR, EFC_ROTATOR, and DIATONIC patches.</li>
+    <li><strong>Device Log</strong> — a scrolling console showing every message sent to and received from the hardware, useful for troubleshooting.</li>
+  </ul>
+
+  <hr class="section-break">
+
+  <h1>9 · Parameters Tab</h1>
+  <p>
+    Each parameter row has a <strong>slider</strong>, a <strong>number input</strong> (type a precise value), a
+    <strong>green readout</strong> showing the current value, and a <strong>Default</strong> button that resets just that one parameter.
+    All edits are local until you press <strong>Write to Device</strong>.
+  </p>
+
+  <h2>Envelope</h2>
+  <table>
+    <tr><th>Parameter</th><th>Range</th><th>Default</th><th>What it does</th></tr>
+    <tr><td>Attack Env</td><td>0 – 1</td><td>0.035</td><td>Amplitude envelope attack time. Lower = snappier transient.</td></tr>
+    <tr><td>Release Env</td><td>0 – 1</td><td>0.110</td><td>Amplitude envelope release tail. Higher = longer fade-out.</td></tr>
+    <tr><td>Attack Filter</td><td>0 – 1</td><td>0.035</td><td>Filter envelope attack time (mirrors amplitude envelope shape on the filter cutoff).</td></tr>
+    <tr><td>Release Filter</td><td>0 – 1</td><td>0.110</td><td>Filter envelope release time.</td></tr>
+  </table>
+
+  <h2>Effects</h2>
+  <table>
+    <tr><th>Parameter</th><th>Range</th><th>Default</th><th>What it does</th></tr>
+    <tr><td>Chorus Depth Scale</td><td>0 – 10</td><td>3.000</td><td>Global multiplier on the chorus LFO depth. Higher values = more pitch shimmer from the chorus effect.</td></tr>
+    <tr><td>Chorus Speed Scale</td><td>0 – 10</td><td>3.000</td><td>Global multiplier on the chorus LFO rate.</td></tr>
+    <tr><td>Chord Volume</td><td>0 – 1</td><td>0.800</td><td>Relative volume of harmony notes in chord patches. The "lead" (triggered) note is always at full velocity.</td></tr>
+  </table>
+
+  <h2>EWI / Breath Controller</h2>
+  <p>These parameters affect the <strong>EWI_MONO</strong> and <strong>EWI_DUAL_WAVE_LFO</strong> patches which respond to breath (CC2) or channel pressure.</p>
+  <table>
+    <tr><th>Parameter</th><th>Range</th><th>Default</th><th>What it does</th></tr>
+    <tr><td>EWI Attack Interp (s)</td><td>0 – 10</td><td>0.200</td><td>Smoothing time for the amplitude envelope attack driven by breath. Low values = fast response; high = slow swell.</td></tr>
+    <tr><td>EWI Bend Up (st)</td><td>0 – 12</td><td>2.000</td><td>Semitones of upward pitch bend range.</td></tr>
+    <tr><td>EWI Bend Down (st)</td><td>0 – 12</td><td>2.000</td><td>Semitones of downward pitch bend range.</td></tr>
+    <tr><td>EWI Lowest Note</td><td>0 – 127</td><td>24</td><td>MIDI note number of the lowest note the EWI patches will respond to.</td></tr>
+    <tr><td>EWI Portamento (ms)</td><td>0 – 1000</td><td>5</td><td>Glide time between notes in EWI legato patches. 0 = instant.</td></tr>
+    <tr><td>EWI Breath Attack (ms)</td><td>0 – 500</td><td>33</td><td>Rise time of the breath-driven amplitude smoother.</td></tr>
+    <tr><td>EWI Breath Release (ms)</td><td>0 – 2000</td><td>50</td><td>Decay time of the breath-driven amplitude smoother.</td></tr>
+    <tr><td>EWI Filter Min (Hz)</td><td>0 – 18000</td><td>800</td><td>Filter cutoff when breath = 0 (silence). Sets the tonal "floor."</td></tr>
+    <tr><td>EWI Filter Max (Hz)</td><td>20 – 18000</td><td>3000</td><td>Filter cutoff at full breath. Controls how bright the tone gets.</td></tr>
+    <tr><td>EWI Filter Sensitivity</td><td>0.1 – 5</td><td>1.00</td><td>Multiplier on the breath→filter mapping. Above 1 = filter opens faster.</td></tr>
+    <tr><td>EWI Amp Sensitivity</td><td>0.1 – 5</td><td>1.00</td><td>Multiplier on the breath→amplitude mapping. Above 1 = louder sooner.</td></tr>
+  </table>
+</div>
+
+<!-- ══ LFO PARAMS ════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>9 · Parameters Tab (continued)</h1>
+
+  <h2>SQUARE_SAW_LFO Settings (Patches 49 &amp; 54)</h2>
+  <p>
+    These four sliders control the pitch-modulation LFO that runs in
+    <strong>SQUARE_SAW_LFO</strong> (patch 49) and <strong>SQUARE_SAW_LFO2</strong> (patch 54).
+    The left and right sides of the stereo field have independent speed and depth,
+    creating a gentle detuned shimmer.
+  </p>
+  <table>
+    <tr><th>Parameter</th><th>Range</th><th>Default</th><th>What it does</th></tr>
+    <tr><td>LFO Depth Left (cents)</td><td>0 – 20</td><td>15</td><td>Peak pitch deviation of the left-channel LFO in cents (100 cents = 1 semitone).</td></tr>
+    <tr><td>LFO Depth Right (cents)</td><td>0 – 20</td><td>6</td><td>Peak pitch deviation of the right-channel LFO.</td></tr>
+    <tr><td>LFO Speed Left (Hz)</td><td>0.01 – 2.0</td><td>1.5</td><td>Modulation rate of the left LFO in Hz.</td></tr>
+    <tr><td>LFO Speed Right (Hz)</td><td>0.01 – 2.0</td><td>0.06</td><td>Modulation rate of the right LFO. The low default creates a slow wide swirl.</td></tr>
+  </table>
+
+  <h2>EWI_DUAL_WAVE_LFO Settings (Patches 51, 52, 53)</h2>
+  <p>
+    Each of the three <strong>EWI_DUAL_WAVE_LFO</strong> patches has its own independent
+    waveform selection for the left and right oscillator banks, plus a noise volume control.
+    All three patches otherwise share the LFO depth and speed sliders above.
+  </p>
+  <table>
+    <tr><th>Control</th><th>Options</th><th>What it does</th></tr>
+    <tr><td>Noise Volume (0–100)</td><td>0 – 100</td><td>Mixes white noise into the oscillator signal. Adds breath and air to the tone. 0 = no noise.</td></tr>
+    <tr><td>Left Waveform</td><td>SAW · SINE · SQUARE 50% · SQUARE 75% · TRIANGLE</td><td>Oscillator waveform for all left-side voices in this patch.</td></tr>
+    <tr><td>Right Waveform</td><td>SAW · SINE · SQUARE 50% · SQUARE 75% · TRIANGLE</td><td>Oscillator waveform for all right-side voices in this patch.</td></tr>
+  </table>
+  <div class="info">
+    <strong>Square modes and key-tracking</strong>
+    The SQUARE 50% and SQUARE 75% waveforms use key-tracking and velocity-sensitive
+    pulse-width modulation — the duty cycle shifts with pitch and how hard you play.
+    This gives a more expressive, analogue-like character compared with a fixed waveform.
+  </div>
+
+  <h2>SQUARE_SAW_LFO2 Settings (Patch 54)</h2>
+  <p>
+    Patch 54 is a polyphonic version of the EWI_DUAL_WAVE_LFO patches — it uses the ADSR
+    envelope and polyphonic voice allocation (not breath/legato), but with the same
+    selectable waveforms. It also has its own <strong>Noise Volume</strong> control.
+    The LFO speed and depth sliders above apply equally to patch 54.
+  </p>
+
+  <hr class="section-break">
+
+  <h1>10 · Patches Tab</h1>
+  <p>
+    The Patches tab shows every available sound as a checkbox list. Ticking a patch
+    <strong>enables</strong> it in the patch rotation — the encoder on the Daisy Pod
+    steps through only the enabled patches. Unticking hides a patch from rotation
+    without deleting its settings.
+  </p>
+  <ul>
+    <li><strong>Select All Patches</strong> — enable every patch at once.</li>
+    <li><strong>Unselect All Patches</strong> — disable every patch (useful to then tick only the few you want for a performance set).</li>
+  </ul>
+  <div class="tip">
+    <strong>Performance tip</strong>
+    Narrow your set to 4–6 patches before a gig. The encoder then cycles only those
+    sounds. Write to Device to lock this in, and the Daisy remembers the selection
+    across power cycles.
+  </div>
+  <p>
+    Patches marked <em>RESERVED</em> in the list are disabled internally and cannot be
+    activated — their checkboxes are hidden.
+  </p>
+</div>
+
+<!-- ══ PATCH REFERENCE ═══════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>11 · Patch Reference</h1>
+  <p>The Waylinator has 55 patch slots. Active patches (those not marked RESERVED) are listed below grouped by type. All patches run through the shared chorus and 3-tap LCR delay effects; the on-hardware knobs control chorus depth/rate (Knob 1) and delay wet level (Knob 2) unless noted.</p>
+
+  <h2>Basic Polyphonic Oscillator Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>0 · DUAL_SQUARE</td><td>Square wave on both left and right sides. Classic, bright polyphonic organ/synth tone.</td></tr>
+    <tr><td>3 · SQUARE_SAW</td><td>Square wave left, Sawtooth right. Adds brightness and harmonic richness to the left/right blend.</td></tr>
+    <tr><td>21 · DUAL_SQUARE_CHRS_DLY</td><td>Dual square with chorus and panned delays. Knob 1 controls chorus depth and rate simultaneously; Knob 2 controls delay wet.</td></tr>
+    <tr><td>30 · DUAL_SQUARE_QUARTIC</td><td>Dual square with a quartic amplitude curve and left-side pitch LFO. Knob 1 = LFO depth/rate; Knob 2 = delay wet.</td></tr>
+    <tr><td>31 · SQUARE_SAW_QUARTIC</td><td>Square/Saw combination with quartic envelope and left-side pitch LFO.</td></tr>
+    <tr><td>35 · DUAL_SQUARE_FIXED_PULSE</td><td>Square wave left, fixed pulse-width square right. Hybrid tone with a harder edge on the right side.</td></tr>
+  </table>
+
+  <h2>Fixed Pulse-Width / Analogue-Style Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>32 · FIXED_PULSE_SQUARE</td><td>Fixed 50% pulse wave (no LFO). Pure square, no chorusing on the oscillator itself.</td></tr>
+    <tr><td>33 · FIXED_PULSE_SAW</td><td>Fixed pulse-width sawtooth — a raw, buzzy saw tone.</td></tr>
+    <tr><td>34 · FIXED_PULSE_PARABOLA</td><td>Parabolic waveform oscillator. Rounder and softer than square or saw.</td></tr>
+    <tr><td>36 · ANALOG_A1</td><td>Analogue-style oscillator model A1 — custom waveform with analogue character.</td></tr>
+    <tr><td>37 · ANALOG_A2</td><td>Analogue-style oscillator model A2 — a variation of A1 with a different harmonic profile.</td></tr>
+  </table>
+
+  <h2>Chord / Harmony Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>8 · MIDIROTATOR</td><td>Each note played triggers a rotating set of MIDI transpositions. The sequence of intervals cycles with each new note-on. Configure via the MIDIROTATOR field in Rotator Chords.</td></tr>
+    <tr><td>9 · CHORDROTATOR</td><td>Similar to MIDIROTATOR but uses the CHORDROTATOR interval sequence.</td></tr>
+    <tr><td>10 · CDG_ROTATOR</td><td>Rotator using the CDG interval pattern — creates a repeating C–D–G flavour chord cycle.</td></tr>
+    <tr><td>11 · EFC_ROTATOR</td><td>Rotator using the EFC interval pattern.</td></tr>
+    <tr><td>12 · CHORD_SEQUENCER</td><td>Plays pre-programmed harmonic sequences. Notes C2–A#2 (MIDI 36–46) silently set a transposition offset (C2 = −5 st, each semitone up adds +1). Notes at C1 and below trigger different lick patterns.</td></tr>
+    <tr><td>13 · DIATONIC_CHORDS</td><td>Automatically voices diatonic triads. Notes C2–B2 (MIDI 36–47) select the root key silently; notes from C5 up trigger the chord at that scale degree. Configure root/octave offsets in the Diatonic fields.</td></tr>
+    <tr><td>14 · DIATONIC_FOURTHS</td><td>Variation of DIATONIC_CHORDS voiced in fourths. Keys C2–B2 select the root silently; notes from C5 up trigger the voicing.</td></tr>
+    <tr><td>15 · FIFTH_UP</td><td>Plays the triggered note plus a fifth above. Keys C2–B2 (MIDI 36–47) silently set the root note (C2 → root C4, B2 → root B4); notes above trigger the fifth-interval chord from that root. PHR effect sound.</td></tr>
+    <tr><td>16 · FIFTH_UP_FOURTH_DOWN</td><td>Plays a G–C–F voicing (fifth up, fourth down) for each note. Keys C2–B2 select the root silently, same as FIFTH_UP.</td></tr>
+    <tr><td>17 · PITCH_BEND_CHORDS</td><td>Chords that respond to pitch bend on the most recently played note only.</td></tr>
+    <tr><td>18 · SELECTIVE_PITCH_BEND_2NOTES</td><td>Like PITCH_BEND_CHORDS but the pitch bend affects the last two notes played.</td></tr>
+    <tr><td>43–47 · CHORD_SCALE1–5</td><td>User-definable chromatic chord scales — see the Chord Editor section.</td></tr>
+  </table>
+
+  <h2>Transposition / Remapping Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>5 · WAYLO_TRANS</td><td>Remaps incoming MIDI notes using a custom chromatic transposition table. Square/Saw oscillators.</td></tr>
+    <tr><td>6 · ZAWINUL</td><td>Note remapping inspired by Joe Zawinul's keyboard layouts.</td></tr>
+    <tr><td>7 · SAMCHILI</td><td>Alternative note remapping — Square/Saw oscillators.</td></tr>
+  </table>
+
+  <h2>FM / Synthesis Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>19 · SINE_FM_PIANO</td><td>Sine-wave FM piano synthesis. Knob 1 sets chorus + delay, Mod wheel controls FM feedback and filter cutoff.</td></tr>
+    <tr><td>20 · SINE_FM_PIANO_ADJ</td><td>FM piano with adjustable attack time. Button 1 shortens attack; Button 2 lengthens it (up to 50 ms).</td></tr>
+    <tr><td>24 · WAYLO_FM</td><td>FM synthesis variation with chorus and delay. Knob 1 = chorus; Knob 2 = delay wet.</td></tr>
+  </table>
+
+  <h2>Crossfade / LFO Modulation Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>25 · WAYLO_XFADE</td><td>Crossfade patch — square waves both sides with chorus and delay.</td></tr>
+    <tr><td>27 · WAYLO_XFADE2</td><td>Left-side pitch LFO only (depth and rate set by Knob 1, 0–6 Hz). Right side static. Knob 2 = delay.</td></tr>
+    <tr><td>28 · WAYLO_XFADE2_LINEAR</td><td>Variation of WAYLO_XFADE2 with a linear amplitude envelope curve.</td></tr>
+    <tr><td>29 · WAYLO_XFADE2_QUARTIC</td><td>Variation with a quartic (steep) amplitude curve — sharp attack, smooth release.</td></tr>
+  </table>
+
+  <h2>LFO Pitch-Modulation Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>49 · SQUARE_SAW_LFO</td><td>Polyphonic Square/Saw with independent left/right pitch LFOs. LFO depth and speed are set in the Parameters tab. Creates a wide stereo shimmer effect.</td></tr>
+    <tr><td>54 · SQUARE_SAW_LFO2</td><td>Polyphonic Square/Saw with selectable waveforms per side (SAW, SINE, SQUARE 50%, SQUARE 75%, TRIANGLE — same options as EWI_DUAL_WAVE_LFO) plus its own Noise Volume control. Uses ADSR envelope and polyphonic voice allocation, not breath/legato. LFO depth and speed are shared with patch 49. Configure waveform and noise in the Parameters tab under <em>SQUARE_SAW_LFO2 Settings</em>.</td></tr>
+  </table>
+
+  <h2>Audio Input Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>38 · AUDIO_INPUT_FX</td><td>Passes the audio input (Daisy Pod line input) through the chorus and delay effects. No synthesis — pure FX processor.</td></tr>
+    <tr><td>50 · GUITAR_INPUT_FX</td><td>Guitar-optimised version of AUDIO_INPUT_FX. Knob 2 = delay wet.</td></tr>
+  </table>
+
+  <h2>EWI / Breath Patches</h2>
+  <table>
+    <tr><th>ID · Name</th><th>Description</th></tr>
+    <tr><td>42 · EWI_MONO_SQUARE_SAW</td><td>Monophonic legato patch. Square left, Saw right. Breath (CC2) or channel pressure controls amplitude and filter cutoff. Phase preserved across notes for smooth legato.</td></tr>
+    <tr><td>48 · EWI_MONO_DUAL_SAW</td><td>Monophonic legato patch with Sawtooth on both sides. Otherwise identical behaviour to EWI_MONO_SQUARE_SAW.</td></tr>
+    <tr><td>51 · EWI_DUAL_WAVE_LFO</td><td>EWI monophonic legato with fully selectable waveforms per side and a noise volume control. Waveform set in Parameters tab.</td></tr>
+    <tr><td>52 · EWI_DUAL_WAVE_LFO2</td><td>Independent copy of EWI_DUAL_WAVE_LFO with its own waveform and noise settings.</td></tr>
+    <tr><td>53 · EWI_DUAL_WAVE_LFO3</td><td>Third independent EWI selectable-waveform patch.</td></tr>
+  </table>
+</div>
+
+<!-- ══ CHORD EDITOR ══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>12 · Chord Editor Tab</h1>
+  <p>
+    The five <strong>CHORD_SCALE</strong> patches (43–47) each store a table of 36 chords
+    covering three chromatic octaves (C4 through B6). When you play a note in that
+    range, the synth looks up the chord stored at that pitch and plays all its notes
+    simultaneously. Notes below the range (C3–B3) select a transposition offset;
+    notes above the range are ignored.
+  </p>
+
+  <h2>Reading the chord grid</h2>
+  <p>
+    Each card in the Chord Editor shows one scale (CHORD_SCALE1 … CHORD_SCALE5).
+    Inside the card is a 6-column grid of 36 cells. Each cell shows:
+  </p>
+  <ul>
+    <li><strong>Root label</strong> (e.g. "G4") — the MIDI note that triggers this chord.</li>
+    <li><strong>Note list</strong> (e.g. "C4, E4, G4") — the actual notes that sound when this cell's trigger note is received.</li>
+  </ul>
+  <p>Click any cell to open the <strong>piano keyboard editor</strong> and change its notes.</p>
+
+  <h2>Piano keyboard editor</h2>
+  <p>
+    A full nine-octave piano keyboard appears. Keys highlighted in green are currently active in the chord. Click any key to toggle it on or off. The chord can hold up to <strong>six notes</strong>. When done, click <strong>Save Chord</strong> to update the grid, or <strong>Cancel</strong> to discard.
+  </p>
+  <div class="warn">
+    <strong>Remember to Send to Device</strong>
+    Changes in the Chord Editor are held in memory only. You must click
+    <strong>Send to Device</strong> (the button at the top of the Chord Editor tab) to
+    transmit the new chords over USB. The device responds with a confirmation
+    in the Device Log: <code>{"chordsAck":180}</code>.
+  </div>
+
+  <h2>Chord Editor buttons</h2>
+  <table>
+    <tr><th>Button</th><th>What it does</th></tr>
+    <tr><td>Send to Device</td><td>Transmits all five chord scales (180 chords total) to the device's persistent storage. The device will use these chords immediately and remember them after power-off.</td></tr>
+    <tr><td>Read from Device</td><td>Requests the device to send back all five chord scales, populating the editor with whatever is currently stored in hardware.</td></tr>
+    <tr><td>Export CSV</td><td>Downloads a CSV file containing all 180 chords. Format: Scale, ChordIndex, ChordSize, Note1…Note6.</td></tr>
+    <tr><td>Import CSV</td><td>Loads a previously exported CSV back into the editor (does not send to device automatically).</td></tr>
+    <tr><td>MIDI→CSV</td><td>Opens the MIDI import dialog — see section 8.</td></tr>
+  </table>
+
+  <h2>Transposition control</h2>
+  <p>
+    While playing a CHORD_SCALE patch, any note <strong>below C4</strong> (MIDI &lt; 60)
+    acts as a transposition key rather than triggering a chord. The formula is
+    <code>transposition = note − 48</code>, so C3 (MIDI 48) = 0 semitones, C#3 = +1,
+    D3 = +2, and so on up to B3 = +11. Notes below C3 produce negative transpositions.
+    This lets you shift the entire chord scale up or down without editing individual chords.
+  </p>
+
+  <hr class="section-break">
+
+  <h1>13 · Importing Chords from a MIDI File</h1>
+  <p>
+    The <strong>MIDI→CSV</strong> button opens an import dialog that reads a standard MIDI
+    file and converts its note events into a chord scale — one chord per beat position,
+    up to 36 chords (six notes maximum per chord).
+  </p>
+
+  <h2>How the import works</h2>
+  <ol class="steps">
+    <li>Click <strong>MIDI→CSV</strong> in the Chord Editor tab. The import dialog opens.</li>
+    <li>Choose the <strong>Target Scale</strong> (CHORD_SCALE1 through CHORD_SCALE5) from the drop-down.</li>
+    <li>Click <strong>Choose MIDI File</strong> and select a <code>.mid</code> or <code>.midi</code> file from your computer.</li>
+    <li>The file is parsed in the browser. A preview shows how many chords were found and which notes each chord contains.</li>
+    <li>Tick <strong>Also download as CSV</strong> if you want a backup file.</li>
+    <li>Click <strong>Load into Scale</strong>. The selected chord scale is updated in the editor.</li>
+    <li>Return to the Chord Editor tab and click <strong>Send to Device</strong> to push the new scale to the hardware.</li>
+  </ol>
+
+  <h2>How chords are extracted from MIDI</h2>
+  <p>
+    The importer groups all Note-On events into time clusters using a tolerance of
+    10% of a quarter-note (so notes within a small window are treated as a single chord).
+    Each cluster is then quantised to the nearest quarter-note beat. Beats are numbered
+    from 0 and the first 36 beats become chord slots 0–35. Notes beyond six per beat
+    are discarded; slots beyond 36 are ignored.
+  </p>
+  <div class="info">
+    <strong>Best MIDI files to use</strong>
+    Chord-progression MIDI files work best — one chord per beat, clearly separated.
+    Melodic lines produce single-note "chords" which is valid but less interesting.
+    Only Note-On events with velocity &gt; 0 are collected; note-offs, CC data, and
+    tempo events are ignored. SMPTE timecode files are not supported.
+  </div>
+  <div class="tip">
+    <strong>Workflow</strong>
+    Import the MIDI, click through the chord cells to verify the notes look right,
+    adjust any chords manually in the piano editor if needed, then Send to Device.
+  </div>
+</div>
+
+<!-- ══ ROTATORS ══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>14 · Rotator Chords</h1>
+  <p>
+    The rotator patches each hold a sequence of semitone intervals. Every time you play
+    a new note, the patch reads the next interval in its sequence and offsets the
+    harmony note(s) by that amount. The sequence loops continuously.
+  </p>
+  <p>
+    Each rotator field accepts a <strong>comma-separated list of integers</strong> (positive or
+    negative semitone offsets). The first value is a static constant; values 2–5 are
+    the rotating offsets.
+  </p>
+
+  <table>
+    <tr><th>Field</th><th>Default</th><th>What it controls</th></tr>
+    <tr><td>MIDIROTATOR (m1,m2,m3,m4,m5)</td><td>7,−10,−7,−8,−2</td><td>Interval sequence for patch 8 · MIDIROTATOR. Plays the original note plus a note offset by each interval in rotation.</td></tr>
+    <tr><td>CHORDROTATOR (c0–c4)</td><td>7,3,5,4,2</td><td>Interval sequence for patch 9 · CHORDROTATOR.</td></tr>
+    <tr><td>CDG_ROTATOR (d0–d4)</td><td>7,0,2,7,12</td><td>Interval sequence for patch 10 · CDG_ROTATOR. The default produces a C–D–G flavour cycle.</td></tr>
+    <tr><td>EFC_ROTATOR (e0–e4)</td><td>7,4,5,12,−5</td><td>Interval sequence for patch 11 · EFC_ROTATOR.</td></tr>
+    <tr><td>DIATONIC Degrees (dd0–dd4)</td><td>0,5,2,3,0</td><td>Scale degree offsets used by the DIATONIC_CHORDS and DIATONIC_FOURTHS patches to voice harmony notes.</td></tr>
+    <tr><td>DIATONIC Octaves (do0–do4)</td><td>3,3,4,4,5</td><td>Octave placement for each diatonic voice.</td></tr>
+  </table>
+
+  <div class="tip">
+    <strong>Rotator Defaults button</strong>
+    Click <strong>Rotator Defaults</strong> to restore the four rotator sequences to their factory values.
+    Click <strong>Diatonic Defaults</strong> to restore only the diatonic degree and octave fields.
+    Neither button writes to the device — click <strong>Write to Device</strong> afterwards.
+  </div>
+
+  <div class="info">
+    <strong>Exact count required</strong>
+    Each field expects exactly <strong>5 comma-separated integers</strong>.
+    An incorrect count will show a validation error when you try to write to the device.
+  </div>
+
+  <hr class="section-break">
+
+  <h1>15 · Saving &amp; Restoring Settings (CSV)</h1>
+  <p>
+    The top-bar <strong>Export as CSV</strong> and <strong>Import from CSV</strong> buttons save and restore
+    a complete snapshot of <em>all</em> editor state (parameters, waveform selects, rotator
+    sequences, and patch enable/disable state) in a single CSV file. They do <em>not</em>
+    include chord scale data — use the Chord Editor's own Export/Import for that.
+  </p>
+
+  <h2>Export</h2>
+  <p>
+    Click <strong>Export as CSV</strong>. The browser downloads a file named
+    <code>waylinator-settings-YYYY-MM-DD.csv</code>. Keep this file as a preset backup.
+  </p>
+
+  <h2>Import</h2>
+  <p>
+    Click <strong>Import from CSV</strong> and select a previously exported file.
+    All parameters, rotators, waveforms, and patch states are restored in the editor.
+    Click <strong>Write to Device</strong> to send the restored values to hardware.
+  </p>
+
+  <div class="tip">
+    <strong>Preset management tip</strong>
+    Keep one CSV per performance or project. Name them meaningfully —
+    <code>gig-2025-funk.csv</code>, <code>ambient-set.csv</code> — and store them
+    alongside any chord scale CSVs for that session.
+  </div>
+</div>
+
+<!-- ══ EWI REFERENCE ═════════════════════════════════════════════════════════ -->
+<div class="page">
+  <h1>16 · EWI / Breath Controller Reference</h1>
+  <p>
+    The <strong>EWI_MONO</strong> and <strong>EWI_DUAL_WAVE_LFO</strong> patches are designed for
+    wind controllers (EWI, Akai EWI USB, Berglund NuRAD, etc.) or any controller that
+    sends breath data. They can also be played from a standard keyboard — breath
+    is optional.
+  </p>
+
+  <h2>Signal flow</h2>
+  <ol>
+    <li><strong>Note-On</strong> → sets the target pitch. Phase is preserved across notes (no click on legato transitions).</li>
+    <li><strong>CC2 (Breath) or Channel Pressure</strong> → drives both amplitude (volume) and filter cutoff simultaneously.</li>
+    <li><strong>Pitch Bend</strong> → uses EWI-specific up/down ranges (set by <em>EWI Bend Up</em> and <em>EWI Bend Down</em> parameters), not the standard ±2 semitone range.</li>
+    <li>The <strong>ADSR envelope is bypassed</strong> entirely — dynamics come purely from breath.</li>
+  </ol>
+
+  <h2>Playing without a breath controller</h2>
+  <p>
+    If no CC2 or pressure data is received, the synth assumes full breath (amplitude = 1.0)
+    so the patch still makes sound from a regular MIDI keyboard. You will lose breath
+    dynamics but the patches are fully playable.
+  </p>
+
+  <h2>Portamento / glide</h2>
+  <p>
+    The <strong>EWI Portamento (ms)</strong> parameter sets the glide time between consecutive
+    notes. At 0 ms there is no glide — pitch jumps instantly. At higher values the pitch
+    slides from the previous note to the new one over the specified time, at the audio
+    sample rate (smooth, artefact-free portamento).
+  </p>
+
+  <h2>Filter behaviour</h2>
+  <p>
+    At breath = 0 the filter cutoff sits at <strong>EWI Filter Min (Hz)</strong>.
+    At full breath it rises to <strong>EWI Filter Max (Hz)</strong>.
+    The <strong>EWI Filter Sensitivity</strong> multiplier skews this curve — values above 1.0
+    make the filter open faster for a given breath amount, values below 1.0 slow it down.
+  </p>
+
+  <h2>EWI_DUAL_WAVE_LFO patches — waveform guide</h2>
+  <table>
+    <tr><th>Waveform</th><th>Character</th></tr>
+    <tr><td>SAW (PolyBLEP Sawtooth)</td><td>Bright, buzzy, rich in harmonics. Classic synth-brass or synth-string foundation.</td></tr>
+    <tr><td>SINE</td><td>Pure, smooth, flute-like. Almost no aliasing. Combine with noise for a breathy flute sound.</td></tr>
+    <tr><td>SQUARE 50% (Traditional)</td><td>Hollow, clarinet-like. Contains only odd harmonics.</td></tr>
+    <tr><td>SQUARE 75% (Pulse)</td><td>Narrower pulse width — nasal, reedy quality. Key-tracking and velocity shift the duty cycle.</td></tr>
+    <tr><td>TRIANGLE</td><td>Softer than square, warmer than sine. Mellow lead tone.</td></tr>
+  </table>
+  <p>
+    Mix different waveforms on left and right for a wider stereo spread.
+    For example: SQUARE 75% left + SAW right creates a dense, chorused EWI-brass sound.
+  </p>
+
+  <h2>Noise volume</h2>
+  <p>
+    The <strong>Noise Volume</strong> control (0–100) in each EWI_DUAL_WAVE_LFO section mixes
+    white noise into the oscillator output before the filter. A small amount (5–15) adds
+    "breath" and air to otherwise clean waveforms — especially effective with SINE or
+    TRIANGLE for flute-like textures. Higher values create a noisy, breathy reed character.
+  </p>
+
+  <hr class="section-break">
+
+  <h1>17 · Quick-Start Workflows</h1>
+
+  <h2>First-time setup</h2>
+  <ol class="steps">
+    <li>Connect hardware. Open editor in Chrome. Click <strong>Connect</strong>.</li>
+    <li>Click <strong>Read from Device</strong> to sync the editor with current hardware state.</li>
+    <li>Go to the <strong>Patches</strong> tab. Tick only the patches you want in your set.</li>
+    <li>Click <strong>Write to Device</strong>.</li>
+    <li>Use the encoder on the Daisy Pod to step through your enabled patches.</li>
+  </ol>
+
+  <h2>Setting up a custom chord scale from MIDI</h2>
+  <ol class="steps">
+    <li>In a DAW or notation app, write a chord progression and export it as a MIDI file.</li>
+    <li>In the editor, click the <strong>Chord Editor</strong> tab, then <strong>MIDI→CSV</strong>.</li>
+    <li>Choose the target scale (e.g. CHORD_SCALE1), pick your file, check the preview.</li>
+    <li>Click <strong>Load into Scale</strong>.</li>
+    <li>Browse the chord grid, click any cell to fine-tune individual chords in the piano editor.</li>
+    <li>Click <strong>Send to Device</strong>. Watch for <code>chordsAck:180</code> in the Device Log.</li>
+    <li>Enable the CHORD_SCALE1 patch on the Patches tab and <strong>Write to Device</strong>.</li>
+    <li>Play MIDI notes C4–B6 to trigger your chords. Use C3–B3 to transpose the whole scale.</li>
+  </ol>
+
+  <h2>Dialling in an EWI sound</h2>
+  <ol class="steps">
+    <li>Enable <strong>EWI_DUAL_WAVE_LFO</strong> (patch 51) and write to device.</li>
+    <li>In the Parameters tab set <strong>Left Waveform</strong> to SQUARE 75%, <strong>Right Waveform</strong> to SAW.</li>
+    <li>Set <strong>Noise Volume</strong> to 8–12 for breath texture.</li>
+    <li>Set <strong>EWI Filter Min</strong> to 400 Hz, <strong>EWI Filter Max</strong> to 4000 Hz.</li>
+    <li>Set <strong>EWI Breath Attack</strong> to 20 ms, <strong>EWI Breath Release</strong> to 80 ms.</li>
+    <li>Click <strong>Write to Device</strong> and play with your breath controller.</li>
+    <li>Adjust <strong>EWI Filter Sensitivity</strong> and <strong>EWI Amp Sensitivity</strong> to taste.</li>
+  </ol>
+
+  <h2>Saving a performance preset</h2>
+  <ol class="steps">
+    <li>With all settings how you want them, click <strong>Export as CSV</strong> → saves parameters + patch state.</li>
+    <li>In the Chord Editor, click <strong>Export CSV</strong> → saves chord scale data separately.</li>
+    <li>Store both files together. To recall: Import CSV (parameters), then Import CSV in the Chord Editor, then Write to Device + Send to Device.</li>
+  </ol>
+
+  <p style="margin-top:40px; text-align:center; color:#aaa; font-size:11px;">
+    Waylinator Editor · End User Guide · Generated from editor.html and Midi.cpp
+  </p>
+</div>
+
+</body>
+</html>
