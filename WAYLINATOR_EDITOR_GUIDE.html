@@ -219,9 +219,9 @@
     <li>Plug the Daisy Pod into your computer with USB. Power it on.</li>
     <li>Open <code>editor.html</code> in Chrome or Edge.</li>
     <li>Click <strong>Connect</strong> at the top of the page. A browser dialog will appear listing available serial ports — select your Daisy Pod (typically labelled "USB Serial Device" or similar).</li>
-    <li>The button label changes to <strong>Disconnect</strong> and a green dot appears. The editor is now live.</li>
-    <li>Click <strong>Read from Device</strong> to pull the current settings, patch state, and rotator values from the hardware into the editor.</li>
-    <li>After making changes, click <strong>Write to Device</strong> to push everything back. The device acknowledges by echoing its state — you will see the values appear in the Device Log at the bottom of the page.</li>
+    <li>The button label changes to <strong>Disconnect</strong> and a green dot appears. The editor automatically reads the current device state — you will see the values appear in the Device Log within a second.</li>
+    <li>Wait for the status bar to say <strong>Device state loaded. Ready to edit and write.</strong> before making any changes. Do not click Write to Device before this message appears.</li>
+    <li>After making changes, click <strong>Write to Device</strong> to push everything back. The device acknowledges by echoing its state in the Device Log.</li>
   </ol>
 
   <div class="info">
@@ -1008,7 +1008,7 @@
   <h2>First-time setup</h2>
   <ol class="steps">
     <li>Connect hardware. Open editor in Chrome. Click <strong>Connect</strong>.</li>
-    <li>Click <strong>Read from Device</strong> to sync the editor with current hardware state.</li>
+    <li>Wait for the status bar to say <strong>Device state loaded</strong> — the editor reads from the device automatically on connect.</li>
     <li>Go to the <strong>Patches</strong> tab. Tick only the patches you want in your set.</li>
     <li>Click <strong>Write to Device</strong>.</li>
     <li>Use the encoder on the Daisy Pod to step through your enabled patches.</li>
