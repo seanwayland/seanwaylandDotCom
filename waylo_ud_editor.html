@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WayloUD Delay Pod Editor</title>
+  <style>
+    :root {
+      --bg: #0f1720;
+      --panel: #162431;
+      --panel-soft: #1b3040;
+      --ink: #e7f4ff;
+      --muted: #9fc0d6;
+      --accent: #f6ad55;
+      --accent-2: #34d399;
+      --danger: #f87171;
+      --line: #2c465b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 600px at -5% -10%, #254a63 0%, transparent 55%),
+        radial-gradient(900px 500px at 110% 0%, #304e34 0%, transparent 60%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+      min-height: 100vh;
+      padding: 26px;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 2.8vw, 2.6rem);
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-soft));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+    }
+
+    .status {
+      font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+      color: var(--muted);
+      font-size: 0.85rem;
+      min-height: 1.2rem;
+    }
+
+    button, select, input[type="number"] {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #10202d;
+      color: var(--ink);
+      padding: 10px 12px;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #2f546e, #204159);
+      transition: transform 0.08s ease, border-color 0.12s ease;
+    }
+
+    button:hover { border-color: #4f7997; }
+    button:active { transform: translateY(1px); }
+
+    .danger { background: linear-gradient(180deg, #6c2e2e, #552525); border-color: #864646; }
+    .accent { background: linear-gradient(180deg, #7a5224, #5d3e1b); border-color: #8e6534; }
+    .success { background: linear-gradient(180deg, #2a5a45, #214936); border-color: #3f7f63; }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 12px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .group-title {
+      margin: 2px 0 10px;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    .param-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 210px 1fr 82px 74px;
+      gap: 10px;
+      align-items: center;
+      background: rgba(12, 22, 30, 0.35);
+      border: 1px solid rgba(83, 115, 138, 0.25);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .row label {
+      color: #d6ecff;
+      font-size: 0.95rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-2);
+    }
+
+    .tiny {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .patch-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .patch-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(12, 22, 30, 0.35);
+      border: 1px solid rgba(83, 115, 138, 0.25);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+    }
+
+    .patch-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent-2);
+    }
+
+    @media (max-width: 900px) {
+      body { padding: 14px; }
+      .top-grid { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>WayloUD Delay Pod Editor</h1>
+    <p class="subtitle">8 modulated delay lines, 32 factory patches, 5 user patches.</p>
+
+    <div class="panel">
+      <div class="toolbar">
+        <button id="connectBtn" class="success">Connect</button>
+        <button id="readBtn">Read Device</button>
+        <button id="writeBtn" class="accent">Write Current</button>
+        <button id="saveUserBtn">Save To User Slot</button>
+        <button id="loadUserBtn">Load User Slot</button>
+        <button id="exportBtn">Export Backup</button>
+        <button id="importBtn">Import Backup</button>
+        <button id="factoryBtn" class="danger">Factory Reset</button>
+      </div>
+      <div class="status" id="status">Not connected.</div>
+    </div>
+
+    <div class="panel">
+      <div class="top-grid">
+        <div>
+          <label for="presetSelect">Preset</label>
+          <select id="presetSelect" style="width:100%"></select>
+          <div class="tiny">Encoder on hardware scrolls this same list.</div>
+        </div>
+        <div>
+          <label for="userSlotSelect">User Slot</label>
+          <select id="userSlotSelect" style="width:100%"></select>
+        </div>
+        <div class="meta">
+          <label><input type="checkbox" id="bypassChk" /> Bypass</label>
+        </div>
+      </div>
+      <div class="tiny">Hardware mapping: Knob1 = More Beer + Zarabeth together (global depth &amp; rate macro, center detent = preset value), Knob2 = Wet level only (dry is set here in the editor / stored in the preset and never touched by hardware), Left button = trim delay time &amp; feedback down, Right button = trim delay time &amp; feedback up (both around the preset's own value), Encoder short-press = cycle input mode, Encoder long-press = save to user.</div>
+    </div>
+
+    <div class="panel">
+      <h2 class="group-title">Patches</h2>
+      <div class="tiny">Uncheck a patch to skip it when scrolling presets with the hardware encoder. Disabled patches are still reachable from the Preset dropdown above or via MIDI program change.</div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button id="patchesAllBtn">Select All</button>
+        <button id="patchesNoneBtn">Select None</button>
+        <button id="patchesSendBtn" class="accent">Send Patch List</button>
+      </div>
+      <div class="patch-list" id="patchList"></div>
+    </div>
+
+    <div class="panel">
+      <h2 class="group-title">Core Mix</h2>
+      <div id="group-core" class="param-grid"></div>
+    </div>
+
+    <div class="panel">
+      <h2 class="group-title">Delay Times</h2>
+      <div id="group-time" class="param-grid"></div>
+    </div>
+
+    <div class="panel">
+      <h2 class="group-title">Delay Gains</h2>
+      <div id="group-gain" class="param-grid"></div>
+    </div>
+
+    <div class="panel">
+      <h2 class="group-title">Mod Depth And Rate</h2>
+      <div id="group-mod" class="param-grid"></div>
+    </div>
+
+    <div class="panel">
+      <h2 class="group-title">Feedback And Pan</h2>
+      <div id="group-fbpan" class="param-grid"></div>
+    </div>
+  </div>
+
+  <input type="file" id="importFile" accept="application/json" style="display:none" />
+
+  <script>
+    const PARAMS = [
+      { id: 0, name: "Dry", max: 1, group: "core" },
+      { id: 41, name: "Wet", max: 1, group: "core" },
+      { id: 42, name: "Global Rate", max: 5, group: "core" },
+      { id: 43, name: "Global Depth", max: 5, group: "core" },
+
+      ...Array.from({ length: 8 }, (_, i) => ({ id: 1 + i, name: `Delay ${i + 1} Time`, max: 1, group: "time" })),
+      ...Array.from({ length: 8 }, (_, i) => ({ id: 9 + i, name: `Delay ${i + 1} Gain`, max: 1, group: "gain" })),
+      ...Array.from({ length: 8 }, (_, i) => ({ id: 17 + i, name: `Delay ${i + 1} Mod Depth`, max: 1, group: "mod" })),
+      ...Array.from({ length: 8 }, (_, i) => ({ id: 25 + i, name: `Delay ${i + 1} Mod Rate`, max: 1, group: "mod" })),
+      ...Array.from({ length: 8 }, (_, i) => ({ id: 33 + i, name: `Delay ${i + 1} Feedback`, max: 0.98, group: "fbpan" })),
+      ...Array.from({ length: 8 }, (_, i) => ({ id: 44 + i, name: `Delay ${i + 1} Pan`, max: 1, group: "fbpan" })),
+    ];
+
+    const PARAM_BY_ID = new Map(PARAMS.map(p => [p.id, p]));
+
+    const FACTORY_PRESET_NAMES = [
+      "",
+      "011 legend chorus 1",
+      "012 legend chorus 2",
+      "013 legend chorus 3",
+      "021 legend chorus 4",
+      "022 legend chorus 5",
+      "023 legend chorus 6",
+      "031 legend chorus 7",
+      "032 legend chorus 8",
+      "033 legend chorus 9",
+      "111 legend chorus 10",
+      "112 legend chorus 11",
+      "113 legend chorus 12",
+      "121 legend lead solo 1",
+      "122 legend lead solo 2",
+      "123 legend lead solo 3",
+      "131 legend lead solo 4",
+      "132 legend lead solo 5",
+      "133 legend lead solo 6",
+      "211 legend lead solo 7",
+      "212 legend lead solo 8",
+      "213 legend lead solo 9",
+      "221 legend swell FX 1",
+      "222 legend swell FX 2",
+      "223 legend point source plus echos",
+      "231 legend echo 1 ",
+      "232 legend echo 2",
+      "233 legend echo 3",
+      "Waylochorus 1",
+      "Waylolead 1",
+      "",
+      "",
+    ];
+
+    const TOTAL_PRESET_COUNT = 37;
+
+    const state = {
+      port: null,
+      reader: null,
+      writer: null,
+      queue: [],
+      connected: false,
+      preset: 0,
+      bypass: 0,
+      params: new Array(52).fill(0),
+      user: Array.from({ length: 5 }, () => new Array(52).fill(0)),
+      enabled: new Array(TOTAL_PRESET_COUNT).fill(true),
+    };
+
+    const statusEl = document.getElementById("status");
+    const presetSelect = document.getElementById("presetSelect");
+    const userSlotSelect = document.getElementById("userSlotSelect");
+    const bypassChk = document.getElementById("bypassChk");
+    const patchListEl = document.getElementById("patchList");
+
+    function getAllPresetNames() {
+      const names = [];
+      for (let i = 0; i < 32; i++) {
+        const name = FACTORY_PRESET_NAMES[i] || "";
+        names.push(name.length > 0 ? name : `EMPTY ${String(i).padStart(2, "0")}`);
+      }
+      for (let i = 0; i < 5; i++) {
+        names.push(`User ${String(i + 1).padStart(2, "0")}`);
+      }
+      return names;
+    }
+
+    function logStatus(msg) {
+      statusEl.textContent = msg;
+    }
+
+    function populatePresetSelect() {
+      presetSelect.innerHTML = "";
+      getAllPresetNames().forEach((name, i) => {
+        const o = document.createElement("option");
+        o.value = String(i);
+        o.textContent = name;
+        presetSelect.appendChild(o);
+      });
+
+      userSlotSelect.innerHTML = "";
+      for (let i = 0; i < 5; i++) {
+        const o = document.createElement("option");
+        o.value = String(i);
+        o.textContent = `User ${i + 1}`;
+        userSlotSelect.appendChild(o);
+      }
+    }
+
+    function renderPatchList() {
+      patchListEl.innerHTML = "";
+      getAllPresetNames().forEach((name, i) => {
+        const row = document.createElement("div");
+        row.className = "patch-row";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!state.enabled[i];
+        cb.addEventListener("change", () => { state.enabled[i] = cb.checked; });
+
+        const label = document.createElement("label");
+        label.textContent = `${i}: ${name}`;
+
+        row.appendChild(cb);
+        row.appendChild(label);
+        patchListEl.appendChild(row);
+      });
+    }
+
+    function toScaled(v, max) {
+      const n = Math.max(0, Math.min(1, v / max));
+      return Math.round(n * 65535);
+    }
+
+    function fromScaled(v, max) {
+      return (v / 65535) * max;
+    }
+
+    function renderParams() {
+      const groups = {
+        core: document.getElementById("group-core"),
+        time: document.getElementById("group-time"),
+        gain: document.getElementById("group-gain"),
+        mod: document.getElementById("group-mod"),
+        fbpan: document.getElementById("group-fbpan"),
+      };
+
+      Object.values(groups).forEach(el => (el.innerHTML = ""));
+
+      PARAMS.forEach(p => {
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const lab = document.createElement("label");
+        lab.textContent = p.name;
+
+        const range = document.createElement("input");
+        range.type = "range";
+        range.min = "0";
+        range.max = String(p.max);
+        range.step = p.max <= 1 ? "0.001" : "0.01";
+        range.value = String(state.params[p.id] || 0);
+
+        const num = document.createElement("input");
+        num.type = "number";
+        num.min = "0";
+        num.max = String(p.max);
+        num.step = p.max <= 1 ? "0.001" : "0.01";
+        num.value = String(Number(range.value).toFixed(3));
+
+        const val = document.createElement("div");
+        val.className = "tiny";
+        val.textContent = Number(range.value).toFixed(3);
+
+        const sync = (v) => {
+          const clamped = Math.max(0, Math.min(p.max, Number(v)));
+          state.params[p.id] = clamped;
+          range.value = String(clamped);
+          num.value = clamped.toFixed(3);
+          val.textContent = clamped.toFixed(3);
+        };
+
+        range.addEventListener("input", () => { sync(range.value); scheduleLiveEdit(); });
+        range.addEventListener("change", () => { sync(range.value); commitParams(); });
+        num.addEventListener("change", () => { sync(num.value); commitParams(); });
+
+        row.appendChild(lab);
+        row.appendChild(range);
+        row.appendChild(num);
+        row.appendChild(val);
+
+        groups[p.group].appendChild(row);
+      });
+    }
+
+    function encodeCurrentParams() {
+      const scaled = new Array(52).fill(0);
+      for (let i = 0; i < 52; i++) {
+        const def = PARAM_BY_ID.get(i) || { max: 1 };
+        scaled[i] = toScaled(state.params[i] || 0, def.max);
+      }
+      return scaled;
+    }
+
+    function decodeParams(encoded) {
+      const out = new Array(52).fill(0);
+      for (let i = 0; i < 52; i++) {
+        const def = PARAM_BY_ID.get(i) || { max: 1 };
+        out[i] = fromScaled(encoded[i] || 0, def.max);
+      }
+      return out;
+    }
+
+    async function readLoop() {
+      const decoder = new TextDecoder();
+      while (state.connected && state.port?.readable) {
+        try {
+          const reader = state.port.readable.getReader();
+          state.reader = reader;
+          let chunk = "";
+          while (state.connected) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            chunk += decoder.decode(value, { stream: true });
+            let idx;
+            while ((idx = chunk.indexOf("\n")) >= 0) {
+              const line = chunk.slice(0, idx).trim();
+              chunk = chunk.slice(idx + 1);
+              if (line) state.queue.push(line);
+            }
+          }
+          reader.releaseLock();
+        } catch {
+          break;
+        }
+      }
+    }
+
+    async function nextLine(timeoutMs = 2000) {
+      const start = performance.now();
+      while (performance.now() - start < timeoutMs) {
+        if (state.queue.length > 0) return state.queue.shift();
+        await new Promise(r => setTimeout(r, 20));
+      }
+      throw new Error("Timed out waiting for device response");
+    }
+
+    async function sendRaw(text, expectReply = true) {
+      if (!state.writer) throw new Error("Not connected");
+      await state.writer.write(new TextEncoder().encode(text + "\n"));
+      if (!expectReply) return null;
+      const line = await nextLine();
+      return JSON.parse(line);
+    }
+
+    async function sendJson(obj, expectReply = true) {
+      return sendRaw(JSON.stringify(obj), expectReply);
+    }
+
+    async function openPort(port) {
+      await port.open({ baudRate: 115200 });
+      state.port = port;
+      state.writer = state.port.writable.getWriter();
+      state.connected = true;
+      state.queue = [];
+      readLoop();
+      logStatus("Connected. Reading state...");
+      await readDevice();
+    }
+
+    async function connect() {
+      if (!("serial" in navigator)) {
+        throw new Error("Web Serial is not available in this browser.");
+      }
+
+      // Reuse previously granted ports first; this avoids chooser issues and
+      // makes reconnect one-click when permission already exists.
+      const knownPorts = await navigator.serial.getPorts();
+      if (knownPorts.length > 0) {
+        let lastErr = null;
+        for (const p of knownPorts) {
+          try {
+            await openPort(p);
+            return;
+          } catch (err) {
+            lastErr = err;
+          }
+        }
+        if (lastErr) {
+          throw lastErr;
+        }
+      }
+
+      const requested = await navigator.serial.requestPort();
+      await openPort(requested);
+    }
+
+    function formatConnectError(e) {
+      const msg = String(e?.message || e || "Unknown error");
+      if (e?.name === "NotFoundError" || msg.includes("No port selected by the user")) {
+        return "No serial port was selected. If Daisy is missing from the chooser, ensure firmware is running (not DFU): unplug/replug or press RESET once, then reconnect and retry.";
+      }
+      if (msg.includes("Failed to open") || msg.includes("The port is already open") || msg.includes("NetworkError")) {
+        return "Serial port is busy (likely open in another tab/app). Close other Daisy editor tabs/apps, unplug/replug if needed, then retry Connect.";
+      }
+      return msg;
+    }
+
+    async function readDevice() {
+      const data = await sendJson({ cmd: "read" }, true);
+      applyDeviceState(data);
+      logStatus(`Preset ${state.preset + 1} loaded.`);
+    }
+
+    function applyDeviceState(data) {
+      state.preset = Number(data.preset || 0);
+      state.bypass = Number(data.bypass || 0);
+      state.params = decodeParams(data.params || []);
+      if (Array.isArray(data.user)) {
+        state.user = data.user.map(arr => arr.slice(0, 52));
+      }
+      if (typeof data.enabled === "string" && data.enabled.length > 0) {
+        state.enabled = state.enabled.map((prev, i) => (i < data.enabled.length ? data.enabled[i] === "1" : prev));
+      }
+      presetSelect.value = String(state.preset);
+      bypassChk.checked = !!state.bypass;
+      renderParams();
+      renderPatchList();
+    }
+
+    let liveEditTimer = null;
+    const LIVE_EDIT_DEBOUNCE_MS = 60;
+
+    function scheduleLiveEdit() {
+      if (!state.connected) return;
+      if (liveEditTimer) clearTimeout(liveEditTimer);
+      liveEditTimer = setTimeout(() => {
+        liveEditTimer = null;
+        sendJson({ cmd: "set", persist: 0, params: encodeCurrentParams() }, false).catch(() => {});
+      }, LIVE_EDIT_DEBOUNCE_MS);
+    }
+
+    async function commitParams() {
+      if (!state.connected) return;
+      if (liveEditTimer) { clearTimeout(liveEditTimer); liveEditTimer = null; }
+      try {
+        const data = await sendJson({ cmd: "set", params: encodeCurrentParams() }, true);
+        state.preset = Number(data.preset ?? state.preset);
+        state.bypass = Number(data.bypass ?? state.bypass);
+        if (Array.isArray(data.user)) state.user = data.user.map(arr => arr.slice(0, 52));
+      } catch (e) {
+        logStatus(`Live write failed: ${e.message}`);
+      }
+    }
+
+    async function writeCurrent() {
+      const payload = {
+        cmd: "set",
+        preset: Number(presetSelect.value),
+        bypass: bypassChk.checked ? 1 : 0,
+        params: encodeCurrentParams(),
+      };
+      const data = await sendJson(payload, true);
+      applyDeviceState(data);
+      logStatus("Wrote current state to device.");
+    }
+
+    async function saveUser() {
+      const slot = Number(userSlotSelect.value);
+      await writeCurrent();
+      const data = await sendJson({ cmd: "saveUser", slot }, true);
+      applyDeviceState(data);
+      logStatus(`Saved to user slot ${slot + 1}.`);
+    }
+
+    async function loadUser() {
+      const slot = Number(userSlotSelect.value);
+      const data = await sendJson({ cmd: "loadUser", slot }, true);
+      applyDeviceState(data);
+      logStatus(`Loaded user slot ${slot + 1}.`);
+    }
+
+    function exportBackup() {
+      const backup = {
+        preset: Number(presetSelect.value),
+        bypass: bypassChk.checked ? 1 : 0,
+        params: encodeCurrentParams(),
+        user: state.user,
+        exportedAt: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "wayloud_delay_backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      logStatus("Backup exported.");
+    }
+
+    async function importBackup(file) {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!Array.isArray(data.params) || data.params.length !== 52) {
+        throw new Error("Backup file missing 52 params.");
+      }
+      state.params = decodeParams(data.params);
+      if (Array.isArray(data.user) && data.user.length === 5) {
+        state.user = data.user;
+      }
+      bypassChk.checked = !!data.bypass;
+      presetSelect.value = String(Math.max(0, Math.min(36, Number(data.preset || 0))));
+      renderParams();
+      logStatus("Backup loaded in editor. Click Write Current to push to hardware.");
+    }
+
+    document.getElementById("connectBtn").addEventListener("click", async () => {
+      try {
+        await connect();
+      } catch (e) {
+        logStatus(`Connect failed: ${formatConnectError(e)}`);
+      }
+    });
+
+    document.getElementById("readBtn").addEventListener("click", async () => {
+      try {
+        await readDevice();
+      } catch (e) {
+        logStatus(`Read failed: ${e.message}`);
+      }
+    });
+
+    document.getElementById("writeBtn").addEventListener("click", async () => {
+      try {
+        await writeCurrent();
+      } catch (e) {
+        logStatus(`Write failed: ${e.message}`);
+      }
+    });
+
+    document.getElementById("saveUserBtn").addEventListener("click", async () => {
+      try {
+        await saveUser();
+      } catch (e) {
+        logStatus(`Save user failed: ${e.message}`);
+      }
+    });
+
+    document.getElementById("loadUserBtn").addEventListener("click", async () => {
+      try {
+        await loadUser();
+      } catch (e) {
+        logStatus(`Load user failed: ${e.message}`);
+      }
+    });
+
+    document.getElementById("factoryBtn").addEventListener("click", async () => {
+      try {
+        const data = await sendJson({ cmd: "factoryReset" }, true);
+        applyDeviceState(data);
+        logStatus("Factory reset complete.");
+      } catch (e) {
+        logStatus(`Factory reset failed: ${e.message}`);
+      }
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", exportBackup);
+    document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+
+    document.getElementById("importFile").addEventListener("change", async (ev) => {
+      const file = ev.target.files?.[0];
+      if (!file) return;
+      try {
+        await importBackup(file);
+      } catch (e) {
+        logStatus(`Import failed: ${e.message}`);
+      }
+      ev.target.value = "";
+    });
+
+    presetSelect.addEventListener("change", async () => {
+      try {
+        const data = await sendJson({ cmd: "set", preset: Number(presetSelect.value) }, true);
+        applyDeviceState(data);
+        logStatus(`Switched preset to ${Number(presetSelect.value) + 1}.`);
+      } catch (e) {
+        logStatus(`Preset switch failed: ${e.message}`);
+      }
+    });
+
+    bypassChk.addEventListener("change", async () => {
+      try {
+        const data = await sendJson({ cmd: "set", bypass: bypassChk.checked ? 1 : 0 }, true);
+        applyDeviceState(data);
+      } catch (e) {
+        logStatus(`Bypass update failed: ${e.message}`);
+      }
+    });
+
+    document.getElementById("patchesAllBtn").addEventListener("click", () => {
+      state.enabled = state.enabled.map(() => true);
+      renderPatchList();
+    });
+
+    document.getElementById("patchesNoneBtn").addEventListener("click", () => {
+      state.enabled = state.enabled.map(() => false);
+      renderPatchList();
+    });
+
+    document.getElementById("patchesSendBtn").addEventListener("click", async () => {
+      try {
+        const bits = state.enabled.map(e => (e ? "1" : "0")).join("");
+        const data = await sendRaw(`p:${bits}`, true);
+        applyDeviceState(data);
+        logStatus("Patch list sent to device.");
+      } catch (e) {
+        logStatus(`Send patch list failed: ${e.message}`);
+      }
+    });
+
+    populatePresetSelect();
+    renderParams();
+    renderPatchList();
+  </script>
+</body>
+</html>
