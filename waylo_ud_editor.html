@@ -170,6 +170,50 @@
       accent-color: var(--accent-2);
     }
 
+    /* Import list rows (label + slot dropdown + button) need more horizontal
+       room than the compact checkbox rows above, so they get their own
+       single-column stack instead of the auto-fill grid. */
+    .import-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .import-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(12, 22, 30, 0.35);
+      border: 1px solid rgba(83, 115, 138, 0.25);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+    }
+
+    .import-row label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .import-row select {
+      flex: 0 0 auto;
+      width: 110px;
+    }
+
+    .import-row button {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 700px) {
+      .import-row { flex-wrap: wrap; }
+      .import-row label { flex-basis: 100%; white-space: normal; }
+    }
+
     @media (max-width: 900px) {
       body { padding: 14px; }
       .top-grid { grid-template-columns: 1fr; }
@@ -180,7 +224,7 @@
 <body>
   <div class="wrap">
     <h1>WayloUD Delay Pod Editor</h1>
-    <p class="subtitle">8 modulated delay lines, 32 factory patches, 5 user patches.</p>
+    <p class="subtitle">8 modulated delay lines, 32 factory patches, 99 user patches.</p>
 
     <div class="panel">
       <div class="toolbar">
@@ -223,6 +267,26 @@
         <button id="patchesSendBtn" class="accent">Send Patch List</button>
       </div>
       <div class="patch-list" id="patchList"></div>
+    </div>
+
+    <div class="panel">
+      <h2 class="group-title">Import Magicstomp Patch</h2>
+      <div class="tiny">
+        Load a Yamaha Magicstomp library file (.ub9, 99 patches). Accepted types:
+        <strong>EightBandParallelDelay</strong> (primary &mdash; its 8 independent delay bands map
+        almost 1:1 onto WayloUD's 8 voices, each with its own time/feedback/pan/level/LFO) and
+        <strong>ModDelay</strong> (a single mono delay+LFO, mapped onto Voice 1 with Voices 2-8 silenced).
+        Everything else &mdash; reverb, pitch-shift, phaser, distortion/amp, acoustic-multi, etc. &mdash;
+        has no equivalent in WayloUD's engine and won't show up here. Patches not matching an accepted
+        type are simply not listed/converted.
+      </div>
+      <div class="toolbar" style="margin-top:10px;">
+        <input type="file" id="ub9FileInput" accept=".ub9" style="display:none" />
+        <button id="ub9ChooseBtn">Choose .ub9 File</button>
+        <button id="ub9SaveAllBtn" class="accent" disabled>Save All to Selected Slots</button>
+        <span class="tiny" id="ub9FileName" style="align-self:center;">No file loaded.</span>
+      </div>
+      <div id="ub9PatchList" class="import-list"></div>
     </div>
 
     <div class="panel">
@@ -305,7 +369,9 @@
       "",
     ];
 
-    const TOTAL_PRESET_COUNT = 37;
+    const FACTORY_PRESET_COUNT = 32;
+    const USER_PRESET_COUNT = 99; // matches a Magicstomp .ub9 library's 99-patch capacity
+    const TOTAL_PRESET_COUNT = FACTORY_PRESET_COUNT + USER_PRESET_COUNT;
 
     const state = {
       port: null,
@@ -316,7 +382,8 @@
       preset: 0,
       bypass: 0,
       params: new Array(52).fill(0),
-      user: Array.from({ length: 5 }, () => new Array(52).fill(0)),
+      user: Array.from({ length: USER_PRESET_COUNT }, () => new Array(52).fill(0)),
+      userNames: new Array(USER_PRESET_COUNT).fill(""),
       enabled: new Array(TOTAL_PRESET_COUNT).fill(true),
     };
 
@@ -328,12 +395,13 @@
 
     function getAllPresetNames() {
       const names = [];
-      for (let i = 0; i < 32; i++) {
+      for (let i = 0; i < FACTORY_PRESET_COUNT; i++) {
         const name = FACTORY_PRESET_NAMES[i] || "";
         names.push(name.length > 0 ? name : `EMPTY ${String(i).padStart(2, "0")}`);
       }
-      for (let i = 0; i < 5; i++) {
-        names.push(`User ${String(i + 1).padStart(2, "0")}`);
+      for (let i = 0; i < USER_PRESET_COUNT; i++) {
+        const custom = (state.userNames[i] || "").trim();
+        names.push(custom.length > 0 ? custom : `User ${String(i + 1).padStart(2, "0")}`);
       }
       return names;
     }
@@ -352,7 +420,7 @@
       });
 
       userSlotSelect.innerHTML = "";
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < USER_PRESET_COUNT; i++) {
         const o = document.createElement("option");
         o.value = String(i);
         o.textContent = `User ${i + 1}`;
@@ -572,9 +640,15 @@
       if (Array.isArray(data.user)) {
         state.user = data.user.map(arr => arr.slice(0, 52));
       }
+      if (Array.isArray(data.userNames)) {
+        state.userNames = state.userNames.map((prev, i) => (i < data.userNames.length ? String(data.userNames[i] || "") : prev));
+      }
       if (typeof data.enabled === "string" && data.enabled.length > 0) {
         state.enabled = state.enabled.map((prev, i) => (i < data.enabled.length ? data.enabled[i] === "1" : prev));
       }
+      // Names may have changed (e.g. after a Magicstomp import save), so
+      // repopulate the dropdown's option text, not just its selected value.
+      populatePresetSelect();
       presetSelect.value = String(state.preset);
       bypassChk.checked = !!state.bypass;
       renderParams();
@@ -658,11 +732,11 @@
         throw new Error("Backup file missing 52 params.");
       }
       state.params = decodeParams(data.params);
-      if (Array.isArray(data.user) && data.user.length === 5) {
+      if (Array.isArray(data.user) && data.user.length === USER_PRESET_COUNT) {
         state.user = data.user;
       }
       bypassChk.checked = !!data.bypass;
-      presetSelect.value = String(Math.max(0, Math.min(36, Number(data.preset || 0))));
+      presetSelect.value = String(Math.max(0, Math.min(TOTAL_PRESET_COUNT - 1, Number(data.preset || 0))));
       renderParams();
       logStatus("Backup loaded in editor. Click Write Current to push to hardware.");
     }
@@ -769,6 +843,314 @@
       } catch (e) {
         logStatus(`Send patch list failed: ${e.message}`);
       }
+    });
+
+    // --- Magicstomp .ub9 import (ModDelay only) ---
+    // File layout reverse-engineered from MagicstompFrenzy (ub99file.h/cpp,
+    // magicstomp.h): two copies of a 10-byte "UB99 V1.00" header (at 0x000
+    // and 0x040), a names/index block, then 99 patches back-to-back at
+    // offset 0x600, 159 bytes each (32-byte "common" + 127-byte "effect").
+    // Patch name is at bytes 16-27; effect type is a 2-byte 7-bit-packed
+    // value at bytes 0-1 (high byte is always 0 for the types that occur).
+    // ModDelay-specific offsets/scaling from effecteditwidgets/moddelaywidget.cpp.
+    const UB9_HEADER = "UB99 V1.00";
+    const UB9_PATCH_DATA_OFFSET = 0x600;
+    const UB9_PATCH_LENGTH = 0x20 + 0x7F; // 159
+    const UB9_PATCH_NAME_OFFSET = 16;
+    const UB9_PATCH_NAME_LENGTH = 12;
+    const MAGICSTOMP_MODDELAY_TYPE = 0x0f;
+    const MAGICSTOMP_EIGHT_BAND_PARALLEL_DELAY_TYPE = 0x01;
+    // Both widgets' ParameterOffsets are relative to the start of the
+    // effect-specific section, which begins after the 32-byte common header
+    // (PatchType/Control1-3/PatchName all live in that first 32 bytes) —
+    // verified empirically: without this offset, values read as nonsense
+    // (e.g. 14000% feedback, 446Hz LFO); with it, they land exactly in spec,
+    // and for EightBandParallelDelay the decoded per-band times/pans matched
+    // WayloUDDelay's own factory preset #1 almost exactly.
+    const UB9_EFFECT_SECTION_OFFSET = 0x20;
+
+    const MODDELAY_OFFSETS = {
+      DelayTime: UB9_EFFECT_SECTION_OFFSET + 0x10, // 2 bytes, ms = raw*0.2 (0..2250ms)
+      FBGain: UB9_EFFECT_SECTION_OFFSET + 0x12,    // 2 bytes, percent = raw - 99 (-99..+99%)
+      Freq: UB9_EFFECT_SECTION_OFFSET + 0x14,  // 2 bytes, Hz = raw*0.05 + 0.05 (0.05..40Hz)
+      Depth: UB9_EFFECT_SECTION_OFFSET + 0x22, // 1 byte, percent 0..100
+      Mix: UB9_EFFECT_SECTION_OFFSET + 0x28,   // 1 byte, percent 0..100
+    };
+
+    // EightBandParallelDelay (MultibandDelayWidget + DelayBandWidget in
+    // MagicstompFrenzy). 8 independent delay bands map ~1:1 onto WayloUD's
+    // 8 voices: each band has its own time/feedback/pan/level/LFO speed+depth,
+    // exactly like a WayloUD voice.
+    const EIGHT_BAND_OFFSETS = {
+      DelayTimeBase: UB9_EFFECT_SECTION_OFFSET + 0x00, // band i: 2 bytes at +2*i, ms = raw*0.1 + 0.1 (0.1..696ms)
+      EffectLevel: UB9_EFFECT_SECTION_OFFSET + 0x10,   // 2 bytes, 0..10 scale (raw*0.1) — overall wet
+      DirectLevel: UB9_EFFECT_SECTION_OFFSET + 0x12,   // 2 bytes, 0..10 scale (raw*0.1) — overall dry
+      BandBase: UB9_EFFECT_SECTION_OFFSET + 0x1E,      // band i's 11-byte block starts at +11*i
+      BandLength: 11,
+    };
+    // Offsets within an individual band's 11-byte block.
+    const EIGHT_BAND_FIELD = {
+      Feedback: 2, // 1 byte, 0..10 scale (raw*0.1)
+      Speed: 6,    // 1 byte, 0..10 scale (raw*0.1) — LFO speed
+      Depth: 7,    // 1 byte, 0..10 scale (raw*0.1) — LFO depth
+      Pan: 8,      // 1 byte, raw*0.2 - 10 (-10..+10, matches Magicstomp convention of - =left/+ =right)
+      Level: 9,    // 1 byte, 0..10 scale (raw*0.1) — per-band gain
+    };
+
+    // Big-endian 7-bit-per-byte packing (every raw SysEx data byte is <128).
+    function readUb9SevenBit(block, offset, length) {
+      let val = 0;
+      for (let i = 0; i < length; i++) {
+        val = (val << 7) | (block[offset + i] & 0x7f);
+      }
+      return val;
+    }
+
+    function parseUb9File(bytes) {
+      const header = String.fromCharCode(...bytes.slice(0, UB9_HEADER.length));
+      if (header !== UB9_HEADER) {
+        throw new Error(`Not a UB99 library file (expected header ${JSON.stringify(UB9_HEADER)}, got ${JSON.stringify(header)}).`);
+      }
+      const patches = [];
+      for (let i = 0; i < 99; i++) {
+        const off = UB9_PATCH_DATA_OFFSET + i * UB9_PATCH_LENGTH;
+        if (off + UB9_PATCH_LENGTH > bytes.length) break;
+        const block = bytes.slice(off, off + UB9_PATCH_LENGTH);
+        const typeByte = readUb9SevenBit(block, 0, 2);
+        const nameBytes = block.slice(UB9_PATCH_NAME_OFFSET, UB9_PATCH_NAME_OFFSET + UB9_PATCH_NAME_LENGTH);
+        const name = String.fromCharCode(...nameBytes).replace(/\0+$/, "").trim();
+        patches.push({ index: i, name, typeByte, block });
+      }
+      return patches;
+    }
+
+    // Converts a single Magicstomp ModDelay patch block into a 52-element
+    // WayloUD params array (same physical units as state.params — encodeCurrentParams()
+    // handles device-side scaling). ModDelay is a single mono delay+LFO, so it maps
+    // onto Voice 1 only; Voices 2-8 are silenced (gain=0) rather than left undefined.
+    function convertModDelayPatch(block) {
+      const p = new Array(52).fill(0);
+
+      const delayMs = readUb9SevenBit(block, MODDELAY_OFFSETS.DelayTime, 2) * 0.2;
+      const fbPercent = readUb9SevenBit(block, MODDELAY_OFFSETS.FBGain, 2) - 99;
+      const freqHz = readUb9SevenBit(block, MODDELAY_OFFSETS.Freq, 2) * 0.05 + 0.05;
+      const depthPercent = block[MODDELAY_OFFSETS.Depth];
+      const mixPercent = block[MODDELAY_OFFSETS.Mix];
+
+      const wet = Math.max(0, Math.min(1, mixPercent / 100));
+      const dry = 1 - wet;
+
+      // Voice 1 carries the Magicstomp's single delay line.
+      const time = Math.max(0, Math.min(1, (delayMs / 1000))); // WayloUD delay-time param is in seconds, capped at 1s
+      const feedback = Math.max(0, Math.min(0.98, Math.abs(fbPercent) / 100));
+      const modDepth = Math.max(0, Math.min(1, depthPercent / 100));
+      // Magicstomp's LFO Freq (0.05-40Hz) is a real Hz value; WayloUD's per-voice
+      // modrate is a relative multiplier against the global rate macro (typical
+      // preset values ~0.2-0.5 for sub-1Hz chorus wobble). No exact equivalence
+      // exists, so this is a heuristic scale-down, not a unit conversion.
+      const modRate = Math.max(0, Math.min(1, freqHz / 10));
+
+      p[0] = dry;
+      p[1] = time;       // Delay 1 Time
+      p[9] = 1.0;        // Delay 1 Gain — only active voice
+      p[17] = modDepth;  // Delay 1 Mod Depth
+      p[25] = modRate;   // Delay 1 Mod Rate
+      p[33] = feedback;  // Delay 1 Feedback
+      p[41] = wet;
+      p[42] = 1.0;       // Global Rate macro neutral
+      p[43] = 1.0;       // Global Depth macro neutral
+      p[44] = 0.5;       // Delay 1 Pan — center (Magicstomp ModDelay is mono)
+
+      // Voices 2-8: gain 0 so they're silent regardless of their other values.
+      for (let v = 1; v < 8; v++) {
+        p[44 + v] = 0.5; // pan center, harmless since gain is 0
+      }
+
+      return p;
+    }
+
+    // Converts an EightBandParallelDelay patch into a 52-element WayloUD
+    // params array. Near 1:1 structural match: each of the 8 Magicstomp
+    // bands (time/feedback/pan/level/LFO speed+depth) becomes one WayloUD
+    // voice with the same role.
+    function convertEightBandParallelDelay(block) {
+      const p = new Array(52).fill(0);
+
+      const effectLevelRaw = readUb9SevenBit(block, EIGHT_BAND_OFFSETS.EffectLevel, 2);
+      const directLevelRaw = readUb9SevenBit(block, EIGHT_BAND_OFFSETS.DirectLevel, 2);
+      const wet = Math.max(0, Math.min(1, (effectLevelRaw * 0.1) / 10));
+      const dry = Math.max(0, Math.min(1, (directLevelRaw * 0.1) / 10));
+
+      p[0] = dry;
+      p[41] = wet;
+      p[42] = 1.0; // Global Rate macro neutral
+      p[43] = 1.0; // Global Depth macro neutral
+
+      for (let v = 0; v < 8; v++) {
+        const timeRaw = readUb9SevenBit(block, EIGHT_BAND_OFFSETS.DelayTimeBase + 2 * v, 2);
+        const timeMs = timeRaw * 0.1 + 0.1;
+
+        const bandOff = EIGHT_BAND_OFFSETS.BandBase + EIGHT_BAND_OFFSETS.BandLength * v;
+        const feedback = block[bandOff + EIGHT_BAND_FIELD.Feedback] * 0.1;
+        const speed = block[bandOff + EIGHT_BAND_FIELD.Speed] * 0.1;
+        const depth = block[bandOff + EIGHT_BAND_FIELD.Depth] * 0.1;
+        const panRaw = block[bandOff + EIGHT_BAND_FIELD.Pan] * 0.2 - 10; // -10..+10
+        const level = block[bandOff + EIGHT_BAND_FIELD.Level] * 0.1;
+
+        p[1 + v] = Math.max(0, Math.min(1, timeMs / 1000));       // Delay time (s)
+        p[9 + v] = Math.max(0, Math.min(1, level / 10));          // Gain
+        p[17 + v] = Math.max(0, Math.min(1, depth / 10));         // Mod depth
+        p[25 + v] = Math.max(0, Math.min(1, speed / 10));         // Mod rate
+        p[33 + v] = Math.max(0, Math.min(0.98, feedback / 10));   // Feedback
+        p[44 + v] = Math.max(0, Math.min(1, (panRaw + 10) / 20)); // Pan (WayloUD: 0=left, 1=right)
+      }
+
+      return p;
+    }
+
+    // Registry of Magicstomp effect types this importer can convert. Extend
+    // this (plus a matching convert* function) to accept more types later.
+    const ACCEPTED_MAGICSTOMP_TYPES = {
+      [MAGICSTOMP_EIGHT_BAND_PARALLEL_DELAY_TYPE]: {
+        name: "EightBandParallelDelay",
+        convert: convertEightBandParallelDelay,
+      },
+      [MAGICSTOMP_MODDELAY_TYPE]: {
+        name: "ModDelay",
+        convert: convertModDelayPatch,
+      },
+    };
+
+    let ub9Patches = [];
+    let ub9Rows = []; // [{ patch, accepted, slotSelect }] for the currently rendered list
+
+    // Shared by both the per-row "Save to Slot" button and "Save All".
+    async function saveImportedPatch(patch, accepted, slot) {
+      const converted = accepted.convert(patch.block);
+      state.params = converted;
+      await sendJson({ cmd: "set", params: encodeCurrentParams() }, true);
+      // Device stores at most 12 chars per name (matches Magicstomp's own limit).
+      const name = patch.name.slice(0, 12);
+      const data = await sendJson({ cmd: "saveUser", slot, name }, true);
+      applyDeviceState(data);
+    }
+
+    function renderUb9PatchList() {
+      const container = document.getElementById("ub9PatchList");
+      const saveAllBtn = document.getElementById("ub9SaveAllBtn");
+      container.innerHTML = "";
+      ub9Rows = [];
+      if (ub9Patches.length === 0) {
+        saveAllBtn.disabled = true;
+        return;
+      }
+
+      const importable = ub9Patches
+        .map(patch => ({ patch, accepted: ACCEPTED_MAGICSTOMP_TYPES[patch.typeByte] }))
+        .filter(({ accepted }) => accepted);
+
+      if (importable.length === 0) {
+        saveAllBtn.disabled = true;
+        const acceptedNames = Object.values(ACCEPTED_MAGICSTOMP_TYPES).map(a => a.name).join(", ");
+        const row = document.createElement("div");
+        row.className = "tiny";
+        row.textContent = `Loaded ${ub9Patches.length} patches, none match an accepted type (${acceptedNames}) — nothing importable in this file.`;
+        container.appendChild(row);
+        return;
+      }
+
+      saveAllBtn.disabled = false;
+      const acceptedNames = Object.values(ACCEPTED_MAGICSTOMP_TYPES).map(a => a.name).join(", ");
+      const summary = document.createElement("div");
+      summary.className = "tiny";
+      summary.style.marginBottom = "6px";
+      summary.textContent = `${importable.length} of ${ub9Patches.length} patches match an accepted type (${acceptedNames}):`;
+      container.appendChild(summary);
+
+      importable.forEach(({ patch, accepted }) => {
+        const row = document.createElement("div");
+        row.className = "import-row";
+
+        const label = document.createElement("label");
+        label.title = `${patch.index}: ${patch.name} (${accepted.name})`;
+        label.textContent = `${patch.index}: ${patch.name} (${accepted.name})`;
+
+        const slotSelect = document.createElement("select");
+        for (let i = 0; i < USER_PRESET_COUNT; i++) {
+          const o = document.createElement("option");
+          o.value = String(i);
+          o.textContent = `User ${i + 1}`;
+          slotSelect.appendChild(o);
+        }
+        // Default to the same slot number the patch held in the Magicstomp
+        // bank (both are 0-98) — convenient since there's now a 1:1 slot
+        // count, but still changeable per-patch via the dropdown before
+        // hitting Save (individually or via Save All).
+        slotSelect.value = String(patch.index);
+
+        const saveBtn = document.createElement("button");
+        saveBtn.className = "mini-btn";
+        saveBtn.textContent = "Save to Slot";
+        saveBtn.addEventListener("click", async () => {
+          const slot = Number(slotSelect.value);
+          try {
+            await saveImportedPatch(patch, accepted, slot);
+            logStatus(`Imported "${patch.name}" (${accepted.name}) to User ${slot + 1}.`);
+          } catch (e) {
+            logStatus(`Import to User ${slot + 1} failed: ${e.message}`);
+          }
+        });
+
+        row.appendChild(label);
+        row.appendChild(slotSelect);
+        row.appendChild(saveBtn);
+        container.appendChild(row);
+        ub9Rows.push({ patch, accepted, slotSelect });
+      });
+    }
+
+    document.getElementById("ub9ChooseBtn").addEventListener("click", () => {
+      document.getElementById("ub9FileInput").click();
+    });
+
+    document.getElementById("ub9SaveAllBtn").addEventListener("click", async () => {
+      const saveAllBtn = document.getElementById("ub9SaveAllBtn");
+      if (ub9Rows.length === 0) return;
+      saveAllBtn.disabled = true;
+      let done = 0;
+      let failed = 0;
+      for (const { patch, accepted, slotSelect } of ub9Rows) {
+        const slot = Number(slotSelect.value);
+        try {
+          await saveImportedPatch(patch, accepted, slot);
+          done++;
+          logStatus(`Saving all: "${patch.name}" -> User ${slot + 1} (${done}/${ub9Rows.length})`);
+        } catch (e) {
+          failed++;
+          logStatus(`Saving all: "${patch.name}" -> User ${slot + 1} FAILED: ${e.message}`);
+        }
+      }
+      saveAllBtn.disabled = false;
+      logStatus(`Save All complete: ${done} saved${failed > 0 ? `, ${failed} failed` : ""} of ${ub9Rows.length}.`);
+    });
+
+    document.getElementById("ub9FileInput").addEventListener("change", async (ev) => {
+      const file = ev.target.files?.[0];
+      if (!file) return;
+      try {
+        const buf = await file.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        ub9Patches = parseUb9File(bytes);
+        document.getElementById("ub9FileName").textContent = `${file.name} (${ub9Patches.length} patches)`;
+        renderUb9PatchList();
+        logStatus(`Parsed ${file.name}: ${ub9Patches.length} patches found.`);
+      } catch (e) {
+        document.getElementById("ub9FileName").textContent = "No file loaded.";
+        ub9Patches = [];
+        renderUb9PatchList();
+        logStatus(`Failed to parse .ub9 file: ${e.message}`);
+      }
+      ev.target.value = "";
     });
 
     populatePresetSelect();
