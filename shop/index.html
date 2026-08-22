@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waylo Audio — Plugin Shop</title>
+<style>
+  :root{
+    --bg:#121212;
+    --bg-elev:#1a1a1a;
+    --bg-card:#1e1e1e;
+    --bg-card-hover:#242424;
+    --line:#2c2c2c;
+    --line-soft:#232323;
+    --text:#f2f2ef;
+    --text-dim:#a6a6a2;
+    --text-faint:#707070;
+    --green:#7fd858;
+    --green-bright:#9be76f;
+    --green-dark:#4f8f34;
+    --green-glow: rgba(127,216,88,0.35);
+    --radius:14px;
+    --maxw:1180px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  a{color:inherit;text-decoration:none;}
+  img{max-width:100%;display:block;}
+  button{font-family:inherit;}
+
+  ::selection{background:var(--green);color:#0c1a06;}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px;}
+
+  /* ---------- top banner ---------- */
+  .announce{
+    background:linear-gradient(90deg, #14210d, #1b2b12 40%, #14210d);
+    border-bottom:1px solid var(--line-soft);
+    color:var(--green-bright);
+    font-size:13px;
+    letter-spacing:.03em;
+    text-align:center;
+    padding:8px 12px;
+  }
+
+  /* ---------- nav ---------- */
+  header.site{
+    position:sticky;top:0;z-index:50;
+    background:rgba(18,18,18,0.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav.main{
+    max-width:var(--maxw);margin:0 auto;padding:14px 28px;
+    display:flex;align-items:center;gap:28px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .brand img{height:34px;width:auto;}
+  .brand span{font-weight:800;font-size:19px;letter-spacing:.02em;}
+  .navlinks{display:flex;gap:22px;flex:1;}
+  .navlinks a{
+    font-size:14.5px;font-weight:600;color:var(--text-dim);
+    padding:6px 2px;border-bottom:2px solid transparent;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  .navlinks a:hover, .navlinks a.active{color:var(--text);border-color:var(--green);}
+  .cart-btn{
+    display:flex;align-items:center;gap:8px;
+    background:var(--bg-card);border:1px solid var(--line);
+    color:var(--text);padding:9px 14px;border-radius:999px;
+    cursor:pointer;font-size:14px;font-weight:600;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .cart-btn:hover{border-color:var(--green);}
+  .cart-count{
+    background:var(--green);color:#0c1a06;font-weight:800;
+    font-size:12px;min-width:19px;height:19px;border-radius:999px;
+    display:flex;align-items:center;justify-content:center;padding:0 5px;
+  }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:72px 0 56px;
+    background:
+      radial-gradient(ellipse 60% 90% at 80% 0%, rgba(127,216,88,0.10), transparent 60%),
+      radial-gradient(ellipse 50% 60% at 10% 10%, rgba(127,216,88,0.06), transparent 60%);
+    border-bottom:1px solid var(--line);
+  }
+  .hero-inner{display:flex;align-items:center;gap:48px;flex-wrap:wrap;}
+  .hero-copy{flex:1;min-width:300px;}
+  .eyebrow{
+    color:var(--green);font-weight:700;font-size:13px;letter-spacing:.12em;
+    text-transform:uppercase;margin-bottom:14px;display:block;
+  }
+  h1.hero-title{
+    font-size:clamp(34px,5vw,54px);line-height:1.06;margin:0 0 18px;
+    font-weight:800;letter-spacing:-0.01em;
+  }
+  h1.hero-title em{color:var(--green);font-style:normal;}
+  .hero-sub{color:var(--text-dim);font-size:17px;max-width:520px;margin:0 0 28px;}
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;}
+  .hero-art{
+    flex:0 0 340px;max-width:340px;
+    display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle, rgba(127,216,88,0.14), transparent 70%);
+    border-radius:24px;padding:20px;
+  }
+  .hero-art img{border-radius:16px;filter:drop-shadow(0 20px 50px rgba(0,0,0,0.55));}
+
+  /* buttons */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 22px;border-radius:10px;font-weight:700;font-size:14.5px;
+    cursor:pointer;border:1px solid transparent;transition:all .15s ease;
+  }
+  .btn-primary{background:var(--green);color:#0c1a06;}
+  .btn-primary:hover{background:var(--green-bright);box-shadow:0 0 0 4px var(--green-glow);}
+  .btn-outline{background:transparent;color:var(--text);border-color:var(--line);}
+  .btn-outline:hover{border-color:var(--green);color:var(--green-bright);}
+  .btn-block{width:100%;}
+  .btn:disabled{opacity:.5;cursor:default;box-shadow:none;}
+
+  /* ---------- section headers ---------- */
+  .section{padding:56px 0;}
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;gap:20px;flex-wrap:wrap;}
+  .section-head h2{font-size:26px;margin:0 0 6px;font-weight:800;}
+  .section-head p{color:var(--text-dim);margin:0;font-size:14.5px;}
+
+  /* ---------- product grid ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(250px,1fr));gap:22px;}
+  .card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;transition:transform .18s ease, border-color .18s ease, background .18s ease;
+    display:flex;flex-direction:column;
+  }
+  .card:hover{transform:translateY(-4px);border-color:#3a5c2c;background:var(--bg-card-hover);}
+  .card-img{
+    aspect-ratio:4/3;background:#0d0d0d;display:flex;align-items:center;justify-content:center;
+    padding:18px;border-bottom:1px solid var(--line-soft);position:relative;
+  }
+  .card-img img{max-height:100%;object-fit:contain;border-radius:8px;}
+  .free-pill{
+    position:absolute;top:10px;left:10px;background:var(--green);color:#0c1a06;
+    font-size:11px;font-weight:800;letter-spacing:.04em;padding:4px 9px;border-radius:999px;
+  }
+  .card-body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:6px;flex:1;}
+  .card-body h3{margin:0;font-size:17px;font-weight:800;}
+  .card-body .tag{color:var(--text-dim);font-size:13.5px;margin:0 0 10px;flex:1;}
+  .card-description{color:#d6d6d2;font-size:13.5px;line-height:1.6;margin:0 0 12px;}
+  .price-row{display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+  .price-row .price{font-weight:800;color:var(--green-bright);font-size:15px;}
+  .price-row .free-note{color:var(--text-faint);font-size:12.5px;}
+
+  /* ---------- product detail ---------- */
+  .breadcrumb{color:var(--text-faint);font-size:13.5px;margin-bottom:22px;}
+  .breadcrumb a:hover{color:var(--green);}
+  .product-layout{display:flex;gap:52px;align-items:flex-start;flex-wrap:wrap;}
+  .product-media{flex:1 1 460px;min-width:320px;position:sticky;top:90px;}
+  .media-frame{
+    background:#0d0d0d;border:1px solid var(--line);border-radius:18px;
+    padding:26px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 30px 70px rgba(0,0,0,0.45);
+  }
+  .media-frame img{border-radius:10px;}
+  .product-info{flex:1 1 420px;min-width:320px;}
+  .product-info .subtitle{color:var(--green);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+  .product-info h1{font-size:36px;margin:0 0 10px;font-weight:800;letter-spacing:-0.01em;}
+  .product-info .tagline{color:var(--text-dim);font-size:17px;margin:0 0 26px;}
+  .desc{color:#d6d6d2;font-size:15.5px;line-height:1.7;margin-bottom:26px;}
+
+  .version-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:30px;}
+  .version-card{
+    border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg-elev);
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .version-card.pro{border-color:#3a5c2c;background:linear-gradient(160deg, rgba(127,216,88,0.08), transparent 60%), var(--bg-elev);}
+  .version-card .vtitle{font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:center;}
+  .version-card .vprice{font-size:24px;font-weight:800;color:var(--green-bright);}
+  .version-card .vnote{color:var(--text-dim);font-size:12.5px;flex:1;}
+
+  .feature-list{list-style:none;margin:0 0 30px;padding:0;display:grid;gap:11px;}
+  .feature-list li{display:flex;gap:10px;font-size:14.5px;color:#d6d6d2;align-items:flex-start;}
+  .feature-list li::before{content:"";flex:0 0 7px;height:7px;border-radius:2px;background:var(--green);margin-top:7px;}
+
+  .spec-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:10px;}
+  .spec-table tr{border-top:1px solid var(--line-soft);}
+  .spec-table td{padding:10px 0;color:var(--text-dim);}
+  .spec-table td:first-child{color:var(--text-faint);width:150px;}
+
+  /* ---------- free plugins page ---------- */
+  .free-banner{
+    background:linear-gradient(120deg, rgba(127,216,88,0.10), transparent 60%);
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:34px;margin-bottom:34px;display:flex;align-items:center;gap:24px;justify-content:space-between;flex-wrap:wrap;
+  }
+  .free-banner h2{margin:0 0 6px;font-size:23px;}
+  .free-banner p{margin:0;color:var(--text-dim);font-size:14.5px;max-width:520px;}
+
+  /* ---------- gumroad embed ---------- */
+  .gumroad-frame-wrap{
+    background:#0d0d0d;border:1px solid var(--line);border-radius:18px;
+    overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,0.45);
+  }
+  .gumroad-frame-wrap iframe{width:100%;height:760px;border:0;display:block;background:#fff;}
+  @media (max-width:640px){ .gumroad-frame-wrap iframe{height:620px;} }
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line);padding:44px 0 34px;margin-top:40px;}
+  .footer-grid{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;}
+  .footer-brand{display:flex;align-items:center;gap:10px;}
+  .footer-brand img{height:26px;}
+  .footer-brand span{font-weight:800;}
+  .footer-cols{display:flex;gap:56px;flex-wrap:wrap;}
+  .footer-col h4{font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:0 0 12px;}
+  .footer-col a{display:block;color:var(--text-dim);font-size:14px;margin-bottom:9px;}
+  .footer-col a:hover{color:var(--green-bright);}
+  .footer-bottom{margin-top:38px;padding-top:20px;border-top:1px solid var(--line-soft);color:var(--text-faint);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+
+  /* ---------- cart drawer ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;
+    opacity:0;pointer-events:none;transition:opacity .2s ease;
+  }
+  .overlay.open{opacity:1;pointer-events:auto;}
+  .drawer{
+    position:fixed;top:0;right:0;height:100%;width:380px;max-width:92vw;
+    background:var(--bg-elev);border-left:1px solid var(--line);z-index:101;
+    display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+  .drawer-head h3{margin:0;font-size:17px;}
+  .drawer-close{background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;line-height:1;}
+  .drawer-close:hover{color:var(--text);}
+  .drawer-items{flex:1;overflow-y:auto;padding:14px 22px;}
+  .drawer-empty{color:var(--text-faint);font-size:14px;text-align:center;padding:60px 10px;}
+  .drawer-item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line-soft);align-items:center;}
+  .drawer-item img{width:56px;height:56px;object-fit:contain;background:#0d0d0d;border-radius:8px;border:1px solid var(--line-soft);padding:6px;}
+  .drawer-item .di-info{flex:1;}
+  .drawer-item .di-name{font-weight:700;font-size:14px;}
+  .drawer-item .di-variant{color:var(--text-faint);font-size:12px;}
+  .drawer-item .di-price{font-weight:700;color:var(--green-bright);font-size:13.5px;}
+  .drawer-item .di-remove{background:none;border:none;color:var(--text-faint);font-size:12px;cursor:pointer;text-decoration:underline;padding:0;margin-top:4px;}
+  .drawer-foot{padding:20px 22px;border-top:1px solid var(--line);}
+  .drawer-total{display:flex;justify-content:space-between;font-size:15px;font-weight:700;margin-bottom:14px;}
+
+  /* toast */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--bg-card);border:1px solid var(--green-dark);color:var(--text);
+    padding:13px 20px;border-radius:10px;font-size:14px;font-weight:600;
+    z-index:200;opacity:0;pointer-events:none;transition:all .25s ease;
+    box-shadow:0 12px 30px rgba(0,0,0,0.4);display:flex;align-items:center;gap:10px;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast .dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:0 0 8px;}
+
+  @media (max-width:640px){
+    .navlinks{display:none;}
+    .version-cards{grid-template-columns:1fr;}
+    .product-media{position:static;}
+    .hero-art{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="announce">🐊 All Waylo plugins are macOS notarized &amp; Apple Silicon native — free versions never expire.</div>
+
+<header class="site">
+  <nav class="main">
+    <a href="#/" class="brand">
+      <img src="../assets/img/shop/waylo-logo.png" alt="Waylo Audio">
+      <span>WAYLO AUDIO</span>
+    </a>
+    <div class="navlinks" id="navlinks">
+      <a href="#/" data-route="/">Shop</a>
+    </div>
+    <a class="cart-btn" href="https://seanwave027.gumroad.com/" target="_blank" rel="noopener">
+      Gumroad Shop ↗
+    </a>
+  </nav>
+</header>
+
+<main id="app"></main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="../assets/img/shop/waylo-logo.png" alt="Waylo Audio">
+        <span>WAYLO AUDIO</span>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Plugins</h4>
+          <a href="#shopgrid">WayloDelay</a>
+          <a href="#shopgrid">WayloUD Chorus</a>
+          <a href="#shopgrid">WayloUD Delay</a>
+          <a href="#shopgrid">Waylomidinator</a>
+          <a href="#shopgrid">NatorSynth</a>
+          <a href="#shopgrid">WayloSynth2</a>
+        </div>
+        <div class="footer-col">
+          <h4>Shop</h4>
+          <a href="#shopgrid">All Products</a>
+          <a href="https://seanwave027.gumroad.com/" target="_blank" rel="noopener">Gumroad Shop ↗</a>
+        </div>
+        <div class="footer-col">
+          <h4>Sean Wayland</h4>
+          <a href="#shopgrid">Album Scores</a>
+          <a href="#shopgrid">Etudes</a>
+          <a href="#shopgrid">Patches</a>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <a href="mailto:seanwayland@gmail.com">Contact</a>
+          <a href="#/about">Installation Help</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Waylo Audio. All rights reserved.</span>
+      <span>Made in the swamp 🐊</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
+
+<script>
+/* ---------------------------------------------------------
+   Waylo Audio — product data
+--------------------------------------------------------- */
+const PRODUCTS = [
+  {
+    slug: "waylodelay",
+    name: "WayloDelay",
+    subtitle: "",
+    tagline: "Stereo ping-pong delay with a mind of its own",
+    image: "../assets/img/shop/waylodelay.png",
+    marketplaceUrl: "https://seanwave027.gumroad.com/",
+    category: "Delay",
+    pricePro: null,
+    description: "A lean 3-tap stereo delay built around independent Left, Mid, and Right delay lines feeding a warm, gently saturating repeat engine. Dial in tight slapbacks or wide, wandering echo trails using nothing but Feedback, Wet, and Dry — no menus, no manual required.",
+    features: [
+      "Independent Left / Mid / Right delay taps",
+      "Musical feedback path with soft internal saturation",
+      "Full wet/dry control for parallel blending",
+      "Free version included — no time limit, no watermark"
+    ],
+    specs: {
+      "Formats": "AU, VST3, AAX",
+      "OS": "macOS 11 Big Sur or later",
+      "Architecture": "Apple Silicon &amp; Intel (Universal)",
+      "Signed": "Notarized installer (.pkg)"
+    }
+  },
+  {
+    slug: "wayloud-chorus",
+    name: "WayloUD Chorus",
+    subtitle: "",
+    tagline: "Thick, lush modulation for width without the wobble",
+    image: "../assets/img/shop/wayloud-chorus.png",
+    marketplaceUrl: "https://seanwave027.gumroad.com/",
+    category: "Modulation",
+    pricePro: null,
+    description: "A single-purpose chorus built on Waylo's UD modulation core. Two controls — Dry and Wet — are all it takes to move from a barely-there shimmer to a full, swirling chorus wash. Built for engineers who want the sound, not the spreadsheet.",
+    features: [
+      "Dedicated Dry / Wet modulation blend",
+      "Studio-grade UD (under-damped) modulation core",
+      "Mono-to-stereo widening with zero added latency",
+      "Free version included — no time limit, no watermark"
+    ],
+    specs: {
+      "Formats": "AU, VST3, AAX",
+      "OS": "macOS 11 Big Sur or later",
+      "Architecture": "Apple Silicon &amp; Intel (Universal)",
+      "Signed": "Notarized installer (.pkg)"
+    }
+  },
+  {
+    slug: "wayloud-delay",
+    name: "WayloUD Delay",
+    subtitle: "WayloMod UD 2.0",
+    tagline: "Six-tap modulated delay engine for rhythmic, evolving echoes",
+    image: "../assets/img/shop/wayloud-delay.png",
+    marketplaceUrl: "https://seanwave027.gumroad.com/l/WayloUDdelay1?layout=profile",
+    category: "Delay",
+    pricePro: 25,
+    description: "The flagship of the UD series. Six fully independent delay taps, each with its own Time, Gain, modulation Depth &amp; Rate, Feedback, and Pan — plus the signature \"Visit Zarabeth\" and \"More Beer\" macro controls for instant character. Use two taps for a simple stereo echo, or all six to build intricate, polyrhythmic delay networks that never quite repeat the same way twice.",
+    features: [
+      "6 independent delay taps with per-tap Time / Gain / Pan",
+      "Per-tap modulation depth &amp; rate for organic movement",
+      "Global Dry Gain / Wet Gain macro controls",
+      "Signature \"Visit Zarabeth\" &amp; \"More Beer\" macros",
+      "Free version included — no time limit, no watermark"
+    ],
+    specs: {
+      "Formats": "AU, VST3, AAX",
+      "OS": "macOS 11 Big Sur or later",
+      "Architecture": "Apple Silicon &amp; Intel (Universal)",
+      "Signed": "Notarized installer (.pkg)"
+    }
+  },
+  {
+    slug: "waylomidinator",
+    name: "Waylomidinator",
+    subtitle: "",
+    tagline: "MIDI chord &amp; transposition engine for hardware and software synths",
+    image: "../assets/img/shop/waylomidinator.png",
+    marketplaceUrl: "https://seanwave027.gumroad.com/",
+    category: "MIDI Utility",
+    pricePro: null,
+    description: "A MIDI-effect plugin that remaps, transposes, and generates chords in real time. Play notes in (or feed MIDI from your DAW) and Waylomidinator outputs re-voiced, transposed MIDI — route it into any hardware or software synth. Waylomidinator handles the notes, your synth handles the sound.",
+    features: [
+      "Independent input &amp; output transpose",
+      "Loadable chord/patch presets (\"Waylo Trans\" and more)",
+      "Full backup import / export via CSV",
+      "Free version included — no time limit, no watermark"
+    ],
+    specs: {
+      "Formats": "AU (MIDI FX), VST3, AAX",
+      "OS": "macOS 11 Big Sur or later",
+      "Architecture": "Apple Silicon &amp; Intel (Universal)",
+      "Signed": "Notarized installer (.pkg)"
+    }
+  },
+  {
+    slug: "natorsynth",
+    name: "NatorSynth",
+    subtitle: "",
+    tagline: "Dual-oscillator synth with a swampy green glow",
+        image: "../assets/img/shop/natorsynth.png",
+    marketplaceUrl: "https://seanwave027.gumroad.com/l/natorsynthvst1?layout=profile",
+    category: "Synth",
+    pricePro: 25,
+    description: "A dual-oscillator subtractive synth with independent Left/Right waveform selection, full amp &amp; filter envelopes, dual LFOs, and built-in chorus &amp; delay. NatorSynth bites deep — from glassy leads and gnarly basses to slow, swampy pads.",
+    features: [
+      "Independent Left/Right oscillators (Square, Saw &amp; more)",
+      "Full Amp &amp; Filter ADSR with filter envelope amount",
+      "Dual LFOs with independent depth &amp; rate per side",
+      "Built-in chorus &amp; delay, adjustable pitch-bend range",
+      "Free version included — no time limit, no watermark"
+    ],
+    specs: {
+      "Formats": "AU, VST3, AAX",
+      "OS": "macOS 11 Big Sur or later",
+      "Architecture": "Apple Silicon &amp; Intel (Universal)",
+      "Signed": "Notarized installer (.pkg)"
+    }
+  },
+  {
+    slug: "waylosynth2",
+    name: "WayloSynth2",
+    subtitle: "Waylo Audio Synthesizer",
+    tagline: "A deep, expressive synth for leads, basses, and strange places",
+        image: "../assets/img/shop/waylosynth2.png",
+    marketplaceUrl: "https://seanwave027.gumroad.com/l/WayloSynth2?layout=profile",
+    category: "Synth",
+    pricePro: 25,
+    description: "WayloSynth2 is a flexible subtractive synthesizer with two oscillators, variable wave shapes, a resonant filter, and dedicated amp and filter envelopes. Shape everything from clean melodic voices to unstable, otherworldly tones with velocity response, detune, LFO modulation, and the Hyperspace mode — then save the sounds you want to keep as presets.",
+    features: [
+      "Dual oscillators with selectable wave types, detune, and mix control",
+      "Independent amp and filter envelopes with adjustable attack shapes",
+      "Resonant filter with keyboard tracking and velocity response",
+      "Preset browser, pitch-bend support, and Hyperspace sound mode",
+      "Free version included — no time limit, no watermark"
+    ],
+    specs: {
+      "Formats": "AU, VST3, AUv3, Standalone",
+      "OS": "macOS 11 Big Sur or later",
+      "Architecture": "Apple Silicon &amp; Intel (Universal)",
+      "Signed": "Notarized installer (.pkg)"
+    }
+  }
+];
+
+const productBySlug = slug => PRODUCTS.find(p => p.slug === slug);
+
+/* ---------------------------------------------------------
+   Sean Wayland — Gumroad items (scores, etudes, patches)
+--------------------------------------------------------- */
+const EXTRAS = [
+  {
+    slug: "album-scores",
+    name: "All Sean Wayland Album Scores — The Lot!",
+    tagline: "Every score used across the full album catalogue, pre-2025",
+    image: "../assets/img/shop/album-scores.png",
+    description: "Contains the scores used to create music on Sean Wayland's albums, plus 99 unreleased scores — including I Am Sun, Australian Rhythm Changes, Barrenjoey, Click Track Jazz, Colossus of Rhodes, Eat It Mr Squiggle, Expensive Habit, Face to Face, Fangin, Foodland, Joisey Trio, Lurline, Pistachio 1 &amp; 2, Show Must Go On, South Pacific Soul, Stevo, and Xpanded &amp; Rail Mary.",
+    price: "$10+",
+    gumroadUrl: "https://seanwave027.gumroad.com/l/hyrrfv?layout=profile"
+  },
+  {
+    slug: "etudes",
+    name: "Sean Wayland Etudes",
+    tagline: "Sheet music for practice, improvisation, and developing your sound",
+    image: "../assets/img/shop/etudes.png",
+    description: "Sheet music to be used for practice and improvisation, and to study while developing your own sound.",
+    price: "$5",
+    gumroadUrl: "https://seanwave027.gumroad.com/l/ckrdcq?layout=profile"
+  },
+  {
+    slug: "patches",
+    name: "Sean Wayland Patches",
+    tagline: "Synth patches from Sean Wayland",
+    image: "../assets/img/shop/patches.png",
+    description: "A collection of synth patches from Sean Wayland.",
+    price: "$100",
+    gumroadUrl: "https://seanwave027.gumroad.com/l/wenbno?layout=profile"
+  },
+  {
+    slug: "pistachio-scores",
+    name: "Pistachio 1 &amp; 2 Album Scores",
+    tagline: "The complete scores for Pistachio 1 and 2",
+        image: "../assets/img/shop/waylo-logo.png",
+    description: "The album scores for Sean Wayland's Pistachio 1 and 2, delivered through Gumroad.",
+    price: "$5+",
+    marketplace: "Gumroad",
+    gumroadUrl: "https://seanwave027.gumroad.com/l/elmrxb?layout=profile"
+  },
+  {
+    slug: "lesson-with-sean",
+    name: "Lesson with Sean",
+    tagline: "One-to-one lessons in music, synthesis, and production",
+    image: "../assets/img/shop/lesson-with-sean.png",
+    description: "Personal lessons with Sean Wayland covering music, composition, piano, synthesizers, sound design, mixing, mastering, plugin development, and software development. Lessons are available virtually over Zoom or Google Meet, or in person in Jersey City, New Jersey.",
+    price: "$100",
+    marketplace: "Gumroad",
+    gumroadUrl: "https://seanwave027.gumroad.com/l/vitpmu?layout=profile"
+  },
+  {
+    slug: "all-plugins-pack",
+    name: "Sean Wayland Plugin Pack of 11 Plugins",
+    tagline: "Eleven plugins, including lightweight free versions",
+    image: "../assets/img/shop/plugin-pack.png",
+    description: "A complete collection of 11 Waylo plugins, including WayloUD Delay, Waylo Chorus, Waylo Delay, WayloMidiNator, NatorSynth, WayloGuitar, and lightweight free versions that use less CPU.",
+    price: "$75",
+    marketplace: "Gumroad",
+    gumroadUrl: "https://seanwave027.gumroad.com/l/wbxovp?layout=profile"
+  },
+  {
+    slug: "play-on-your-track",
+    name: "Play on Your Track",
+    tagline: "Professional keyboard and piano parts for your music",
+    image: "../assets/img/shop/play-on-your-track.png",
+    description: "Professional keyboard and piano parts for your track, with multiple stereo options and a rough mix. Sean can record jazz, funk, classical, and Latin parts using a broad collection of vintage and modern keyboards, synthesizers, microphones, and preamps.",
+    price: "$200",
+    marketplace: "Gumroad",
+    gumroadUrl: "https://seanwave027.gumroad.com/l/bxshqg?layout=profile"
+  },
+  {
+    slug: "waylinator-pocket-synth",
+    name: "Waylinator Pocket Synth",
+    tagline: "A tiny hardware synthesizer and effects box",
+    image: "../assets/img/shop/waylinator-pocket-synth.jpeg",
+    description: "A lightweight pocket synthesizer and effects box with MIDI-triggered synth sounds, onboard chorus and delay patches, stereo audio I/O, a headphone amplifier, and a browser-based editor. It is micro-USB powered and uses 1/8-inch jacks; MIDI input is via a regular 5-pin DIN MIDI cable, not USB MIDI. The current 3D-printed enclosure is a fragile beta version and cables or power supply are not included.",
+    marketplace: "Reverb",
+    price: "$220",
+    marketplaceUrl: "https://reverb.com/item/100287942-sean-wayland-waylinator-2026-yellow"
+  },
+  {
+    slug: "wayloud-effects-pocket-unit",
+    name: "Waylo UD Effects Pocket Unit",
+    tagline: "A compact delay, chorus, and reverb hardware unit",
+    image: "../assets/img/shop/waylo-ud-effects.jpeg",
+    description: "A small, lightweight USB-powered effects unit with delay, chorus, and reverb sounds inspired by classic jazz-fusion and Japanese stomp boxes. The simple controls make it quick to use, while the USB-connected online editor lets you edit patches and build expansive lead and chorus sounds.",
+    marketplace: "Reverb",
+    price: "$220",
+    marketplaceUrl: "https://reverb.com/item/100286915-sean-wayland-waylo-ud-effects-2026-black"
+  }
+];
+const extraBySlug = slug => EXTRAS.find(e => e.slug === slug);
+
+/* ---------------------------------------------------------
+   Cart (localStorage)
+--------------------------------------------------------- */
+const CART_KEY = "waylo_cart_v1";
+function getCart(){ try{ return JSON.parse(localStorage.getItem(CART_KEY)) || []; }catch(e){ return []; } }
+function saveCart(cart){ localStorage.setItem(CART_KEY, JSON.stringify(cart)); renderCart(); }
+function addToCart(slug, variant, price){
+  const cart = getCart();
+  const id = slug + ":" + variant;
+  if(cart.find(i => i.id === id)){
+    showToast((productBySlug(slug).name) + " (" + variant + ") is already in your cart");
+    return;
+  }
+  cart.push({ id, slug, variant, price });
+  saveCart(cart);
+  showToast("Added " + productBySlug(slug).name + " (" + variant + ") to cart");
+  openDrawer();
+}
+function removeFromCart(id){
+  saveCart(getCart().filter(i => i.id !== id));
+}
+function cartTotal(){ return getCart().reduce((sum,i) => sum + i.price, 0); }
+
+function renderCart(){
+  const cart = getCart();
+  document.getElementById("cartCount").textContent = cart.length;
+  const itemsEl = document.getElementById("drawerItems");
+  if(cart.length === 0){
+    itemsEl.innerHTML = '<div class="drawer-empty">Your cart is empty.<br>Browse the shop to add a plugin.</div>';
+  } else {
+    itemsEl.innerHTML = cart.map(item => {
+      const p = productBySlug(item.slug);
+      return `<div class="drawer-item">
+        <img src="${p.image}" alt="${p.name}">
+        <div class="di-info">
+          <div class="di-name">${p.name}</div>
+          <div class="di-variant">${item.variant === 'free' ? 'Free version' : 'Pro version'}</div>
+          <button class="di-remove" data-remove="${item.id}">remove</button>
+        </div>
+        <div class="di-price">${item.price === 0 ? 'Free' : '$'+item.price}</div>
+      </div>`;
+    }).join("");
+    itemsEl.querySelectorAll("[data-remove]").forEach(btn => {
+      btn.addEventListener("click", () => removeFromCart(btn.dataset.remove));
+    });
+  }
+  document.getElementById("drawerTotal").textContent = "$" + cartTotal();
+}
+
+function openDrawer(){ document.getElementById("overlay").classList.add("open"); document.getElementById("drawer").classList.add("open"); }
+function closeDrawer(){ document.getElementById("overlay").classList.remove("open"); document.getElementById("drawer").classList.remove("open"); }
+
+let toastTimer;
+function showToast(msg){
+  const toast = document.getElementById("toast");
+  document.getElementById("toastMsg").textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+}
+
+/* ---------------------------------------------------------
+   Views
+--------------------------------------------------------- */
+function productCard(p){
+  return `<div class="card">
+    <div class="card-img">
+      <span class="free-pill">FREE VERSION</span>
+      <img src="${p.image}" alt="${p.name}">
+    </div>
+    <div class="card-body">
+      <h3>${p.name}</h3>
+      <p class="tag">${p.tagline}</p>
+      <p class="card-description">${p.description}</p>
+      <div class="price-row">
+        <span class="price">${p.pricePro ? "$" + p.pricePro + " Pro" : "See Gumroad shop"}</span>
+        <span class="free-note">Free version included</span>
+      </div>
+      <a class="btn btn-primary btn-block" href="${p.marketplaceUrl}" target="_blank" rel="noopener">${p.pricePro ? "See Gumroad versions" : "Open Gumroad Shop"} ↗</a>
+    </div>
+  </div>`;
+}
+
+function viewHome(){
+  return `
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div class="hero-copy">
+        <span class="eyebrow">macOS Native · AU / VST3 / AAX</span>
+        <h1 class="hero-title">Plugins built<br>in the <em>swamp</em>,<br>signed for the studio.</h1>
+        <p class="hero-sub">Six hand-built instruments and effects, plus scores, patches, and pocket hardware. Browse the full collection below; purchases open securely on Gumroad or Reverb.</p>
+        <div class="hero-ctas">
+          <a href="https://seanwave027.gumroad.com/" class="btn btn-primary" target="_blank" rel="noopener">Open Gumroad Shop ↗</a>
+        </div>
+      </div>
+         <div class="hero-art"><img src="../assets/img/shop/natorsynth-logo.png" alt="Waylo mascot"></div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="shopgrid">
+    <div class="section-head">
+      <div>
+        <h2>All Plugins</h2>
+        <p>Free and Pro versions of every Waylo plugin.</p>
+      </div>
+    </div>
+    <div class="grid">
+      ${PRODUCTS.map(productCard).join("")}
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <div class="section-head">
+      <div>
+        <h2>Scores, Lessons, Patches &amp; Hardware</h2>
+        <p>Everything else from Sean Wayland, with purchases handled securely on Gumroad or Reverb.</p>
+      </div>
+    </div>
+    <div class="grid">
+      ${EXTRAS.map(extraCard).join("")}
+    </div>
+  </section>`;
+}
+
+function viewFree(){
+  return `
+  <section class="section wrap">
+    <div class="free-banner">
+      <div>
+        <h2>Every Waylo plugin has a free version.</h2>
+        <p>Full-featured, notarized, no time limit and no watermark. Grab any (or all) of them below — upgrade to Pro any time for the extended parameter set.</p>
+      </div>
+      <a href="#/" class="btn btn-outline">See Pro Versions</a>
+    </div>
+    <div class="grid">
+      ${PRODUCTS.map(p => `
+        <div class="card">
+          <div class="card-img">
+            <span class="free-pill">FREE</span>
+            <img src="${p.image}" alt="${p.name}">
+          </div>
+          <div class="card-body">
+            <h3>${p.name}</h3>
+            <p class="tag">${p.tagline}</p>
+            <div class="price-row">
+              <span class="price">Free</span>
+              <a href="#/product/${p.slug}" class="free-note" style="text-decoration:underline;">details →</a>
+            </div>
+            <a class="btn btn-primary btn-block" style="margin-top:10px;" href="${p.marketplaceUrl}" target="_blank" rel="noopener">Open on Gumroad ↗</a>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  </section>`;
+}
+
+function extraCard(e){
+  return `<div class="card">
+    <div class="card-img">
+      <span class="free-pill" style="background:var(--text);color:#0c1a06;">${e.marketplace || "GUMROAD"}</span>
+      <img src="${e.image}" alt="${e.name}">
+    </div>
+    <div class="card-body">
+      <h3>${e.name}</h3>
+      <p class="tag">${e.tagline}</p>
+      <p class="card-description">${e.description}</p>
+      <div class="price-row">
+        <span class="price">${e.price || ""}</span>
+        <span class="free-note">View on ${e.marketplace || "Gumroad"} →</span>
+      </div>
+      <a class="btn btn-primary btn-block" href="${e.gumroadUrl || e.marketplaceUrl}" target="_blank" rel="noopener">Open on ${e.marketplace || "Gumroad"} ↗</a>
+    </div>
+  </div>`;
+}
+
+function viewExtras(){
+  return `
+  <section class="section wrap">
+    <div class="section-head">
+      <div>
+        <h2>From Sean Wayland</h2>
+        <p>Scores, plugins, patches, and pocket hardware — purchased securely on Gumroad or Reverb.</p>
+      </div>
+    </div>
+    <div class="grid">
+      ${EXTRAS.map(extraCard).join("")}
+    </div>
+  </section>`;
+}
+
+function viewExtraProduct(slug){
+  const e = extraBySlug(slug);
+  if(!e) return `<div class="wrap section"><p>Item not found. <a href="#/extras" style="color:var(--green);">Back</a></p></div>`;
+  return `
+  <section class="section wrap">
+    <div class="breadcrumb"><a href="#/extras">Sean Wayland</a> / ${e.name}</div>
+    <div class="product-layout">
+      <div class="product-media">
+        ${e.gumroadUrl ? `<div class="gumroad-frame-wrap"><iframe src="${e.gumroadUrl}" title="${e.name}"></iframe></div>` : `<div class="media-frame"><img src="${e.image}" alt="${e.name}"></div>`}
+      </div>
+      <div class="product-info">
+        <div class="subtitle">${e.marketplace || "Gumroad"}</div>
+        <h1>${e.name}</h1>
+        <p class="tagline">${e.tagline}</p>
+        <p class="desc">${e.description}</p>
+        <a class="btn btn-primary" href="${e.gumroadUrl || e.marketplaceUrl}" target="_blank" rel="noopener">Open on ${e.marketplace || "Gumroad"} ↗</a>
+      </div>
+    </div>
+  </section>`;
+}
+
+function viewAbout(){
+  return `
+  <section class="section wrap" style="max-width:760px;">
+    <div class="section-head"><div><h2>About Waylo Audio</h2></div></div>
+    <p class="desc">Waylo Audio is a small, independent plugin shop building delays, modulation
+    effects, MIDI tools, and synths — designed on macOS, signed and notarized for Gatekeeper,
+    and built to run natively on both Apple Silicon and Intel Macs.</p>
+    <p class="desc">Every plugin in the shop ships with a permanently free version. If you find it
+    useful, the Pro version unlocks the full parameter set and supports development of the next one.</p>
+    <p class="desc">Questions, bug reports, or just want to say hi? <a href="mailto:seanwayland@gmail.com" style="color:var(--green-bright);text-decoration:underline;">seanwayland@gmail.com</a></p>
+  </section>`;
+}
+
+function viewProduct(slug){
+  const p = productBySlug(slug);
+  if(!p) return `<div class="wrap section"><p>Product not found. <a href="#/" style="color:var(--green);">Back to shop</a></p></div>`;
+
+  return `
+  <section class="section wrap">
+    <div class="breadcrumb"><a href="#/">Shop</a> / <a href="#/">${p.category}</a> / ${p.name}</div>
+    <div class="product-layout">
+      <div class="product-media">
+        <div class="media-frame"><img src="${p.image}" alt="${p.name}"></div>
+      </div>
+      <div class="product-info">
+        ${p.subtitle ? `<div class="subtitle">${p.subtitle}</div>` : ""}
+        <h1>${p.name}</h1>
+        <p class="tagline">${p.tagline}</p>
+        <p class="desc">${p.description}</p>
+
+        <div class="version-cards">
+          <div class="version-card pro" style="grid-column:1 / -1;">
+            <div class="vtitle">Available on Gumroad <span class="vprice">$${p.pricePro}</span></div>
+            <div class="vnote">Download and complete your purchase securely on Gumroad.</div>
+            <a class="btn btn-primary btn-block" href="${p.marketplaceUrl}" target="_blank" rel="noopener">Open on Gumroad ↗</a>
+          </div>
+        </div>
+
+        <h3 style="font-size:15px;margin:0 0 14px;">What's included</h3>
+        <ul class="feature-list">
+          ${p.features.map(f => `<li>${f}</li>`).join("")}
+        </ul>
+
+        <h3 style="font-size:15px;margin:0 0 6px;">System Requirements</h3>
+        <table class="spec-table">
+          ${Object.entries(p.specs).map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}
+        </table>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ---------------------------------------------------------
+   Router
+--------------------------------------------------------- */
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = viewHome();
+  window.scrollTo(0,0);
+}
+
+window.addEventListener("DOMContentLoaded", render);
+</script>
+</body>
+</html>

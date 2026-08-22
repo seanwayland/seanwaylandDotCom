@@ -693,6 +693,14 @@ section .container {
 /*--------------------------------------------------------------
 # Services
 --------------------------------------------------------------*/
+.shop-embed {
+  width: 100%;
+  min-height: 4200px;
+  border: 0;
+  display: block;
+  background: #121212;
+}
+
 .services .icon-box {
   text-align: center;
   background: rgba(204, 204, 204, 0.1);
