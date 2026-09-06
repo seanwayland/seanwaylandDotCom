@@ -1,0 +1,453 @@
+<title>WayloUD Delay</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#eee7d6;
+    --ink:#201b16;
+    --ink-dim:#5b5240;
+    --panel:#e2d8c0;
+    --panel-2:#d8ccae;
+    --line:#c3b48d;
+    --accent:#a8691f;
+    --accent-ink:#201b16;
+    --accent2:#276b64;
+    --danger:#a6392a;
+    --shadow: 0 1px 0 rgba(32,27,22,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#15120d;
+      --ink:#ece2ca;
+      --ink-dim:#a89975;
+      --panel:#211b12;
+      --panel-2:#2b2317;
+      --line:#3d3320;
+      --accent:#d99a4e;
+      --accent-ink:#15120d;
+      --accent2:#59baac;
+      --danger:#e26a56;
+      --shadow: 0 1px 0 rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#15120d;
+    --ink:#ece2ca;
+    --ink-dim:#a89975;
+    --panel:#211b12;
+    --panel-2:#2b2317;
+    --line:#3d3320;
+    --accent:#d99a4e;
+    --accent-ink:#15120d;
+    --accent2:#59baac;
+    --danger:#e26a56;
+    --shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+
+  *{ box-sizing:border-box; }
+  html{ color-scheme: light dark; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    font-size:16px; line-height:1.6;
+  }
+  ::selection{ background:var(--accent); color:var(--accent-ink); }
+
+  .head-face{ font-family:'Big Shoulders Display', 'Arial Narrow', sans-serif; text-transform:uppercase; letter-spacing:.02em; }
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; text-transform:uppercase; letter-spacing:.14em;
+    font-size:.72rem; color:var(--accent); font-weight:600;
+  }
+
+  a{ color:var(--accent2); }
+
+  .shell{ display:flex; max-width:1180px; margin:0 auto; }
+
+  /* ---- sidebar ---- */
+  nav.toc{
+    flex:0 0 220px; position:sticky; top:0; align-self:flex-start;
+    height:100vh; overflow-y:auto; padding:2.4rem 1.2rem 2rem 2rem;
+    border-right:1px solid var(--line);
+  }
+  nav.toc .brand{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:1.5rem;
+    letter-spacing:.01em; margin:0 0 .15rem;
+  }
+  nav.toc .brand small{ display:block; font-family:'IBM Plex Mono',monospace; font-weight:400;
+    font-size:.68rem; letter-spacing:.1em; color:var(--ink-dim); text-transform:uppercase; margin-top:.35rem; }
+  nav.toc ul{ list-style:none; margin:1.8rem 0 0; padding:0; }
+  nav.toc li{ margin-bottom:.15rem; }
+  nav.toc a{
+    display:block; padding:.4rem .5rem; border-radius:4px; text-decoration:none;
+    color:var(--ink-dim); font-size:.86rem; font-weight:500;
+  }
+  nav.toc a:hover{ color:var(--ink); background:var(--panel); }
+  nav.toc .num{ font-family:'IBM Plex Mono',monospace; color:var(--accent); margin-right:.5em; font-size:.78em; }
+
+  main{ flex:1; min-width:0; padding:2.4rem 2.4rem 6rem; max-width:900px; }
+
+  header.hero{ margin-bottom:2.6rem; }
+  header.hero h1{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    font-size:clamp(2.6rem, 6vw, 4.2rem); line-height:.92; margin:.3rem 0 .5rem; text-wrap:balance;
+  }
+  header.hero p.tag{ margin:0 0 1.6rem; color:var(--ink-dim); font-size:1.05rem; max-width:38em; }
+
+  section{ margin-bottom:3.4rem; scroll-margin-top:1.5rem; }
+  section > .eyebrow{ display:block; margin-bottom:.4rem; }
+  section h2{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:700;
+    font-size:2rem; margin:0 0 1rem; letter-spacing:.01em; text-wrap:balance;
+  }
+  section h3{
+    font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:1.05rem; margin:1.6rem 0 .5rem;
+  }
+  section p{ max-width:62ch; }
+  section > p:first-of-type{ margin-top:0; }
+
+  /* ---- diagram ---- */
+  .diagram-wrap{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:1.4rem 1.4rem 1.1rem; box-shadow:var(--shadow); margin:1.6rem 0 2rem;
+  }
+  .diagram-wrap svg{ width:100%; height:auto; display:block; }
+  .diagram-caption{
+    display:flex; justify-content:space-between; margin-top:.6rem;
+    font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--ink-dim); letter-spacing:.04em;
+  }
+  .badge{ fill:var(--accent); }
+  .badge-text{ fill:var(--accent-ink); font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:13px; }
+  .panel-line{ stroke:var(--line); }
+  .panel-fill{ fill:var(--panel-2); }
+  .knob-fill{ fill:var(--paper); stroke:var(--ink-dim); }
+  .led-dot{ fill:var(--accent2); }
+  @media (prefers-reduced-motion: no-preference){
+    .led-dot{ animation: pulse 2.6s ease-in-out infinite; }
+  }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+
+  /* ---- control entries ---- */
+  .control{
+    display:grid; grid-template-columns:2.4rem 1fr; gap:.9rem 1rem;
+    padding:1.1rem 0; border-top:1px solid var(--line);
+  }
+  .control:first-of-type{ border-top:none; padding-top:.3rem; }
+  .control .num{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:1.7rem;
+    color:var(--accent); line-height:1;
+  }
+  .control h4{ margin:0 0 .3rem; font-size:1.02rem; font-weight:600; }
+  .control .detail{ margin:0; max-width:60ch; }
+  .control .detail + .detail{ margin-top:.5rem; }
+  .control .sub{
+    margin:.6rem 0 0; padding-left:1.1rem; border-left:2px solid var(--line);
+    font-size:.94rem; color:var(--ink-dim);
+  }
+  .control .sub li{ margin-bottom:.35rem; }
+  .control .sub b{ color:var(--ink); font-weight:600; }
+
+  /* ---- callout ---- */
+  .callout{
+    background:var(--panel); border-left:3px solid var(--accent2); border-radius:0 8px 8px 0;
+    padding:.9rem 1.1rem; margin:1.2rem 0; font-size:.94rem;
+  }
+  .callout.warn{ border-left-color:var(--danger); }
+  .callout strong{ display:block; font-family:'IBM Plex Mono',monospace; text-transform:uppercase;
+    font-size:.68rem; letter-spacing:.1em; margin-bottom:.3rem; }
+  .callout.warn strong{ color:var(--danger); }
+  .callout:not(.warn) strong{ color:var(--accent2); }
+
+  /* ---- slot / preset table ---- */
+  .slotgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.9rem; margin:1.2rem 0; }
+  .slotcard{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:1rem 1.1rem;
+  }
+  .slotcard .n{ font-family:'IBM Plex Mono',monospace; color:var(--accent); font-size:.76rem;
+    letter-spacing:.08em; text-transform:uppercase; }
+  .slotcard h4{ margin:.3rem 0 .4rem; font-size:1.15rem; }
+  .slotcard p{ margin:0; font-size:.88rem; color:var(--ink-dim); }
+
+  /* ---- table ---- */
+  .tblwrap{ overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:1.2rem 0; }
+  table{ border-collapse:collapse; width:100%; min-width:520px; font-size:.9rem; }
+  thead th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; font-size:.68rem;
+    letter-spacing:.08em; color:var(--ink-dim); background:var(--panel); padding:.6rem .9rem;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{ padding:.55rem .9rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  tbody tr:last-child td{ border-bottom:none; }
+  td.cc{ font-family:'IBM Plex Mono',monospace; color:var(--accent); white-space:nowrap; }
+
+  /* ---- steps ---- */
+  ol.steps{ margin:1.2rem 0; padding:0; list-style:none; counter-reset:step; }
+  ol.steps li{
+    counter-increment:step; position:relative; padding:.15rem 0 .15rem 2.4rem; margin-bottom:1rem;
+  }
+  ol.steps li::before{
+    content:counter(step); position:absolute; left:0; top:0;
+    width:1.7rem; height:1.7rem; border-radius:50%; background:var(--accent); color:var(--accent-ink);
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:.85rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps p{ margin:0; }
+  ol.steps .note{ margin-top:.35rem; color:var(--ink-dim); font-size:.88rem; }
+
+  code{
+    font-family:'IBM Plex Mono',monospace; font-size:.88em; background:var(--panel);
+    padding:.1em .38em; border-radius:4px; border:1px solid var(--line);
+  }
+
+  footer{
+    border-top:1px solid var(--line); padding-top:1.4rem; margin-top:3rem;
+    font-size:.82rem; color:var(--ink-dim); display:flex; justify-content:space-between; flex-wrap:wrap; gap:.5rem;
+  }
+
+  @media (max-width:860px){
+    .shell{ display:block; }
+    nav.toc{ position:relative; height:auto; width:auto; border-right:none; border-bottom:1px solid var(--line);
+      padding:1.6rem 1.4rem; }
+    nav.toc ul{ display:flex; flex-wrap:wrap; gap:.2rem .6rem; margin-top:1rem; }
+    nav.toc li{ margin:0; }
+    main{ padding:2rem 1.4rem 4rem; }
+  }
+</style>
+
+<div class="shell">
+  <nav class="toc">
+    <p class="brand">WayloUD<br>Delay<small>Owner's reference</small></p>
+    <ul>
+      <li><a href="#controls"><span class="num">01</span>Controls</a></li>
+      <li><a href="#presets"><span class="num">02</span>Presets &amp; slots</a></li>
+      <li><a href="#midi"><span class="num">03</span>MIDI</a></li>
+      <li><a href="#editor"><span class="num">04</span>Editor</a></li>
+      <li><a href="#notes"><span class="num">05</span>Notes</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <span class="eyebrow">Daisy Pod &middot; eight-voice modulated delay</span>
+      <h1>WayloUD Delay</h1>
+      <p class="tag">Two knobs, two buttons, one encoder. Everything below maps directly onto the hardware in front of you — no menus to dig through.</p>
+
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 300" role="img" aria-label="Daisy Pod control panel diagram: two knobs at top, an encoder with LED in the center, two buttons below, input and output jacks on the top edge.">
+          <rect x="8" y="8" width="704" height="284" rx="16" class="panel-fill panel-line" stroke-width="1.5"/>
+
+          <!-- jacks -->
+          <circle cx="60" cy="30" r="9" class="knob-fill" stroke-width="2"/>
+          <circle cx="660" cy="30" r="9" class="knob-fill" stroke-width="2"/>
+          <text x="60" y="56" text-anchor="middle" class="mono" font-size="10" fill="var(--ink-dim)">IN</text>
+          <text x="660" y="56" text-anchor="middle" class="mono" font-size="10" fill="var(--ink-dim)">OUT</text>
+
+          <!-- knob 1 -->
+          <circle cx="185" cy="115" r="46" class="knob-fill" stroke-width="2.5"/>
+          <line x1="185" y1="115" x2="185" y2="78" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="185" cy="115" r="1" fill="var(--ink-dim)"/>
+          <circle class="badge" cx="228" cy="76" r="15"/>
+          <text class="badge-text" x="228" y="81" text-anchor="middle">1</text>
+
+          <!-- knob 2 -->
+          <circle cx="535" cy="115" r="46" class="knob-fill" stroke-width="2.5"/>
+          <line x1="535" y1="115" x2="565" y2="90" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
+          <circle class="badge" cx="578" cy="76" r="15"/>
+          <text class="badge-text" x="578" y="81" text-anchor="middle">2</text>
+
+          <!-- encoder -->
+          <circle cx="360" cy="150" r="52" class="knob-fill" stroke-width="2.5"/>
+          <circle cx="360" cy="150" r="8" class="led-dot"/>
+          <circle class="badge" cx="405" cy="108" r="15"/>
+          <text class="badge-text" x="405" y="113" text-anchor="middle">5</text>
+
+          <!-- buttons -->
+          <rect x="230" y="228" width="70" height="34" rx="7" class="knob-fill" stroke-width="2.5"/>
+          <text x="265" y="250" text-anchor="middle" class="mono" font-size="10" fill="var(--ink-dim)">1</text>
+          <circle class="badge" cx="303" cy="222" r="15"/>
+          <text class="badge-text" x="303" y="227" text-anchor="middle">3</text>
+
+          <rect x="420" y="228" width="70" height="34" rx="7" class="knob-fill" stroke-width="2.5"/>
+          <text x="455" y="250" text-anchor="middle" class="mono" font-size="10" fill="var(--ink-dim)">2</text>
+          <circle class="badge" cx="493" cy="222" r="15"/>
+          <text class="badge-text" x="493" y="227" text-anchor="middle">4</text>
+        </svg>
+        <div class="diagram-caption">
+          <span>1 KNOB&nbsp;1 &middot; 2 KNOB&nbsp;2 &middot; 3 BUTTON&nbsp;1 &middot; 4 BUTTON&nbsp;2 &middot; 5 ENCODER</span>
+          <span>LED glow = last data read from device</span>
+        </div>
+      </div>
+    </header>
+
+    <section id="controls">
+      <span class="eyebrow">01 — Hardware</span>
+      <h2>Controls</h2>
+      <p>Every control is global — it acts on whichever patch is currently loaded. Nothing here needs a menu or a screen; the numbers match the diagram above.</p>
+
+      <div class="control">
+        <span class="num">1</span>
+        <div>
+          <h4>Knob 1 — macro (patch-dependent)</h4>
+          <p class="detail">On most patches, this is the <b>More&nbsp;Beer / Zarabeth</b> macro: it eases the patch's own modulation depth and rate up or down together. Straight up (12 o'clock) is neutral — exactly what the patch was saved with. Turn left to calm the wobble down, right to push it further.</p>
+          <p class="detail">On six specific echo/delay patches, it does something different: it drives <b>delay time and feedback</b> together instead, same center-neutral idea, from 0.25&times; up to 3&times; the patch's stored values. Those six are listed in <a href="#presets">Presets &amp; slots</a>.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">2</span>
+        <div>
+          <h4>Knob 2 — wet level</h4>
+          <p class="detail">Sets the effect's wet (delayed) signal level, 0–100%. It only ever adds delay signal on top — it never touches the dry signal, which stays whatever the patch or editor set it to.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">3</span>
+        <div>
+          <h4>Button 1 — trim down</h4>
+          <p class="detail">Each press scales every voice's delay time <em>and</em> feedback down together by another 0.1&times;, to a floor of 0.25&times; the patch's stored values. Shorter repeats, less feedback.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">4</span>
+        <div>
+          <h4>Button 2 — trim up</h4>
+          <p class="detail">The mirror of Button 1: each press scales time and feedback up by 0.1&times;, to a ceiling of 3&times;. Longer repeats, more feedback — right up to self-oscillation territory near the top of the range.</p>
+          <p class="detail">Both trims reset to 1&times; (unmodified) whenever you change patches.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">5</span>
+        <div>
+          <h4>Encoder — three actions in one</h4>
+          <ul class="sub">
+            <li><b>Rotate</b> — scroll through patches, one step per detent. Skips any patch you've disabled from the editor's checklist; disabled patches are still reachable by MIDI Program Change.</li>
+            <li><b>Press &amp; release</b> — cycles the input/output routing, one step forward each time: <span class="mono">Stereo In/Out → Mono In/Stereo Out → Bypass → Mono In/Out → </span>back to Stereo.</li>
+            <li><b>Press &amp; hold</b> (&gt; ~0.3s) — quick-saves the current live sound to a user slot: if you're already on a user slot, it saves there; otherwise it saves to the next slot in a running rotation and advances that rotation for next time.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>LEDs</h3>
+      <p>LED&nbsp;1 shows a color unique to the loaded patch — same patch always looks the same, so you can spot a change at a glance without reading a screen. LED&nbsp;2 mirrors it at a third the brightness, except when bypass is active, when it goes solid red.</p>
+
+      <div class="callout warn">
+        <strong>No hardware bypass button</strong>
+        Bypass only toggles from the encoder's routing cycle (step 3 above), the editor's Bypass checkbox, or MIDI CC&nbsp;64 (sustain-pedal style, ≥64 = on).
+      </div>
+    </section>
+
+    <section id="presets">
+      <span class="eyebrow">02 — Memory</span>
+      <h2>Presets &amp; slots</h2>
+      <p>131 total slots: 32 factory, 99 user. Factory patches can't be overwritten from the front panel or MIDI — quick-save and editor saves always land in a user slot.</p>
+
+      <div class="slotgrid">
+        <div class="slotcard">
+          <span class="n">Slots 0–31</span>
+          <h4>Factory</h4>
+          <p>The "legend" chorus, lead-solo, swell and echo families, plus Waylochorus&nbsp;1 and Waylolead&nbsp;1. Fixed, read-only.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Slots 32–130</span>
+          <h4>User (99)</h4>
+          <p>Freely editable from the browser editor. Each can carry a custom name up to 12 characters, shown in place of the default "User&nbsp;NN" label.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">25 of the 99</span>
+          <h4>Magicstomp imports</h4>
+          <p>Pre-loaded by default from a real Magicstomp patch bank, each in the same slot number it held on that bank.</p>
+        </div>
+      </div>
+
+      <h3>The six delay-time/feedback patches</h3>
+      <p>These are the only patches where Knob&nbsp;1 controls delay time + feedback instead of the usual depth/rate macro — all genuine echo/delay-type imports, not chorus or modulation patches:</p>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Slot</th><th>Name</th><th>Source type</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">53</td><td>TapeEcho</td><td>ModDelay</td></tr>
+            <tr><td class="mono">55</td><td>AnalogDelay</td><td>ModDelay</td></tr>
+            <tr><td class="mono">56</td><td>PingPongDly</td><td>Eight Multi-Tap Mod Delay</td></tr>
+            <tr><td class="mono">57</td><td>AnalogModDly</td><td>Eight Multi-Tap Mod Delay</td></tr>
+            <tr><td class="mono">78</td><td>MachineGun</td><td>Eight Multi-Tap Mod Delay</td></tr>
+            <tr><td class="mono">79</td><td>RotModDly</td><td>Eight Multi-Tap Mod Delay</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <strong>About the Magicstomp defaults</strong>
+        They ship baked into the firmware but load only on a brand-new device or after an explicit Factory Reset from the editor — reflashing firmware onto a device that already has saved settings leaves those settings untouched.
+      </div>
+    </section>
+
+    <section id="midi">
+      <span class="eyebrow">03 — Remote control</span>
+      <h2>MIDI</h2>
+      <p>Program Change selects any of the 131 slots directly (including disabled ones). Seven Control Changes reach the parameters the front panel doesn't expose on its own:</p>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>CC</th><th>Name</th><th>Does</th></tr></thead>
+          <tbody>
+            <tr><td class="cc">1</td><td>Mod wheel</td><td>More Beer macro (depth) — independent of Knob&nbsp;1</td></tr>
+            <tr><td class="cc">2</td><td>Breath</td><td>Zarabeth macro (rate) — independent of Knob&nbsp;1</td></tr>
+            <tr><td class="cc">7</td><td>Channel volume</td><td>Wet level — same parameter as Knob&nbsp;2</td></tr>
+            <tr><td class="cc">11</td><td>Expression</td><td>Dry level</td></tr>
+            <tr><td class="cc">64</td><td>Sustain</td><td>Bypass — &ge;64 is on, &lt;64 is off</td></tr>
+            <tr><td class="cc">71</td><td>—</td><td>Global depth macro</td></tr>
+            <tr><td class="cc">74</td><td>—</td><td>Global rate macro</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>CC&nbsp;1 and CC&nbsp;2 stack multiplicatively with Knob&nbsp;1 rather than overriding it — on delay-type patches they leave Knob&nbsp;1's time/feedback job alone and keep working the old depth/rate macro underneath.</p>
+    </section>
+
+    <section id="editor">
+      <span class="eyebrow">04 — Software</span>
+      <h2>Browser editor</h2>
+      <p>The full parameter set — beyond what two knobs and two buttons can reach — lives in <code>waylo_ud_editor.html</code>, a self-contained page that talks to the Pod over USB via WebSerial. No install, no server; it needs a WebSerial-capable browser (Chrome or Edge).</p>
+
+      <ol class="steps">
+        <li>
+          <p>Plug the Pod in over USB and open the editor page. Click <b>Connect</b> and pick its serial port from the browser's prompt.</p>
+        </li>
+        <li>
+          <p>Adjust any of the 52 parameters, grouped as Core Mix, Delay Times, Delay Gains, Mod Depth &amp; Rate, and Feedback &amp; Pan — eight per-voice sliders per group.</p>
+          <p class="note">Changes to a loaded user slot write live; factory slots are read-only until you save them into a user slot.</p>
+        </li>
+        <li>
+          <p>Save the current sound to any of the 99 user slots, with an optional name up to 12 characters.</p>
+        </li>
+        <li>
+          <p>To import a Magicstomp <code>.ub9</code> library file, use the Import panel: pick the file, review which patches converted, then save one at a time or use <b>Save All to Selected Slots</b>.</p>
+          <p class="note">Only four Magicstomp effect types have a WayloUD equivalent and convert: Eight Band Parallel Delay, Mod Delay, Eight Multi-Tap Mod Delay, and Symphonic. Reverb, pitch-shift, phaser, distortion and amp-sim patches have nothing to convert to and are skipped.</p>
+        </li>
+        <li>
+          <p>Use the patch checklist to enable or disable which of the 131 slots the front-panel encoder scrolls past.</p>
+        </li>
+      </ol>
+
+      <div class="callout warn">
+        <strong>Factory Reset</strong>
+        Wipes every user slot back to firmware defaults, including the 25 Magicstomp imports. It's the only way to bring those defaults onto a device that already has different settings saved.
+      </div>
+    </section>
+
+    <section id="notes">
+      <span class="eyebrow">05 — Good to know</span>
+      <h2>Notes</h2>
+      <h3>Turning Knob 1 sounds smooth, not clicky</h3>
+      <p>On the six delay-time/feedback patches, the read position inside the delay buffer glides toward wherever the knob is pointing rather than jumping there — this is what keeps a fast turn from producing a click or "zipper" artifact, especially with feedback recirculating.</p>
+      <h3>Chorus and lead patches are unaffected by that</h3>
+      <p>Knob&nbsp;1's job is decided per patch, explicitly — by name, not by measuring the patch's own delay times — so nothing outside the six listed patches changed behavior when they were added.</p>
+    </section>
+
+    <footer>
+      <span>WayloUD Delay &middot; Daisy Pod firmware</span>
+      <span class="mono">v.2026080B</span>
+    </footer>
+  </main>
+</div>
