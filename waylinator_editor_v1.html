@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   WAYLORD / Waylinator editor -- v1, frozen 2026-09-21
-  Built from daisy_dual_engine 9ff6b15 2026-09-21
+  Built from daisy_dual_engine 3eacffc 2026-09-21
   One file: the logo and sample_builder.js are inlined, so it needs nothing
   else uploaded beside it. Needs Chrome or Edge (Web MIDI).
 -->
@@ -51,7 +51,7 @@
 
   .row{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
   .row label{ width:100px; flex-shrink:0; font-size:13px; color:#cfcbd9; }
-  input[type=range]{ flex:1; accent-color:var(--accent); }
+  input[type=range]{ flex:1 1 0; min-width:0; accent-color:var(--accent); }
   .val{ width:40px; text-align:right; font-variant-numeric:tabular-nums; font-size:12.5px; color:var(--accent); }
 
   .keys{ display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
@@ -117,11 +117,11 @@
   .pm4-ops { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
   .pm4-op h3 { margin: 0 0 4px; font-size: 13px; color: var(--accent); }
   .pm4-op .row label { width: 58px; }
-  .adsr-num{ width:64px; margin-left:8px; background:#141318; color:#eee; border:1px solid #3a3a46;
+  .adsr-num{ flex:0 0 auto; width:58px; background:#141318; color:#eee; border:1px solid #3a3a46;
              border-radius:4px; padding:3px 5px; font-size:12.5px; text-align:right;
              font-variant-numeric:tabular-nums; }
   .adsr-num:focus{ outline:1px solid var(--accent); }
-  .adsr-unit{ width:22px; margin-left:4px; color:var(--muted); font-size:12px; }
+  .adsr-unit{ flex:0 0 auto; width:20px; margin-left:-6px; color:var(--muted); font-size:12px; }
   table.ccmap{ width:100%; border-collapse:collapse; font-size:12.5px; }
   table.ccmap th{ text-align:left; padding:4px 10px 4px 0; color:var(--accent); font-weight:600; border-bottom:1px solid #333; }
   table.ccmap td{ padding:3px 10px 3px 0; vertical-align:top; border-bottom:1px solid #222; }
