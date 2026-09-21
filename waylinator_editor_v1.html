@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   WAYLORD / Waylinator editor -- v1, frozen 2026-09-21
-  Built from daisy_dual_engine c93a7ea 2026-09-21
+  Built from daisy_dual_engine 9ff6b15 2026-09-21
   One file: the logo and sample_builder.js are inlined, so it needs nothing
   else uploaded beside it. Needs Chrome or Edge (Web MIDI).
 -->
@@ -117,6 +117,11 @@
   .pm4-ops { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
   .pm4-op h3 { margin: 0 0 4px; font-size: 13px; color: var(--accent); }
   .pm4-op .row label { width: 58px; }
+  .adsr-num{ width:64px; margin-left:8px; background:#141318; color:#eee; border:1px solid #3a3a46;
+             border-radius:4px; padding:3px 5px; font-size:12.5px; text-align:right;
+             font-variant-numeric:tabular-nums; }
+  .adsr-num:focus{ outline:1px solid var(--accent); }
+  .adsr-unit{ width:22px; margin-left:4px; color:var(--muted); font-size:12px; }
   table.ccmap{ width:100%; border-collapse:collapse; font-size:12.5px; }
   table.ccmap th{ text-align:left; padding:4px 10px 4px 0; color:var(--accent); font-weight:600; border-bottom:1px solid #333; }
   table.ccmap td{ padding:3px 10px 3px 0; vertical-align:top; border-bottom:1px solid #222; }
@@ -232,12 +237,12 @@
         <div class="sub" style="margin-bottom:12px;">Reaches Sine/Saw/Square/Pulse, CDG Rotator, Waylo Xfade2's square half, and the sample voices (Vintage Vibe, Waylo Tele, Sustain Steel and the SD instruments) — on those, Attack sets the fade-in length and Release the fade-out, with Decay/Sustain unused since the recording provides its own decay. Not mda/FM/Guitar, which have their own envelopes. <strong>Attack also sets how quickly a sample speaks</strong>: at the factory default (2) every sampled note fades in over ~31ms.</div>
         <div class="mini-cols">
           <div>
-            <div class="row"><label>Attack</label><input type="range" id="adsrAttack" min="0" max="16256" value="256"><span class="val" id="adsrAttackVal"></span></div>
-            <div class="row"><label>Decay</label><input type="range" id="adsrDecay" min="0" max="16256" value="4864"><span class="val" id="adsrDecayVal"></span></div>
+            <div class="row"><label>Attack</label><input type="range" id="adsrAttack" min="0" max="16256" value="256"><input type="number" class="adsr-num" id="adsrAttackNum" min="0" max="2000" step="1"><span class="adsr-unit">ms</span></div>
+            <div class="row"><label>Decay</label><input type="range" id="adsrDecay" min="0" max="16256" value="4864"><input type="number" class="adsr-num" id="adsrDecayNum" min="0" max="3000" step="1"><span class="adsr-unit">ms</span></div>
           </div>
           <div>
-            <div class="row"><label>Sustain</label><input type="range" id="adsrSustain" min="0" max="16256" value="14592"><span class="val" id="adsrSustainVal"></span></div>
-            <div class="row"><label>Release</label><input type="range" id="adsrRelease" min="0" max="16256" value="896"><span class="val" id="adsrReleaseVal"></span></div>
+            <div class="row"><label>Sustain</label><input type="range" id="adsrSustain" min="0" max="16256" value="14592"><input type="number" class="adsr-num" id="adsrSustainNum" min="0" max="100" step="0.1"><span class="adsr-unit">%</span></div>
+            <div class="row"><label>Release</label><input type="range" id="adsrRelease" min="0" max="16256" value="896"><input type="number" class="adsr-num" id="adsrReleaseNum" min="0" max="2000" step="1"><span class="adsr-unit">ms</span></div>
           </div>
         </div>
       </div>
@@ -1770,24 +1775,49 @@ function adsrSnap(k, raw) {
   const ms = Math.round(raw / perMs);
   return Math.max(0, Math.min(ADSR_RAW_MAX, Math.round(ms * perMs)));
 }
+// What a raw value reads as in the box: milliseconds for the three times,
+// a percentage for sustain (which is a level, not a time).
+function adsrShown(k, raw) {
+  const x = Math.min(1, raw / 128 / 127);
+  return ADSR_MAX_S[k] === null ? Math.round(x * 1000) / 10 : Math.round(x * ADSR_MAX_S[k] * 1000);
+}
+// ...and the other way, for a typed value.
+function adsrRawFromShown(k, shown) {
+  const x = ADSR_MAX_S[k] === null ? shown / 100 : shown / (ADSR_MAX_S[k] * 1000);
+  return Math.max(0, Math.min(ADSR_RAW_MAX, Math.round(x * ADSR_RAW_MAX)));
+}
 function paintAdsr(k) {
   const v = parseInt(document.getElementById(ADSR_IDS[k]).value, 10);
-  const x = Math.min(1, v / 128 / 127);
-  document.getElementById(ADSR_IDS[k] + 'Val').textContent =
-    ADSR_MAX_S[k] === null ? `${(x * 100).toFixed(2)}%` : `${Math.round(x * ADSR_MAX_S[k] * 1000)} ms`;
+  const box = document.getElementById(ADSR_IDS[k] + 'Num');
+  // Don't fight someone mid-type.
+  if (box && document.activeElement !== box) box.value = String(adsrShown(k, v));
 }
 ADSR_IDS.forEach((id, k) => {
   const el = document.getElementById(id);
+  const box = document.getElementById(id + 'Num');
   paintAdsr(k);
-  el.addEventListener('input', () => {
-    const v = adsrSnap(k, parseInt(el.value, 10));
-    if (v !== parseInt(el.value, 10)) el.value = String(v); // land on a whole millisecond
+  // One path for both the slider and the box: put `raw` in, send it on.
+  const applyRaw = (raw) => {
+    const v = adsrSnap(k, Math.max(0, Math.min(ADSR_RAW_MAX, raw)));
+    el.value = String(v);
     paintAdsr(k);
     sendCC(ADSR_CC[k], Math.floor(v / 128));
     sendNrpn(NRPN.ADSR_FINE_BASE + k, v % 128);
     commitUiIntoPatch(currentPatch);
     savePatchesToBrowser();
-  });
+  };
+  el.addEventListener('input', () => applyRaw(parseInt(el.value, 10)));
+  if (box) {
+    // While typing, follow what's there if it's a number; on blur or Enter,
+    // put the box back to what the value actually is (clamped, snapped).
+    box.addEventListener('input', () => {
+      const shown = parseFloat(box.value);
+      if (!Number.isNaN(shown)) applyRaw(adsrRawFromShown(k, shown));
+    });
+    box.addEventListener('change', () => paintAdsr(k));
+    box.addEventListener('blur', () => paintAdsr(k));
+    box.addEventListener('keydown', (e) => { if (e.key === 'Enter') box.blur(); });
+  }
 });
 
 // --- Generic per-patch slider bindings (global panel section, saved) ----
