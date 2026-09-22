@@ -1139,11 +1139,31 @@ function sendPitchBend(v14) {
 
 // --- MIDI connection -------------------------------------------------
 async function initMidi() {
+  const select0 = document.getElementById('portSelect');
   if (!navigator.requestMIDIAccess) {
-    document.getElementById('portSelect').innerHTML = '<option>Web MIDI not supported in this browser</option>';
+    select0.innerHTML = '<option>Web MIDI not supported \u2014 use Chrome or Edge</option>';
     return;
   }
-  const access = await navigator.requestMIDIAccess();
+  // Chrome asks for MIDI permission per site. Dismissed or blocked, this
+  // rejects -- and unhandled it used to kill the whole setup silently: an
+  // empty port list, a Connect button that did nothing, and no clue why.
+  let access;
+  try {
+    access = await navigator.requestMIDIAccess();
+  } catch (err) {
+    select0.innerHTML = '<option>MIDI permission blocked</option>';
+    const note = document.getElementById('syncNote');
+    if (note) {
+      note.innerHTML = 'This page needs permission to use MIDI. Click the icon at the left of the address bar, '
+        + 'set <strong>MIDI devices</strong> to Allow, then <a href="#" id="midiRetry">try again</a> '
+        + '(or reload). On a fresh visit the prompt appears when you press Allow.';
+      note.style.color = '#c33';
+      const retry = document.getElementById('midiRetry');
+      if (retry) retry.addEventListener('click', (e) => { e.preventDefault(); note.textContent = ''; note.style.color = ''; initMidi(); });
+    }
+    return;
+  }
+
   const select = document.getElementById('portSelect');
   function refreshPorts() {
     select.innerHTML = '';
