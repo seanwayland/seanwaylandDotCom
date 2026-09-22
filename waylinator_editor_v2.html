@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <!--
   WAYLORD / Waylinator editor -- v2, built 2026-09-21
-  From daisy_dual_engine a941f7d 2026-09-21
-  New in v2: audio input, mono output, the encoder as volume, and updating
-  the firmware from this page (Chrome or Edge, WebUSB).
+  From daisy_dual_engine 7db75a6 2026-09-21
+  v2: six in/out modes on the encoder's tap (synth or effects-only, mono or
+  stereo), audio input through the effects, the encoder as volume, and
+  updating the firmware from this page (Chrome or Edge, WebUSB).
   Needs v2 firmware. Boards on v1 should use waylinator_editor_v1.html.
   One file: the logo, webdfu.js and sample_builder.js are all inlined.
 -->
@@ -210,6 +211,18 @@
   <div class="panel">
     <h2>Audio input &amp; output <span style="color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0;">&mdash; input per patch, mono output for the instrument</span></h2>
     <div class="sub" style="margin-bottom:10px;">Whatever is plugged into the Pod's inputs goes through the same effects as the engines. Level 0 is off; 100 is unity and above that it drives into clipping on purpose. <strong>Mono input</strong> takes the left input to both sides, for a guitar or anything else on one jack. Turn both slots' Vol down to use the Pod as an effects box. <strong>Mono output</strong> sends the same sum out of both jacks and the headphones &mdash; for a single channel on a desk; it belongs to the instrument, not the patch.</div>
+    <div class="row" style="margin-bottom:12px;">
+      <label>In/out mode</label>
+      <select id="ioMode" style="flex:1;">
+        <option value="0">1 &mdash; synth / samples, stereo out</option>
+        <option value="1">2 &mdash; synth / samples, mono out</option>
+        <option value="2">3 &mdash; synth / samples blended with the input, stereo out</option>
+        <option value="3">4 &mdash; effects only, stereo in, stereo out</option>
+        <option value="4">5 &mdash; effects only, mono in, stereo out</option>
+        <option value="5">6 &mdash; effects only, mono in, mono out</option>
+      </select>
+    </div>
+    <div class="sub" style="margin:-4px 0 12px;"><strong>Tapping the Pod's encoder steps through these six</strong>, and the LEDs flash the mode's colour: green, blue, yellow, orange, magenta, red. It belongs to the instrument, not the patch. In the effects-only modes the patch's own effects still do the work &mdash; a patch with just phaser and reverb is a phaser and reverb pedal &mdash; the engines simply aren't heard. The Input level below still sets how much input; a patch that never set one gets unity.</div>
     <div class="mini-cols">
       <div>
         <div class="row"><label>Input level</label><input type="range" id="audioInLevel" min="0" max="127" value="0"><span class="val" id="audioInLevelVal"></span></div>
@@ -350,6 +363,8 @@
               <td style="padding:3px 0;">Delay amount &mdash; wet and feedback together. Same hand-over as Knob 1.</td></tr>
           <tr><td style="padding:3px 10px 3px 0; white-space:nowrap; color:var(--accent);">Encoder turn</td>
               <td style="padding:3px 0;"><strong>Volume</strong> &mdash; outputs and headphones together, from silence up into clipping. (Pulse width moved to the sliders here and CC23/51.)</td></tr>
+          <tr><td style="padding:3px 10px 3px 0; white-space:nowrap; color:var(--accent);">Encoder tap</td>
+              <td style="padding:3px 0;">Steps through the six in/out modes (synth or effects-only, mono or stereo). The LEDs flash the mode's colour.</td></tr>
           <tr><td style="padding:3px 10px 3px 0; white-space:nowrap; color:var(--accent);">Encoder held</td>
               <td style="padding:3px 0;">Half a second brings you back to patch 1, wherever you are.</td></tr>
           <tr><td style="padding:3px 10px 3px 0; white-space:nowrap; color:var(--accent);">Button 1 / 2</td>
@@ -568,6 +583,7 @@
       <tr><td class="num">15</td><td class="what">Waylinator ADSR box</td><td>off keeps the original patch's own envelope</td></tr>
       <tr><td class="num">16, 17, 18</td><td class="what">Velocity &rarr; FM, Feedback, Filter</td><td>64 = none</td></tr>
       <tr><td class="num">19, 23</td><td class="what">Audio input</td><td>level (0 off, 100 unity, above that clips), and left input to both sides</td></tr>
+      <tr><td class="num">25</td><td class="what">In/out mode</td><td>0&ndash;5, what the encoder's tap cycles &mdash; the instrument's, not the patch's</td></tr>
       <tr><td class="num">24</td><td class="what">Mono output</td><td>the same sum out of both jacks &mdash; the instrument's, not the patch's</td></tr>
       <tr><td class="num">20, 21, 22</td><td class="what">Organ</td><td>touch, percussion volume, scanner vibrato &mdash; per organ (NRPN&nbsp;14)</td></tr>
       <tr><td class="num">30, 31, 32&ndash;63</td><td class="what">4-Op PM</td><td>manual edit, algorithm, then 4 operators &times; 8 values &mdash; per slot (NRPN&nbsp;9)</td></tr>
@@ -1310,7 +1326,7 @@ function showPatchFx(p) {
 const NRPN = { SAVE: 2, LOAD: 3, FACTORY_RESET: 4, DUMP: 5, BOOTLOADER: 6,
                PM4_TARGET: 9, SPLIT_ON: 10, SPLIT_NOTE: 11, TRANSPOSE_BASE: 12, ORGAN_TARGET: 14,
                WAYL_ADSR: 15, VEL_FM: 16, VEL_FB: 17, VEL_FILTER: 18,
-               AUDIO_IN_LEVEL: 19, AUDIO_IN_MONO: 23, MONO_OUT: 24,
+               AUDIO_IN_LEVEL: 19, AUDIO_IN_MONO: 23, MONO_OUT: 24, IO_MODE: 25,
                ORGAN_TOUCH: 20, PERC_VOLUME: 21, ORGAN_VIBRATO: 22,
                PM4_MANUAL: 30, PM4_ALGO: 31, PM4_OP_BASE: 32,
                EQ_RIGHT_BASE: 70, DOUBLE_BASE: 80,
@@ -2720,6 +2736,8 @@ function paintAudioIn() {
 audioInLevelEl.addEventListener('input', () => { paintAudioIn(); sendNrpn(NRPN.AUDIO_IN_LEVEL, parseInt(audioInLevelEl.value, 10)); });
 audioInMonoEl.addEventListener('change', () => sendNrpn(NRPN.AUDIO_IN_MONO, audioInMonoEl.checked ? 127 : 0));
 monoOutEl.addEventListener('change', () => sendNrpn(NRPN.MONO_OUT, monoOutEl.checked ? 127 : 0));
+const ioModeEl = document.getElementById('ioMode');
+ioModeEl.addEventListener('change', () => sendNrpn(NRPN.IO_MODE, parseInt(ioModeEl.value, 10)));
 paintAudioIn();
 
 // --- Split and transpose (NRPN 10-13, per patch) -------------------------
@@ -2810,6 +2828,7 @@ function applyNrpnFromDevice(param, val) {
   if (param === NRPN.AUDIO_IN_LEVEL) { audioInLevelEl.value = String(val); paintAudioIn(); return; }
   if (param === NRPN.AUDIO_IN_MONO) { audioInMonoEl.checked = val >= 64; return; }
   if (param === NRPN.MONO_OUT) { monoOutEl.checked = val >= 64; return; }
+  if (param === NRPN.IO_MODE) { ioModeEl.value = String(Math.min(val, 5)); return; }
   if (param === NRPN.SPLIT_ON) { splitOnEl.checked = val >= 64; paintSplit(); return; }
   if (param === NRPN.SPLIT_NOTE) { splitNoteEl.value = String(Math.min(val, 127)); paintSplit(); return; }
   if (param >= NRPN.TRANSPOSE_BASE && param < NRPN.TRANSPOSE_BASE + NUM_SLOTS) {
