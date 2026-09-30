@@ -30,14 +30,46 @@ class DfuDevice {
   constructor(device, iface) {
     this.device = device;
     this.interfaceNumber = iface;
-    this.transferSize = 1024; // the bootloader's own block size
+    // A safe default only. The real value is read from the device in open()
+    // -- see readTransferSize(). Hardcoding it is what broke the browser
+    // updater: the Daisy bootloader reports 4096, and in DfuSe the DEVICE
+    // computes each block's destination as addr + (block - 2) * wTransferSize.
+    // Sending 1024-byte blocks against a 4096 transfer size therefore places
+    // them 4KB apart while supplying only 1KB each: three quarters of the
+    // image never arrives, every transfer reports success, and the board does
+    // not boot. That is exactly what happened, three times.
+    this.transferSize = 1024;
   }
 
   async open() {
     await this.device.open();
     if (this.device.configuration === null) await this.device.selectConfiguration(1);
     await this.device.claimInterface(this.interfaceNumber);
+    await this.readTransferSize();
     await this.toIdle();
+  }
+
+  // wTransferSize lives in the DFU functional descriptor (bDescriptorType
+  // 0x21) inside the configuration descriptor. WebUSB does not surface it,
+  // so the raw configuration descriptor is fetched and walked.
+  async readTransferSize() {
+    try {
+      const r = await this.device.controlTransferIn(
+        { requestType: 'standard', recipient: 'device', request: 0x06 /* GET_DESCRIPTOR */,
+          value: 0x0200 /* CONFIGURATION, index 0 */, index: 0 }, 512);
+      if (r.status !== 'ok' || !r.data) return;
+      const d = new Uint8Array(r.data.buffer);
+      for (let i = 0; i + 1 < d.length; ) {
+        const len = d[i], type = d[i + 1];
+        if (len === 0) break;
+        if (type === 0x21 && i + 6 < d.length) {
+          const ts = d[i + 5] | (d[i + 6] << 8);
+          if (ts >= 64 && ts <= 16384) this.transferSize = ts;
+          return;
+        }
+        i += len;
+      }
+    } catch (e) { /* keep the default */ }
   }
 
   // A DFU device remembers how the last session ended. Left in dfuERROR by a
