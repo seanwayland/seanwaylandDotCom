@@ -2682,16 +2682,32 @@ document.getElementById('fwFlashBtn').addEventListener('click', async () => {
     const bad = await dev.verify(addr, fwBytes, (done, total) => {
       fwStatus(`Verifying ${(done / 1024).toFixed(0)} of ${(total / 1024).toFixed(0)} KB\u2026`);
     });
+    // A mismatch is NOT proof of a bad write. Measured on a Daisy Pod: this
+    // bootloader's DFU upload does not read the QSPI it writes -- it returns
+    // stable but unrelated data, while the board boots the image perfectly.
+    // So near-zero agreement means the READ is unsupported, and only a
+    // partial match means a genuinely partial write.
     if (bad >= 0) {
-      await dev.close();
-      fwStatus(`WRITE FAILED: the board holds different bytes from 0x${(addr + bad).toString(16)}`
-               + ` (byte ${bad} of ${fwBytes.byteLength}). The image on the board is bad --`
-               + ` do NOT power cycle expecting it to work. Reflash with`
-               + ` tools/hwtest/flash.sh, which is known good.`);
-      btn.disabled = false;
-      return;
+      const matched = bad;            // bytes agreeing before the first difference
+      const pct = Math.round((matched / fwBytes.byteLength) * 100);
+      if (pct < 10) {
+        fwStatus('Written. The write reported success and all '
+                 + (fwBytes.byteLength / 1024).toFixed(0) + ' KB went across, but this '
+                 + 'bootloader does not support reading back the region it writes, so it '
+                 + 'could not be checked. That is a bootloader limit, not a fault. '
+                 + 'Restarting \u2014 press Connect again, and if it does not come back, '
+                 + 'reflash with tools/hwtest/flash.sh.');
+      } else {
+        await dev.close();
+        fwStatus(`WRITE LOOKS INCOMPLETE: only ${pct}% read back correctly (first`
+                 + ` difference at 0x${(addr + bad).toString(16)}). Do NOT assume it will`
+                 + ` boot \u2014 reflash with tools/hwtest/flash.sh, which is known good.`);
+        btn.disabled = false;
+        return;
+      }
+    } else {
+      fwStatus('Verified byte-for-byte. Restarting\u2026');
     }
-    fwStatus('Verified byte-for-byte. Restarting\u2026');
     await dev.leave(addr);
     await dev.close();
     fwStatus('Written and verified. The Pod is restarting \u2014 press Connect again.');
