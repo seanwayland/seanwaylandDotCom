@@ -21,7 +21,11 @@ const DAISY_APP_ADDRESS      = 0x90040000; // the app, in QSPI
 const DAISY_WAVEDATA_ADDRESS = 0x900C0000; // the compiled-in samples
 
 class DfuDevice {
-  layout() { return layoutOf(this.device, this.iface); }
+  // this.interfaceNumber, NOT this.iface -- the constructor below names it
+  // the former. Reading the wrong field returned '' every time, so
+  // layoutCovers() always answered "cannot judge" and the refusal that is
+  // supposed to stop a write to the wrong bootloader never fired.
+  layout() { return layoutOf(this.device, this.interfaceNumber); }
 
   constructor(device, iface) {
     this.device = device;
@@ -33,6 +37,28 @@ class DfuDevice {
     await this.device.open();
     if (this.device.configuration === null) await this.device.selectConfiguration(1);
     await this.device.claimInterface(this.interfaceNumber);
+    await this.toIdle();
+  }
+
+  // A DFU device remembers how the last session ended. Left in dfuERROR by a
+  // failed attempt -- or part-way through a download -- it rejects the next
+  // command block, and the STM32 reports that as status 11, errVENDOR: "it
+  // went wrong and I do not know why". That is what an erase failed with
+  // after the earlier broken attempt: nothing was wrong with the erase, the
+  // device simply had not been told the previous conversation was over.
+  //
+  // dfu-util does this on every connect, which is why it always worked from
+  // the command line while the browser did not.
+  async toIdle() {
+    for (let i = 0; i < 4; i++) {
+      let s;
+      try { s = await this.getStatus(); } catch (e) { return; }
+      if (s.state === STATE_DFU_IDLE) return;
+      if (s.state === STATE_DFU_ERROR) { await this.clearStatus(); continue; }
+      // Anything else (a download left open, a manifest pending) is ended
+      // with ABORT rather than waited out.
+      try { await this.controlOut(DFU_ABORT, 0, undefined); } catch (e) { /* keep trying */ }
+    }
   }
 
   async close() {
@@ -91,7 +117,7 @@ class DfuDevice {
   async erasePage(addr) {
     const cmd = new Uint8Array([0x41, addr & 0xff, (addr >> 8) & 0xff, (addr >> 16) & 0xff, (addr >> 24) & 0xff]);
     await this.controlOut(DFU_DNLOAD, 0, cmd);
-    await this.poll('erasing');
+    await this.poll('erasing 0x' + addr.toString(16));
   }
 
   async leave() {
