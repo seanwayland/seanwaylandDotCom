@@ -691,13 +691,11 @@
         </div>
         <div class="sub" id="patchFileStatus" style="margin-top:8px;"></div>
 
-        <div class="sub" style="margin:14px 0 10px;"><strong>Update the firmware</strong> &mdash; needs Chrome or Edge. <strong>Put the Pod in DFU first</strong>: press <em>Reboot to DFU</em> above, or hold BOOT and tap RESET. Then choose the file and press Update. It cannot reboot the Pod for you as part of the same press &mdash; the browser only allows a device-permission prompt while it is still handling the click that asked for it, so the two have to be separate presses. On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can talk to it. If an update is interrupted the Pod sits in its bootloader and nothing is lost: run this again. This updates the firmware only &mdash; the sounds live on the microSD card and are never touched.</div>
-        <div class="btns">
-          <button id="fwPickBtn">Choose firmware file&hellip;</button>
-          <button id="fwFlashBtn" class="danger" disabled>Update</button>
-          <input type="file" id="fwFile" accept=".bin" style="display:none;">
-        </div>
-        <div class="sub" id="fwStatus" style="margin-top:8px;"></div>
+        <div class="sub" style="margin:14px 0 10px;"><strong>Updating the firmware</strong>
+          &mdash; use the <em>Waylo Firmware Updater</em> app on your Mac. Press
+          <em>Reboot to DFU</em> above first, or just let the app tell you to
+          unplug and replug. Updating the firmware never touches your sounds:
+          those are files on the microSD card.</div>
       </div>
 <div class="panel">
         <h2>Browser presets <span style="color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0;">— separate from the device's 10 patches</span></h2>
@@ -833,7 +831,6 @@
   </footer>
 </div>
 
-<script src="webdfu.js"></script>
 <script src="sample_builder.js"></script>
 <script>
 // InstrumentType order must match dual_voice.h exactly.
@@ -2579,129 +2576,35 @@ document.getElementById('loadBankFile').addEventListener('change', async (e) => 
   requestDumpFromDevice(); // show what the Pod now holds
 });
 
-// --- Updating the firmware from here (WebUSB, see webdfu.js) -------------
-// The app and the sample data are two separate images at two addresses; the
-// sample data only changes when the built-in sampled instruments do, and
-// takes a few minutes, so it's a separate choice rather than something this
-// does every time.
-let fwBytes = null, fwName = '';
-const fwStatus = (t) => { document.getElementById('fwStatus').textContent = t; };
-document.getElementById('fwPickBtn').addEventListener('click', () => document.getElementById('fwFile').click());
-document.getElementById('fwFile').addEventListener('change', async (e) => {
-  const f = e.target.files[0];
-  e.target.value = '';
-  if (!f) return;
-  const picked = new Uint8Array(await f.arrayBuffer());
-  // The firmware is about 480 KB and only ever writes to the app slot. A
-  // multi-megabyte file used to mean "the sample data", which was a second
-  // image written into QSPI; that is gone -- the sounds are on the SD card
-  // now -- so a file that big is simply the wrong file, and offering to
-  // write it is how a board gets bricked.
-  if (picked.byteLength > 2 * 1024 * 1024) {
-    fwBytes = null;
-    document.getElementById('fwFlashBtn').disabled = true;
-    fwStatus(`${f.name} is ${(picked.byteLength / 1048576).toFixed(1)} MB \u2014 too big to be `
-             + `firmware, so it was not loaded. The firmware file is app_only.bin, about 480 KB. `
-             + `Sounds are not updated this way: they are files on the microSD card.`);
-    return;
-  }
-  fwBytes = picked;
-  fwName = f.name;
-  document.getElementById('fwFlashBtn').disabled = false;
-  fwStatus(`${fwName}, ${(fwBytes.byteLength / 1024).toFixed(0)} KB. Press Update to write it.`);
-});
-
-document.getElementById('fwFlashBtn').addEventListener('click', async () => {
-  if (!fwBytes) return;
-  const addr = WebDfu.DAISY_APP_ADDRESS; // the app slot, and nothing else
-  const btn = document.getElementById('fwFlashBtn');
-
-  // --- the device is claimed FIRST, before anything asynchronous ---------
-  //
-  // navigator.usb.requestDevice() only works while the click that triggered
-  // it is still being handled. This used to send the reboot-to-DFU message
-  // and `await` three seconds before asking -- by which time the gesture had
-  // expired and Chrome refused with "Must be handling a user gesture to show
-  // a permission request". It could never have worked on a first run.
-  //
-  // So the Pod has to be in DFU BEFORE this button is pressed, which is what
-  // the "Reboot to DFU" button above is for. A board already permitted is
-  // found without a chooser at all.
-  let dev = null;
-  try {
-    dev = await WebDfu.findPermittedDaisy();
-  } catch (e) { /* fall through to the chooser */ }
-  if (!dev) {
-    try {
-      dev = await WebDfu.requestDaisy();     // still inside the gesture
-    } catch (err) {
-      fwStatus('No Daisy in DFU mode. Press "Reboot to DFU" above first '
-               + '(or hold BOOT and tap RESET on the Pod), then press Update.');
-      return;
-    }
-  }
-
-  btn.disabled = true;
-  try {
-    // --- refuse to write an address this interface does not have ---------
-    //
-    // The STM32's ROM bootloader (BOOT+RESET on a board with no Daisy
-    // bootloader) exposes ONLY internal flash at 0x08000000. This app lives
-    // in QSPI at 0x90040000. Writing that over the ROM interface reports
-    // SUCCESS and leaves a board that will not boot -- which is exactly what
-    // happened: "Written. The Pod is restarting" followed by a dead board.
-    await dev.open();
-    const layout = dev.layout();
-    const covers = WebDfu.layoutCovers(layout, addr);
-    if (covers === false) {
-      await dev.close();
-      fwStatus('Refusing to write: this bootloader only offers '
-               + (layout || 'an unknown region') + ', which does not contain 0x'
-               + addr.toString(16) + '. That is the STM32 ROM bootloader; this '
-               + 'firmware needs the Daisy bootloader, which exposes QSPI. '
-               + 'Nothing was written.');
-      btn.disabled = false;
-      return;
-    }
-    const note = covers === null
-      ? ' (could not read this bootloader\u2019s memory map, writing anyway)' : '';
-
-    if (!confirm(`Update the Pod\u2019s firmware with ${fwName}? `
-                 + `Your sounds and patches are not affected.`)) {
-      await dev.close();
-      btn.disabled = false;
-      fwStatus('Cancelled. Nothing was written.');
-      return;
-    }
-
-    fwStatus('Writing' + note + '\u2026');
-    await dev.write(addr, fwBytes, (done, total, what) => {
-      fwStatus(what === 'erasing' ? 'Erasing\u2026'
-               : `Writing ${(done / 1024).toFixed(0)} of ${(total / 1024).toFixed(0)} KB\u2026`);
-    });
-
-    // No read-back check, deliberately. This bootloader's DFU upload does
-    // not read the QSPI it writes -- measured: two reads of the same region
-    // agree byte for byte, only 0.7% matches the image, and the firmware is
-    // nowhere in the first 640KB read from the QSPI base, while the board
-    // boots that image perfectly. Any verdict would be meaningless, and a
-    // meaningless one is worse than none: an unverifiable write reported as
-    // a failure sends someone to reflash a board that is already correct.
-    // Playing the instrument is the only test that means anything.
-    await dev.leave(addr);
-    await dev.close();
-    fwStatus('Written \u2014 ' + (fwBytes.byteLength / 1024).toFixed(0) + ' KB. The Pod is '
-             + 'restarting; press Connect again, and play it. If it does not come back, '
-             + 'reflash with tools/hwtest/flash.sh.');
-  } catch (err) {
-    const hint = navigator.platform.startsWith('Win')
-      ? 'On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can claim it.'
-      : 'The Pod may still be in its bootloader -- try again, or flash it with tools/hwtest/flash.sh.';
-    fwStatus(`Update failed: ${err.message}. ${hint}`);
-  } finally {
-    btn.disabled = false;
-  }
-});
+// --- Updating the firmware ------------------------------------------------
+//
+// Not from here any more. The WebUSB/DFU updater that used to live here was
+// removed on 2026-09-29 in favour of the macOS app (daisy_dual_engine/
+// tools/mac-updater, "Waylo Firmware Updater.app").
+//
+// It is not that browser DFU cannot work -- it did, once the two real bugs
+// were found: requestDevice() must be called inside the click that asked for
+// it, and wTransferSize must be READ from the DFU functional descriptor (the
+// Daisy bootloader reports 4096 where the STM32 ROM uses 1024, and hardcoding
+// 1024 wrote a quarter of each block to the right address while reporting
+// success, which killed a board three times).
+//
+// It is that this page cannot be trusted to say whether it worked. This
+// bootloader cannot be read back meaningfully: two reads agree byte for byte,
+// match the written image 0.7%, and find the firmware nowhere in 640KB from
+// the QSPI base, on a board that boots perfectly. So the page could only ever
+// report "sent", never "correct" -- and it is the thing a user reaches for
+// first. The Mac app at least runs dfu-util directly, shows its real progress
+// and names a program that has the interface.
+//
+// "Reboot to DFU" above is kept: it is plain MIDI (NRPN 6), and it is how you
+// put the board into DFU for the Mac app without holding buttons.
+//
+// web/webdfu.js is retained in the repo, unused and no longer served, because
+// what it knows was expensive to learn: the transfer-size trap above, and
+// picking the DFU ALTERNATE SETTING whose map covers the target address (the
+// STM32 ROM bootloader lists Option Bytes first, so taking the first one
+// reads the wrong map). tools/hosttest/webdfu_alt_test.js still covers it.
 
 // --- One patch as a file --------------------------------------------------
 // The dump sends each patch as its own run: CC36 (which patch) then that
