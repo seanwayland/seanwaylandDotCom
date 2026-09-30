@@ -691,13 +691,9 @@
         </div>
         <div class="sub" id="patchFileStatus" style="margin-top:8px;"></div>
 
-        <div class="sub" style="margin:14px 0 10px;"><strong>Update the firmware</strong> &mdash; needs Chrome or Edge. <strong>Put the Pod in DFU first</strong>: press <em>Reboot to DFU</em> above, or hold BOOT and tap RESET. Then choose the file and press Update. It cannot reboot the Pod for you as part of the same press &mdash; the browser only allows a device-permission prompt while it is still handling the click that asked for it, so the two have to be separate presses. On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can talk to it. If an update is interrupted the Pod sits in its bootloader and nothing is lost: run this again.</div>
+        <div class="sub" style="margin:14px 0 10px;"><strong>Update the firmware</strong> &mdash; needs Chrome or Edge. <strong>Put the Pod in DFU first</strong>: press <em>Reboot to DFU</em> above, or hold BOOT and tap RESET. Then choose the file and press Update. It cannot reboot the Pod for you as part of the same press &mdash; the browser only allows a device-permission prompt while it is still handling the click that asked for it, so the two have to be separate presses. On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can talk to it. If an update is interrupted the Pod sits in its bootloader and nothing is lost: run this again. This updates the firmware only &mdash; the sounds live on the microSD card and are never touched.</div>
         <div class="btns">
           <button id="fwPickBtn">Choose firmware file&hellip;</button>
-          <select id="fwTarget" style="flex:0 0 auto;">
-            <option value="app">the app (app_only.bin)</option>
-            <option value="wavedata">the sample data (wavedata_only.bin)</option>
-          </select>
           <button id="fwFlashBtn" class="danger" disabled>Update</button>
           <input type="file" id="fwFile" accept=".bin" style="display:none;">
         </div>
@@ -2595,19 +2591,29 @@ document.getElementById('fwFile').addEventListener('change', async (e) => {
   const f = e.target.files[0];
   e.target.value = '';
   if (!f) return;
-  fwBytes = new Uint8Array(await f.arrayBuffer());
+  const picked = new Uint8Array(await f.arrayBuffer());
+  // The firmware is about 480 KB and only ever writes to the app slot. A
+  // multi-megabyte file used to mean "the sample data", which was a second
+  // image written into QSPI; that is gone -- the sounds are on the SD card
+  // now -- so a file that big is simply the wrong file, and offering to
+  // write it is how a board gets bricked.
+  if (picked.byteLength > 2 * 1024 * 1024) {
+    fwBytes = null;
+    document.getElementById('fwFlashBtn').disabled = true;
+    fwStatus(`${f.name} is ${(picked.byteLength / 1048576).toFixed(1)} MB \u2014 too big to be `
+             + `firmware, so it was not loaded. The firmware file is app_only.bin, about 480 KB. `
+             + `Sounds are not updated this way: they are files on the microSD card.`);
+    return;
+  }
+  fwBytes = picked;
   fwName = f.name;
-  // Guess which image it is from its size: the app is a few hundred KB, the
-  // sample data several MB.
-  document.getElementById('fwTarget').value = fwBytes.byteLength > 2 * 1024 * 1024 ? 'wavedata' : 'app';
   document.getElementById('fwFlashBtn').disabled = false;
-  fwStatus(`${fwName}, ${(fwBytes.byteLength / 1024).toFixed(0)} KB. Check what it is above, then press Update.`);
+  fwStatus(`${fwName}, ${(fwBytes.byteLength / 1024).toFixed(0)} KB. Press Update to write it.`);
 });
 
 document.getElementById('fwFlashBtn').addEventListener('click', async () => {
   if (!fwBytes) return;
-  const which = document.getElementById('fwTarget').value;
-  const addr = which === 'wavedata' ? WebDfu.DAISY_WAVEDATA_ADDRESS : WebDfu.DAISY_APP_ADDRESS;
+  const addr = WebDfu.DAISY_APP_ADDRESS; // the app slot, and nothing else
   const btn = document.getElementById('fwFlashBtn');
 
   // --- the device is claimed FIRST, before anything asynchronous ---------
@@ -2660,9 +2666,8 @@ document.getElementById('fwFlashBtn').addEventListener('click', async () => {
     const note = covers === null
       ? ' (could not read this bootloader\u2019s memory map, writing anyway)' : '';
 
-    if (!confirm(`Write ${fwName} to the Pod as `
-                 + `${which === 'wavedata' ? 'the sample data' : 'the app'}?`
-                 + `${which === 'wavedata' ? ' This one takes about four minutes.' : ''}`)) {
+    if (!confirm(`Update the Pod\u2019s firmware with ${fwName}? `
+                 + `Your sounds and patches are not affected.`)) {
       await dev.close();
       btn.disabled = false;
       fwStatus('Cancelled. Nothing was written.');

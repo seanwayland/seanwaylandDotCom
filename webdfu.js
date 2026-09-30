@@ -18,7 +18,11 @@ const STATE_DFU_IDLE = 2, STATE_DFU_DOWNLOAD_BUSY = 4, STATE_DFU_DOWNLOAD_IDLE =
       STATE_DFU_ERROR = 10;
 
 const DAISY_APP_ADDRESS      = 0x90040000; // the app, in QSPI
-const DAISY_WAVEDATA_ADDRESS = 0x900C0000; // the compiled-in samples
+// The QSPI sample region (0x900C0000) used to be a write target here. It is
+// gone on purpose: the samples live on the microSD card, so the only thing
+// this module can write is the app slot. Keeping the constant around meant
+// keeping a way to aim a 7MB erase-before-write at a board that no longer
+// has anything there to replace.
 
 class DfuDevice {
   // this.interfaceNumber, NOT this.iface -- the constructor below names it
@@ -292,4 +296,4 @@ async function findPermittedDaisy() {
 // inline it beside everything else.
 window.WebDfu = { DfuDevice, requestDaisy, findPermittedDaisy,
                   layoutOf, layoutCovers,
-                  DAISY_APP_ADDRESS, DAISY_WAVEDATA_ADDRESS };
+                  DAISY_APP_ADDRESS };
