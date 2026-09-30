@@ -12,7 +12,7 @@
 // WinUSB driver (Zadig) before the browser can claim it -- the page says so
 // when it can't.
 
-const DFU_DETACH = 0x00, DFU_DNLOAD = 0x01, DFU_GETSTATUS = 0x03,
+const DFU_DETACH = 0x00, DFU_DNLOAD = 0x01, DFU_UPLOAD = 0x02, DFU_GETSTATUS = 0x03,
       DFU_CLRSTATUS = 0x04, DFU_ABORT = 0x06;
 const STATE_DFU_IDLE = 2, STATE_DFU_DOWNLOAD_BUSY = 4, STATE_DFU_DOWNLOAD_IDLE = 5,
       STATE_DFU_ERROR = 10;
@@ -120,11 +120,62 @@ class DfuDevice {
     await this.poll('erasing 0x' + addr.toString(16));
   }
 
-  async leave() {
-    // A zero-length download, then a status read, makes the bootloader run
-    // what was just flashed.
+  // Read `len` bytes back from `addr`. DfuSe uses the same address pointer
+  // as a write, then UPLOAD blocks numbered from 2.
+  //
+  // This exists because "Written." was a lie three times: every individual
+  // transfer succeeded, the device reported no error, and the board would
+  // not boot. A write that is not read back is not verified, it is hoped.
+  async read(addr, len, onProgress) {
+    await this.setAddress(addr);
+    // Leaving the download state is required before an upload, or the
+    // device answers from the wrong state machine.
+    try { await this.controlOut(DFU_ABORT, 0, undefined); } catch (e) {}
+    const out = new Uint8Array(len);
+    let done = 0, block = 2;
+    while (done < len) {
+      const want = Math.min(this.transferSize, len - done);
+      const r = await this.device.controlTransferIn(
+        { requestType: 'class', recipient: 'interface', request: DFU_UPLOAD,
+          value: block++, index: this.interfaceNumber }, want);
+      if (r.status !== 'ok') throw new Error('upload failed: ' + r.status);
+      out.set(new Uint8Array(r.data.buffer), done);
+      done += r.data.byteLength;
+      if (onProgress) onProgress(done, len, 'verifying');
+      if (r.data.byteLength === 0) break;
+    }
+    return out;
+  }
+
+  // Write, then read it back and compare. Returns the index of the first
+  // byte that differs, or -1 when they match.
+  async verify(addr, data, onProgress) {
+    const got = await this.read(addr, data.byteLength, onProgress);
+    const want = new Uint8Array(data);
+    for (let i = 0; i < want.length; i++)
+      if (got[i] !== want[i]) return i;
+    return -1;
+  }
+
+  // Leave DFU and run what was just written.
+  //
+  // DfuSe needs the address pointer set to where execution should start
+  // BEFORE the zero-length download -- that is what tells the bootloader
+  // which image to run. A bare zero-length download leaves it with whatever
+  // pointer the last data block happened to leave behind, which is the END
+  // of the image. That is a strong candidate for a board that took a
+  // correct image and then would not boot: the write was fine and the
+  // jump was not.
+  //
+  // Then TWO status reads: the first moves it to dfuMANIFEST, the second is
+  // what actually triggers the reset. dfu-util does both.
+  async leave(addr) {
+    if (addr !== undefined) {
+      try { await this.setAddress(addr); } catch (e) { /* keep going */ }
+    }
     await this.controlOut(DFU_DNLOAD, 0, new Uint8Array(0));
-    try { await this.getStatus(); } catch (e) { /* it may reset mid-answer */ }
+    try { await this.getStatus(); } catch (e) { /* may reset mid-answer */ }
+    try { await this.getStatus(); } catch (e) { /* expected once it resets */ }
   }
 
   // Write `data` at `addr`. `onProgress(done, total)` is called as it goes.

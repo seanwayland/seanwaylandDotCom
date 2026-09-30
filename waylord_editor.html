@@ -2674,9 +2674,27 @@ document.getElementById('fwFlashBtn').addEventListener('click', async () => {
       fwStatus(what === 'erasing' ? 'Erasing\u2026'
                : `Writing ${(done / 1024).toFixed(0)} of ${(total / 1024).toFixed(0)} KB\u2026`);
     });
-    await dev.leave();
+
+    // Read it back and compare before claiming anything. "Written." was a
+    // lie three times over: every transfer succeeded, the device reported no
+    // error, and the board would not boot. An unverified write is a hope.
+    fwStatus('Verifying\u2026');
+    const bad = await dev.verify(addr, fwBytes, (done, total) => {
+      fwStatus(`Verifying ${(done / 1024).toFixed(0)} of ${(total / 1024).toFixed(0)} KB\u2026`);
+    });
+    if (bad >= 0) {
+      await dev.close();
+      fwStatus(`WRITE FAILED: the board holds different bytes from 0x${(addr + bad).toString(16)}`
+               + ` (byte ${bad} of ${fwBytes.byteLength}). The image on the board is bad --`
+               + ` do NOT power cycle expecting it to work. Reflash with`
+               + ` tools/hwtest/flash.sh, which is known good.`);
+      btn.disabled = false;
+      return;
+    }
+    fwStatus('Verified byte-for-byte. Restarting\u2026');
+    await dev.leave(addr);
     await dev.close();
-    fwStatus('Written. The Pod is restarting \u2014 press Connect again when it comes back.');
+    fwStatus('Written and verified. The Pod is restarting \u2014 press Connect again.');
   } catch (err) {
     const hint = navigator.platform.startsWith('Win')
       ? 'On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can claim it.'
