@@ -21,6 +21,8 @@ const DAISY_APP_ADDRESS      = 0x90040000; // the app, in QSPI
 const DAISY_WAVEDATA_ADDRESS = 0x900C0000; // the compiled-in samples
 
 class DfuDevice {
+  layout() { return layoutOf(this.device, this.iface); }
+
   constructor(device, iface) {
     this.device = device;
     this.interfaceNumber = iface;
@@ -137,6 +139,38 @@ async function requestDaisy() {
   return new DfuDevice(device, iface);
 }
 
+// The DFU memory layout, from the interface's own name string, e.g.
+//   "@Flash /0x90000000/64*4Kg/0x90040000/60*64Kg/0x90400000/60*64Kg"  (QSPI)
+//   "@Internal Flash /0x08000000/16*128Kg"                             (ROM)
+// This matters more than it looks: the STM32's ROM bootloader exposes ONLY
+// internal flash, while this app lives in QSPI at 0x90040000. Writing that
+// address over the ROM interface does not fail loudly -- it reports success
+// and the board will not boot afterwards. So the layout is checked and the
+// write refused, rather than trusted.
+function layoutOf(device, ifaceNum) {
+  for (const cfg of device.configurations)
+    for (const i of cfg.interfaces)
+      for (const alt of i.alternates)
+        if (alt.interfaceClass === 0xfe && alt.interfaceSubclass === 0x01
+            && i.interfaceNumber === ifaceNum)
+          return alt.interfaceName || '';
+  return '';
+}
+
+// Does this interface cover `addr`? Parses the segment list above.
+function layoutCovers(name, addr) {
+  if (!name) return null;                    // nothing to judge by
+  const segs = [...name.matchAll(/\/(0x[0-9a-fA-F]+)\/(\d+)\*(\d+)([KMB])/g)];
+  if (!segs.length) return null;
+  for (const [, base, count, size, unit] of segs) {
+    const mult = unit === 'M' ? 1048576 : (unit === 'K' ? 1024 : 1);
+    const start = parseInt(base, 16);
+    const end = start + Number(count) * Number(size) * mult;
+    if (addr >= start && addr < end) return true;
+  }
+  return false;
+}
+
 // Is a Daisy already sitting in DFU? (Only sees devices already permitted.)
 async function findPermittedDaisy() {
   if (!navigator.usb) return null;
@@ -148,4 +182,5 @@ async function findPermittedDaisy() {
 // Plain script rather than a module, so the published single-file build can
 // inline it beside everything else.
 window.WebDfu = { DfuDevice, requestDaisy, findPermittedDaisy,
+                  layoutOf, layoutCovers,
                   DAISY_APP_ADDRESS, DAISY_WAVEDATA_ADDRESS };

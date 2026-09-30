@@ -691,7 +691,7 @@
         </div>
         <div class="sub" id="patchFileStatus" style="margin-top:8px;"></div>
 
-        <div class="sub" style="margin:14px 0 10px;"><strong>Update the firmware</strong> &mdash; needs Chrome or Edge. The Pod is asked to reboot into its bootloader, the file is written, and it restarts on its own. On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can talk to it. If an update is interrupted the Pod sits in its bootloader and nothing is lost: run this again.</div>
+        <div class="sub" style="margin:14px 0 10px;"><strong>Update the firmware</strong> &mdash; needs Chrome or Edge. <strong>Put the Pod in DFU first</strong>: press <em>Reboot to DFU</em> above, or hold BOOT and tap RESET. Then choose the file and press Update. It cannot reboot the Pod for you as part of the same press &mdash; the browser only allows a device-permission prompt while it is still handling the click that asked for it, so the two have to be separate presses. On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can talk to it. If an update is interrupted the Pod sits in its bootloader and nothing is lost: run this again.</div>
         <div class="btns">
           <button id="fwPickBtn">Choose firmware file&hellip;</button>
           <select id="fwTarget" style="flex:0 0 auto;">
@@ -2608,21 +2608,68 @@ document.getElementById('fwFlashBtn').addEventListener('click', async () => {
   if (!fwBytes) return;
   const which = document.getElementById('fwTarget').value;
   const addr = which === 'wavedata' ? WebDfu.DAISY_WAVEDATA_ADDRESS : WebDfu.DAISY_APP_ADDRESS;
-  const mins = which === 'wavedata' ? ' This one takes about four minutes.' : '';
-  if (!confirm(`Write ${fwName} to the Pod as ${which === 'wavedata' ? 'the sample data' : 'the app'}?${mins}`)) return;
   const btn = document.getElementById('fwFlashBtn');
+
+  // --- the device is claimed FIRST, before anything asynchronous ---------
+  //
+  // navigator.usb.requestDevice() only works while the click that triggered
+  // it is still being handled. This used to send the reboot-to-DFU message
+  // and `await` three seconds before asking -- by which time the gesture had
+  // expired and Chrome refused with "Must be handling a user gesture to show
+  // a permission request". It could never have worked on a first run.
+  //
+  // So the Pod has to be in DFU BEFORE this button is pressed, which is what
+  // the "Reboot to DFU" button above is for. A board already permitted is
+  // found without a chooser at all.
+  let dev = null;
+  try {
+    dev = await WebDfu.findPermittedDaisy();
+  } catch (e) { /* fall through to the chooser */ }
+  if (!dev) {
+    try {
+      dev = await WebDfu.requestDaisy();     // still inside the gesture
+    } catch (err) {
+      fwStatus('No Daisy in DFU mode. Press "Reboot to DFU" above first '
+               + '(or hold BOOT and tap RESET on the Pod), then press Update.');
+      return;
+    }
+  }
+
   btn.disabled = true;
   try {
-    if (midiOut) {
-      fwStatus('Asking the Pod to reboot into its bootloader\u2026');
-      sendNrpn(NRPN.BOOTLOADER, 127);
-      await new Promise((r) => setTimeout(r, 3000));
-    } else {
-      fwStatus('No MIDI connection \u2014 hold BOOT and tap RESET on the Pod first.');
-    }
-    fwStatus('Pick the Daisy in the browser\u2019s device chooser\u2026');
-    const dev = await WebDfu.requestDaisy();
+    // --- refuse to write an address this interface does not have ---------
+    //
+    // The STM32's ROM bootloader (BOOT+RESET on a board with no Daisy
+    // bootloader) exposes ONLY internal flash at 0x08000000. This app lives
+    // in QSPI at 0x90040000. Writing that over the ROM interface reports
+    // SUCCESS and leaves a board that will not boot -- which is exactly what
+    // happened: "Written. The Pod is restarting" followed by a dead board.
     await dev.open();
+    const layout = dev.layout();
+    const covers = WebDfu.layoutCovers(layout, addr);
+    if (covers === false) {
+      await dev.close();
+      fwStatus('Refusing to write: this bootloader only offers '
+               + (layout || 'an unknown region') + ', which does not contain 0x'
+               + addr.toString(16) + '. That is the STM32 ROM bootloader; this '
+               + 'firmware needs the Daisy bootloader, which exposes QSPI. '
+               + 'Nothing was written.');
+      btn.disabled = false;
+      return;
+    }
+    const note = covers === null
+      ? ' (could not read this bootloader\u2019s memory map, writing anyway)' : '';
+
+    if (!confirm(`Write ${fwName} to the Pod as `
+                 + `${which === 'wavedata' ? 'the sample data' : 'the app'}?`
+                 + `${which === 'wavedata' ? ' This one takes about four minutes.' : ''}`)) {
+      await dev.close();
+      btn.disabled = false;
+      fwStatus('Cancelled. Nothing was written.');
+      return;
+    }
+
+    fwStatus('Writing' + note + '\u2026');
     await dev.write(addr, fwBytes, (done, total, what) => {
       fwStatus(what === 'erasing' ? 'Erasing\u2026'
                : `Writing ${(done / 1024).toFixed(0)} of ${(total / 1024).toFixed(0)} KB\u2026`);
@@ -2631,11 +2678,9 @@ document.getElementById('fwFlashBtn').addEventListener('click', async () => {
     await dev.close();
     fwStatus('Written. The Pod is restarting \u2014 press Connect again when it comes back.');
   } catch (err) {
-    const hint = /No device selected|cancelled/i.test(String(err))
-      ? 'Nothing was written.'
-      : (navigator.platform.startsWith('Win')
-         ? 'On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can claim it.'
-         : 'The Pod is still in its bootloader -- try again, or flash it with dfu-util.');
+    const hint = navigator.platform.startsWith('Win')
+      ? 'On Windows the bootloader needs a WinUSB driver (Zadig) before the browser can claim it.'
+      : 'The Pod may still be in its bootloader -- try again, or flash it with tools/hwtest/flash.sh.';
     fwStatus(`Update failed: ${err.message}. ${hint}`);
   } finally {
     btn.disabled = false;
