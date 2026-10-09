@@ -508,7 +508,7 @@
         </div>
         <div class="fx-card">
 <div class="sub" style="margin:10px 0 6px;"><strong>Phaser</strong> — four allpass stages swept smoothly. <em>Classic</em> uses every slider below; <em>Phase 90</em> models the MXR pedal (script logo), so only Wet and Rate (its Speed knob) apply. Wet at 0 is bypass.</div>
-        <div class="row"><label>Type</label><select id="phaserType" style="flex:1;"><option value="0">Classic</option><option value="1">Phase 90</option></select></div>
+        <div class="row"><label>Type</label><select id="phaserType" style="flex:1;" title="Classic and Phase 90 are phasers: four matched stages, evenly spaced notches. The three Uni-Vibe voicings are not -- each of their four stages has its own capacitor and its own photocell, so the notches land nowhere near harmonically. Values measured from an original unit in Darabundit/Wedelich/Bischoff, DAFx-19."><option value="0">Classic</option><option value="1">Phase 90</option><option value="2">Uni-Vibe 65</option><option value="3">Uni-Vibe Throb</option><option value="4">Uni-Vibe Modern</option></select></div>
         <div class="row"><label>Wet</label><input type="range" id="phaserWet" min="0" max="127" value="0"><span class="val" id="phaserWetVal"></span></div>
         <div class="row"><label>Rate</label><input type="range" id="phaserRate" min="0" max="127" value="40"><span class="val" id="phaserRateVal"></span></div>
         <div class="row"><label>Depth</label><input type="range" id="phaserDepth" min="0" max="127" value="90"><span class="val" id="phaserDepthVal"></span></div>
@@ -866,8 +866,19 @@ const DV_INSTRUMENTS = [
   "Rhds Model",
   "N Piano Soft", "N Rhds Soft",
   "Salamander Med", "Salamander Hard", "Salamander Full",
+  'Waylo Rhds', 'Waylo Piano',
+  'Waylo Pure 10',
 ];
 const USER_FIRST = 33; // DV_INSTRUMENTS index of User 1
+
+// Withdrawn instruments. Their NAME stays in DV_INSTRUMENTS at its original
+// index, because that index is what a saved patch stores and what CC20 maps
+// onto -- dropping the entry would shift every instrument after it and change
+// what every existing patch plays. They are filtered out of the menus
+// instead, so they cannot be chosen; the firmware substitutes a sine if an
+// old patch still names one (IsRetired() in instrument_type.h).
+const RETIRED_INSTRUMENTS = new Set(['Piano 3', 'Vintage Vibe']);
+const isRetired = (i) => RETIRED_INSTRUMENTS.has(DV_INSTRUMENTS[i]);
 
 // --- which controls actually do anything, given the rest of the patch ----
 //
@@ -1002,16 +1013,19 @@ function instrumentCcValue(index) { return ccValueForIndex(index, instrumentCoun
 // a flat list across optgroups, so it needs no change either.)
 const INSTRUMENT_GROUPS = [
   ['Rhodes & electric pianos', [
+    'Waylo Rhds',
     'Rhds Model', 'Rhds Fender', 'SoS Rhds', 'FM Rhds', 'N Rhds Soft', 'Mda EPiano',
     'N Rhds', 'Vintage Vibe', 'Vintage Vibe SD']],
   ['Pianos', [
+    'Waylo Piano',
     'Salamander Piano', 'Salamander Med', 'Salamander Hard',
     'Salamander Full', 'Studio Piano', 'Piano 3', 'mda Piano', 'N Piano',
     'N Piano Soft']],
   ['Organs', ['Tonewheel Organ', 'Drawbar Organ']],
   ['Synthesizers', [
     'Sine', 'Saw', 'Square', 'Pulse', 'Chrome VCO', 'Band-limited',
-    'Waylo Six-O-Bee', 'Waylo Two-Rev', 'Waylinator SQ75', 'Waylinator Saw',
+    'Waylo Six-O-Bee', 'Waylo Two-Rev', 'Waylo Pure 10',
+    'Waylinator SQ75', 'Waylinator Saw',
     'Mda DX10', '4-Op PM', 'CDG Rotator', 'Waylo Xfade2']],
   ['Guitars & steel', [
     'Waylo Tele', 'Sustain Steel', 'Waylo Guitar', 'Acoustic Guitar',
@@ -1028,13 +1042,15 @@ const INSTRUMENT_GROUPS = [
 function fillInstrumentSelect(sel) {
   const placed = new Set();
   const add = (parent, i) => {
+    if (isRetired(i)) return;            // withdrawn: not selectable
     const opt = document.createElement('option');
     opt.value = i;                       // the index, always
     opt.textContent = DV_INSTRUMENTS[i];
     parent.appendChild(opt);
   };
   for (const [label, names] of INSTRUMENT_GROUPS) {
-    const idxs = names.map((n) => DV_INSTRUMENTS.indexOf(n)).filter((i) => i >= 0);
+    const idxs = names.map((n) => DV_INSTRUMENTS.indexOf(n))
+                      .filter((i) => i >= 0 && !isRetired(i));
     if (!idxs.length) continue;
     const g = document.createElement('optgroup');
     g.label = label;
@@ -1261,7 +1277,7 @@ function defaultPatches() {
   const mk = (t0, t1, overrides) => Object.assign({ type: [t0, t1] }, blankSlotFields(), overrides || {});
   return [
     mk(1, 9),                                    // Saw + mda ePiano
-    mk(4, 5),                                    // Vintage Vibe + Waylo Tele
+    mk(50, 5),                                   // Vintage Vibe SD + Waylo Tele
     mk(6, 6, { lfoRate: [20, 35], lfoDepth: [20, 25], glide: [127, 127] }), // Sustain Steel, both slots (glide on, as it always was)
     mk(0, 0, { lfoRate: [30, 45], lfoDepth: [15, 18] }), // Sine, both slots, vibrato
     mk(7, 3),                                    // CDG Rotator + Pulse
@@ -1343,8 +1359,58 @@ function renderNameBar() {
 let midiOut = null, midiIn = null;
 const PRESET_KEY = "daisy_dual_engine_presets_v5"; // bumped: timbre is now per-slot timbreOffset
 
+// While this is non-zero the page is being FILLED IN, and nothing it does
+// may reach the Pod.
+//
+// Putting a value back on the page sets the control and then dispatches a
+// synthetic 'input' event, so the control's own label updates -- but that
+// same listener also SENDS the value. So redrawing a patch echoed it back
+// out, including extended index 44, which is the Six-O-Bee / Two-Rev filter
+// override. On a browser whose bank had never been filled from the Pod --
+// a fresh one starts on the factory defaults -- clicking a patch tab
+// therefore pushed a default 0 over a real patch's filter choice, and
+// pressing Save put it in flash. showPatchFx's own comment says it puts a
+// patch's settings "onto the page (not the device)"; this makes that true.
+let uiFilling = 0;
+function fillingUi(fn) {
+  uiFilling++;
+  try { return fn(); } finally { uiFilling--; }
+}
+// When this is non-zero, outgoing messages are SCHEDULED at increasing
+// timestamps rather than sent the instant the loop reaches them.
+//
+// Yielding every N messages does not pace anything: the loop fires all N
+// send() calls inside the same microsecond and then idles, so the Pod sees
+// a burst at the speed of the loop and a gap, not a steady stream. Its USB
+// MIDI input has a finite ring, and a burst overflows it however modest the
+// average rate looks. Measured: the editor averaged 2,600 messages a second
+// and still lost 150-450 values of a bank, while a plain MIDI replay at
+// 3,100 a second -- synchronous, so inherently spread out -- lost none.
+//
+// Web MIDI takes a timestamp, so the browser can do the spacing properly.
+let sendClock = 0;          // 0 = send immediately, as before
+// MEASURED on the board, not chosen: a whole bank sent at 0.30ms spacing
+// lands 488 of 3,318 values, and at 0.50, 0.80 and 1.20 it lands 3,317. The
+// cliff is that sharp. 0.70 is the smallest that is comfortably past it,
+// and puts a bank on the wire in about eight seconds.
+const kSendSpacingMs = 0.70;
+function beginPacedSend() { sendClock = performance.now() + 20; }
+function endPacedSend()
+{
+  const until = sendClock;
+  sendClock = 0;
+  // Let the queue drain before anything asks the Pod a question.
+  return Math.max(0, until - performance.now()) + 60;
+}
 function send(bytes) {
-  if (midiOut) midiOut.send(bytes);
+  if (uiFilling) return;
+  if (!midiOut) return;
+  if (sendClock) {
+    midiOut.send(bytes, sendClock);
+    sendClock += kSendSpacingMs;
+  } else {
+    midiOut.send(bytes);
+  }
 }
 // Every setting that used to be global and is now per patch -- mirrors
 // SendFxOut() in main.cpp. Whatever this page sends to one of these is
@@ -1369,6 +1435,20 @@ const isPm4SidedNrpn = (n) => n === 30 || n === 31 || (n >= 32 && n < 64);
 const isOrganSidedCc = (cc) => typeof ORGAN_SIDED_CC !== 'undefined' && ORGAN_SIDED_CC.has(cc);
 const isOrganSidedNrpn = (n) => typeof ORGAN_SIDED_NRPN !== 'undefined' && ORGAN_SIDED_NRPN.has(n);
 let fxRecording = true;
+// An extended parameter's key in a patch's own record. The extended space
+// is reached as a PAIR of NRPNs -- 96 picks an index, 97 sets it, 98 picks
+// the page -- so recording them by NRPN number put all 169 of them on the
+// same two keys, 96 and 97, and only the last one written survived. A patch
+// came back with one extended value out of 169: no filter type, no cutoff,
+// no filter envelope, no mod depths. The page selector was not recorded at
+// all, so even that one could land on the wrong page.
+const extFxKey = (page, index) => `e${page ? 1 : 0}:${index}`;
+const isExtFxKey = (k) => typeof k === 'string' && /^e[01]:\d+$/.test(k);
+// The pre-fix keys. An old browser bank or patch file holds 96 and 97 as
+// plain numbers; replaying them would write one arbitrary extended value, so
+// they are ignored rather than trusted.
+const isStaleExtFxKey = (k) => k === '96' || k === '97' || k === 96 || k === 97;
+
 function recordFx(kind, num, value, side) {
   if (!fxRecording || !patches[currentPatch]) return;
   const p = patches[currentPatch];
@@ -1381,11 +1461,18 @@ function sendCC(cc, value) {
     recordFx('cc', cc, value & 0x7F,
              (PM4_SIDED_CC.has(cc) && pm4Target === 1) || (isOrganSidedCc(cc) && organTarget === 1));
 }
+// Which extended page/index the editor is currently writing to, so the
+// value that follows can be recorded against the parameter it belongs to.
+let txExtPage = 0, txExtIndex = 0;
 function sendNrpn(param, value) {
   send([0xB0, 99, param & 0x7F]);
   send([0xB0, 6, value & 0x7F]);
   if (param === NRPN.PM4_TARGET) pm4Target = value >= 1 ? 1 : 0;
   if (param === NRPN.ORGAN_TARGET) organTarget = value >= 1 ? 1 : 0;
+  // 98/96 are a cursor, not settings; 97 is the value the cursor points at.
+  if (param === 98) { txExtPage = value & 0x7F; return; }
+  if (param === 96) { txExtIndex = value & 0x7F; return; }
+  if (param === 97) { recordFx('nrpn', extFxKey(txExtPage, txExtIndex), value & 0x7F, false); return; }
   if (FX_NRPNS.has(param))
     recordFx('nrpn', param, value & 0x7F,
              (isPm4SidedNrpn(param) && pm4Target === 1) || (isOrganSidedNrpn(param) && organTarget === 1));
@@ -1409,6 +1496,9 @@ function sendOrganCc(side, cc, value) { setOrganTarget(side); sendCC(cc, value);
 // A patch's own settings onto the page (not the device).
 function showPatchFx(p) {
   if (!p.fx) return;
+  return fillingUi(() => showPatchFxInner(p));
+}
+function showPatchFxInner(p) {
   const was = rxPm4Target;
   const wasOrgan = rxOrganTarget;
   Object.entries(p.fx.cc).forEach(([cc, v]) => {
@@ -1416,9 +1506,25 @@ function showPatchFx(p) {
     applyGlobalFxFromDevice(parseInt(cc.replace('r', ''), 10), v);
   });
   Object.entries(p.fx.nrpn).forEach(([n, v]) => {
+    if (isExtFxKey(n) || isStaleExtFxKey(n)) return;   // the extended space, below
     rxPm4Target = rxOrganTarget = n[0] === 'r' ? 1 : 0;
     applyNrpnFromDevice(parseInt(n.replace('r', ''), 10), v);
   });
+  // The extended parameters, page by page and in index order, through the
+  // same path the device's own dump uses -- 98 sets the page, 96 the index,
+  // 97 the value. Page order matters: the cursor is stateful.
+  const extKeys = Object.keys(p.fx.nrpn).filter(isExtFxKey);
+  [0, 1].forEach((pg) => {
+    const ks = extKeys.filter((k) => k.slice(0, 2) === `e${pg}`)
+                      .sort((a, b) => parseInt(a.slice(3), 10) - parseInt(b.slice(3), 10));
+    if (!ks.length) return;
+    applyNrpnFromDevice(98, pg);
+    ks.forEach((k) => {
+      applyNrpnFromDevice(96, parseInt(k.slice(3), 10));
+      applyNrpnFromDevice(97, p.fx.nrpn[k]);
+    });
+  });
+  if (extKeys.length) applyNrpnFromDevice(98, 0);   // leave the cursor on page 0
   rxPm4Target = was;
   rxOrganTarget = wasOrgan;
 }
@@ -1618,9 +1724,19 @@ function handleDeviceMidiMessage(msg) {
   const data = msg.data;
   if ((data[0] & 0xF0) !== 0xB0) return;
   const cc = data[1], val = data[2];
+  lastDeviceMessageAt = performance.now();
+  if (podProbe) { const f = podProbe; podProbe = null; f(); }
   if (bankCapture) bankTap(cc, val);
 
-  if (cc === 22) { sdLoadStage = val; return; }
+  if (cc === 22) {
+    sdLoadStage = val;
+    // An instrument finished loading. Loaders wait for THIS rather than
+    // guessing: the old guess was 2.5s against a load measured at 5.2s, so
+    // the rest of the patch went into a device sitting inside a blocking SD
+    // read, and those values landed nowhere.
+    if (sdLoadWaiter) sdLoadWaiter();
+    return;
+  }
   if (cc === 28) { showSdLoadStatus(sdLoadStage, val); sdLoadStage = null; return; }
   if (cc >= 102 && cc <= 121) { faultChunks[cc] = val; showFaultReport(); return; }
   if (cc === 101) { faultChunks.memTestFailed = val; return; }
@@ -1635,6 +1751,12 @@ function handleDeviceMidiMessage(msg) {
         && FX_NRPNS.has(p)) {
       const b = dumpBuffer[dumpActiveIdx];
       if (!b.fx) b.fx = { cc: {}, nrpn: {} };
+      // The extended pair. 96 moves the cursor (and is in FX_NRPNS, so it
+      // would otherwise be stored as a setting); 97 is the value, which
+      // belongs to the page and index the cursor is on. rxExtPage is kept by
+      // applyNrpnFromDevice, which 98 still reaches -- it is not in FX_NRPNS.
+      if (p === 96) { rxExtIndex = val; return; }
+      if (p === 97) { b.fx.nrpn[extFxKey(rxExtPage, rxExtIndex)] = val; return; }
       // The 4-Op and organ values are per side, and the dump marks each
       // side as it goes (NRPN 9 and 14, tracked in applyNrpnFromDevice).
       // Without the side in the key the right slot's values landed on top
@@ -1829,6 +1951,8 @@ function buildSlotColumns() {
       </div>
       <div class="row"><label>Vol</label><input type="range" id="slotVol${s}" min="0" max="127" value="127"><span class="val" id="slotVolVal${s}"></span></div>
       <div class="row"><label>Pan</label><input type="range" id="slotPan${s}" min="0" max="127" value="64"><span class="val" id="slotPanVal${s}"></span></div>
+      <div class="row" title="FM Rhodes operator feedback, DX7 style: the modulator's output folded back into its own phase, averaged over its last two samples. At 0 it is the sound this engine has always made; as it comes up the sine sours towards a saw and then towards noise. Live only -- not saved with a patch yet."><label>FM fb</label><input type="range" id="fmFeedback${s}" min="0" max="127" value="0"><span class="val" id="fmFeedback${s}Val">off</span></div>
+      <div class="row" title="How long the tine takes to fall silent after the key is released. This used to be a fixed 30ms, which is why there was no release control. Live only -- not saved with a patch yet."><label>FM release</label><input type="range" id="fmRelease${s}" min="0" max="127" value="0"><span class="val" id="fmRelease${s}Val">30ms</span></div>
       <div class="row"><label>Pitch LFO rate</label><input type="range" id="slotLfoRate${s}" min="0" max="127" value="0"><span class="val" id="slotLfoRateVal${s}"></span></div>
       <div class="row"><label>Pitch LFO depth</label><input type="range" id="slotLfoDepth${s}" min="0" max="127" value="0"><span class="val" id="slotLfoDepthVal${s}"></span></div>
       <div class="row"><label>PW</label><input type="range" id="slotPw${s}" min="0" max="127" value="64"><span class="val" id="slotPwVal${s}"></span></div>
@@ -1844,7 +1968,7 @@ function buildSlotColumns() {
       </div>
       <div class="filter-box" id="filterBox${s}">
         <div class="sub" style="margin-bottom:4px;"><strong>Filter</strong> &mdash; this side's own, one per side. <em>Waylo Classic</em> is the CEM-style topology: four one-pole sections with resonance feedback, and the 2-pole taps after the second &mdash; a different filter, not a gentler slope, which is why the 4-pole thins out as resonance rises and the 2-pole doesn't. The two <em>Ladder</em> entries are transistor-ladder models &mdash; Stilson resonates strongly, Improved much less at playing levels, which is how those models are. (Krajeski and Microtracker were removed to make room; their slots in the numbering are kept, so an older patch on either now plays Stilson rather than re-reading as some other filter entirely.) Each side has ONE filter, and its cutoff belongs to the <strong>oldest held note</strong> &mdash; so a new note joining a chord no longer drags the filter out from under the notes already sounding, which is what made a loud note re-open the filter on everything. Sine/Saw/Square/Pulse and the two Waylinators filter per voice inside the engine and are unaffected. <em>Off</em> costs nothing. The mod wheel opens the cutoff (and a Chrome VCO's width), and <em>Key&nbsp;&rarr;&nbsp;Filter</em> / <em>Vel&nbsp;&rarr;&nbsp;Filter</em> move it too. How the two sides' filters connect &mdash; independent, parallel, series, or a variable mix &mdash; is <strong>Filter routing &amp; tracking</strong>, directly below these two columns.</div>
-        <div class="row"><label>Filter</label><select id="chromaFilterType${s}" style="flex:1;"><option value="0">Off</option><option value="1" selected>Waylo Classic 4-pole</option><option value="2">Waylo Classic 2-pole</option><option value="3">Chrome 2-pole</option><option value="4">Ladder: Stilson</option><option value="7">Ladder: Improved</option><option value="8">Waylo Diode 2-pole</option><option value="9">Waylo Multi 4-pole (15 pole mixes)</option><option value="10">Waylo Six-O-Bee 2-pole</option><option value="11">Waylo Two-Rev 4-pole</option></select></div>
+        <div class="row"><label>Filter</label><select id="chromaFilterType${s}" style="flex:1;"><option value="0">Off</option><option value="1" selected>Waylo Classic 4-pole</option><option value="2">Waylo Classic 2-pole</option><option value="3">Chrome 2-pole</option><option value="4">Ladder: Stilson</option><option value="7">Ladder: Improved</option><option value="8">Waylo Diode 2-pole</option><option value="9">Waylo Multi 4-pole (15 pole mixes)</option><option value="10">Waylo Six-O-Bee 2-pole</option><option value="11">Waylo Two-Rev 4-pole</option><option value="12">Waylo Nord LP12 2-pole</option></select></div>
         <div class="sub" id="filterNote${s}" style="display:none; margin:-4px 0 8px; color:var(--muted);"></div>
         <div class="row"><label>Cutoff</label><input type="range" id="chromaFilterCutoff${s}" min="0" max="127" value="90"><span class="val" id="chromaFilterCutoff${s}Val"></span></div>
         <div class="row"><label>Resonance</label><input type="range" id="chromaFilterRes${s}" min="0" max="127" value="0"><span class="val" id="chromaFilterRes${s}Val"></span></div>
@@ -1864,8 +1988,9 @@ function buildSlotColumns() {
         <div class="row" title="How far the cutoff follows the keyboard, in octaves per octave. The instrument's own panel has a three-way switch -- off, half, full -- and this is the same behaviour on a continuous control, so 50% is its half, 100% is its full, and anything between or a little past is reachable. It applies to whichever filter this side is using, not just the Oberheim's."><label>Filter track</label><input type="range" id="obTrack${s}" min="0" max="127" value="0"><span class="val" id="obTrackV${s}">none</span></div>
         <div class="row"><label>Drive</label><input type="range" id="chromaFilterDrive${s}" min="0" max="127" value="40"><span class="val" id="chromaFilterDrive${s}Val"></span></div>
         <div class="row"><label>Audio FM</label><input type="range" id="chromaFilterFm${s}" min="0" max="127" value="0"><span class="val" id="chromaFilterFm${s}Val"></span></div>
-        <div class="sub" style="margin:8px 0 4px;"><strong>Filter envelope</strong> &mdash; its own, separate from the amp's. <em>Amount</em> at centre is off; right opens the filter as the envelope rises, left closes it.</div>
+        <div class="sub" style="margin:8px 0 4px;"><strong>Filter envelope</strong> &mdash; its own, separate from the amp's. <em>Amount</em> at centre is off; right opens the filter as the envelope rises, left closes it. <em>Vel &rarr; Amount</em> hands that amount to how hard you play: at centre it does not, fully right a soft note gets no sweep and a hard one all of it, and left reverses that.</div>
         <div class="row"><label>Amount</label><input type="range" id="chromaFilterEnvAmt${s}" min="0" max="127" value="64"><span class="val" id="chromaFilterEnvAmt${s}Val"></span></div>
+        <div class="row" title="How much of the Amount above velocity owns. At centre the sweep is the same however hard you play. Fully right it is proportional to velocity -- a pianissimo note gets no filter sweep at all and a fortissimo one the whole of it; fully left that is inverted, so playing harder closes the filter down. The filter is one per side rather than one per note, so the sweep follows the note holding the cutoff -- the oldest one down."><label>Vel &rarr; Amount</label><input type="range" id="filtVelEnv${s}" min="0" max="127" value="64"><span class="val" id="filtVelEnv${s}Val">off</span></div>
         <div class="row"><label>Attack</label><input type="range" id="chromaFilterAtk${s}" min="0" max="127" value="8"><span class="val" id="chromaFilterAtk${s}Val"></span></div>
         <div class="row"><label>Decay</label><input type="range" id="chromaFilterDec${s}" min="0" max="127" value="45"><span class="val" id="chromaFilterDec${s}Val"></span></div>
         <div class="row"><label>Sustain</label><input type="range" id="chromaFilterSus${s}" min="0" max="127" value="0"><span class="val" id="chromaFilterSus${s}Val"></span></div>
@@ -2186,8 +2311,39 @@ function applyPatchToUiAndDevice(idx) {
   // Its own effects and settings, where this page has them (a preset may
   // carry only some; the rest stay as the patch had them).
   if (p.fx) {
-    Object.entries(p.fx.cc).forEach(([cc, v]) => sendCC(parseInt(cc, 10), v));
-    Object.entries(p.fx.nrpn).forEach(([n, v]) => sendNrpn(parseInt(n, 10), v));
+    // Every key to the address it names. Three kinds live in here and two of
+    // them are not plain numbers: "r<n>" is the RIGHT side's copy of a 4-Op
+    // or organ value, and "e<page>:<index>" is an extended parameter.
+    // parseInt() turns both into NaN, and `NaN & 0x7F` is 0 -- so the sided
+    // values and (once they were recorded properly) all 170 extended ones
+    // were being sent as NRPN 0 instead of where they belong.
+    Object.entries(p.fx.cc).forEach(([cc, v]) => {
+      if (typeof cc === 'string' && cc[0] === 'r') {
+        const n = parseInt(cc.slice(1), 10);
+        if (PM4_SIDED_CC.has(n)) sendPm4Cc(1, n, v); else sendOrganCc(1, n, v);
+      } else sendCC(parseInt(cc, 10), v);
+    });
+    const extEntries = [];
+    Object.entries(p.fx.nrpn).forEach(([n, v]) => {
+      if (isExtFxKey(n)) { extEntries.push([n, v]); return; }
+      if (isStaleExtFxKey(n)) return;         // a pre-fix bank's collapsed pair
+      if (n[0] === 'r') {
+        const num = parseInt(n.slice(1), 10);
+        if (isPm4SidedNrpn(num)) sendPm4Nrpn(1, num, v); else sendOrganNrpn(1, num, v);
+        return;
+      }
+      sendNrpn(parseInt(n, 10), v);
+    });
+    // The extended space, page by page and in index order -- the cursor is
+    // stateful, so the page has to be set before the values that belong to it.
+    [0, 1].forEach((pg) => {
+      const ks = extEntries.filter(([k]) => k.slice(0, 2) === `e${pg}`)
+                           .sort((a, b) => parseInt(a[0].slice(3), 10) - parseInt(b[0].slice(3), 10));
+      if (!ks.length) return;
+      sendNrpn(98, pg);
+      ks.forEach(([k, v]) => { sendChroma(parseInt(k.slice(3), 10), v); });
+    });
+    if (extEntries.length) sendNrpn(98, 0);
   }
   sendCC(43, p.tremRate);
   sendCC(44, p.tremDepth);
@@ -2203,11 +2359,37 @@ function applyPatchToUiAndDevice(idx) {
   }
 }
 
+// Picking a patch tab SELECTS that patch on the Pod and then shows what the
+// Pod has. It does NOT push this page's copy over it.
+//
+// It used to call applyPatchToUiAndDevice, which sends every value this page
+// holds for the patch. That is right for loading a preset -- the preset is
+// the source -- and wrong for changing patch, because the Pod is the source:
+// it keeps all ten patches itself and CC36 already loads its own copy. When
+// this page's copy was stale or had never been filled in (a fresh browser
+// starts on the FACTORY DEFAULTS), clicking a tab wrote those defaults over
+// a real patch, and pressing Save then put them in flash. That is what "all
+// the settings are at zero and none" looks like.
+//
+// This is the same thing the editor already does when the Pod changes patch
+// by its own buttons: show what we last knew, then ask what is really there.
 function switchToPatch(idx) {
   commitUiIntoPatch(currentPatch);
   savePatchesToBrowser();
-  applyPatchToUiAndDevice(idx);
+  currentPatch = idx;
+  renderPatchTabs();
+  if (patches[idx]) loadPatchIntoUiOnly(idx);
+  sendCC(36, patchCcValue(idx));
+  // ...and ask what it has a moment later, NOT straight away. The Pod mutes,
+  // releases its notes and swaps both engines on a patch change, and an SD
+  // instrument takes seconds to come off the card. A dump requested into the
+  // middle of that reports the patch it is still on, so the page filled
+  // itself in with the one you just left. The patch-file loader already
+  // waits 1.5s after a CC36 for the same reason.
+  clearTimeout(switchDumpTimer);
+  switchDumpTimer = setTimeout(() => { requestDumpFromDevice(); }, 1800);
 }
+let switchDumpTimer = 0;
 
 // --- Tremolo mode toggle -------------------------------------------
 let tremMode = 0; // 0 = tremolo, 127 = pan-tremolo
@@ -2364,7 +2546,34 @@ function bankTap(cc, val) {
   if (cc === 38) { const done = bankCapture.done; bankCapture = null; done(); }
 }
 function isBankReport(cc) { return cc === 22 || cc === 28 || cc === 98 || (cc >= 101 && cc <= 126); }
-const BANK_READONLY_NRPN = new Set([64, 65, 66, 67, 68]); // reports, not settings
+const BANK_READONLY_NRPN = new Set([64, 65, 66, 67, 68, 69]); // reports, not settings
+// 92-95 are the stack and heap high-water marks IN THE GLOBALS and slot 1's
+// double rate, depth, timbre and spare INSIDE a patch. A bank file kept the
+// globals copy and replayed it, and since the Pod is on the last patch by
+// then, loading a bank wrote the stack figure into PATCH 10's double rate
+// and depth every single time. Position is the only thing that tells them
+// apart: everything after CC91 is global.
+const isGlobalOnlyReportNrpn = (p, inPatches) => !inPatches && p >= 92 && p <= 95;
+
+// How fast the Pod's MIDI input can be fed. A bank is ~5,800 values and the
+// loader used to wait 4ms after EVERY one -- 23 seconds a pass before
+// anything else happens. Yielding once per chunk keeps the browser's MIDI
+// queue moving without handing the event loop a timer per message. The
+// numbers are measured on the board by tools/webtest/pace_sweep.py, which
+// loads a bank at a range of settings and counts what fails to arrive.
+let sendChunk = 24, sendChunkMs = 4;
+function makePacer(wait) {
+  let n = 0;
+  return async () => { if (++n % sendChunk === 0) await wait(sendChunkMs); };
+}
+// Resolves when the Pod reports that an instrument finished loading (CC22).
+let sdLoadWaiter = null;
+function awaitSdLoad(wait, timeoutMs = 12000) {
+  return new Promise((resolve) => {
+    const t = setTimeout(() => { sdLoadWaiter = null; resolve(false); }, timeoutMs);
+    sdLoadWaiter = () => { clearTimeout(t); sdLoadWaiter = null; resolve(true); };
+  });
+}
 
 document.getElementById('saveBankBtn').addEventListener('click', () => {
   if (!midiOut || !midiIn) { bankStatus('Connect to the Pod first.'); return; }
@@ -2374,10 +2583,13 @@ document.getElementById('saveBankBtn').addEventListener('click', () => {
   bankCapture = { msgs, done: () => {
     clearTimeout(timer);
     const keep = [];
+    let inPatches = true;
     for (let i = 0; i < msgs.length; i++) {
       const [cc, v] = msgs[i];
+      if (cc === 91) inPatches = false;
       if (cc === 99 && i + 1 < msgs.length && msgs[i + 1][0] === 6) {
-        if (!BANK_READONLY_NRPN.has(v)) keep.push(msgs[i], msgs[i + 1]);
+        if (!BANK_READONLY_NRPN.has(v) && !isGlobalOnlyReportNrpn(v, inPatches))
+          keep.push(msgs[i], msgs[i + 1]);
         i++;
         continue;
       }
@@ -2411,6 +2623,7 @@ document.getElementById('saveBankBtn').addEventListener('click', () => {
 function dumpValues(msgs) {
   const out = new Map();
   let idx = null, side = 0, organSideNow = 0;
+  let page = 0, extIndex = 0;
   for (let i = 0; i < msgs.length; i++) {
     const [cc, v] = msgs[i];
     if (cc === 38) break;
@@ -2421,8 +2634,24 @@ function dumpValues(msgs) {
       i++;
       if (p === NRPN.PM4_TARGET) { side = pv >= 1 ? 1 : 0; continue; }
       if (p === NRPN.ORGAN_TARGET) { organSideNow = pv >= 1 ? 1 : 0; continue; }
-      if (!BANK_READONLY_NRPN.has(p))
-        out.set(`${idx}|n${p}|${ORGAN_SIDED_NRPN.has(p) ? organSideNow : side}`, pv);
+      // The extended space is a CURSOR plus a value. Keyed by NRPN number,
+      // all 170 extended parameters shared keys 96 and 97, so a bank load
+      // could report "every value checked" having checked one of them.
+      if (p === 98) { page = pv; continue; }
+      if (p === NRPN_EXT_INDEX) { extIndex = pv; continue; }
+      if (p === NRPN_EXT_VALUE) {
+        if (page >= 2) continue;                              // measurement reports
+        if (page === 1 && (extIndex === 27 || extIndex === 28)) continue; // bank length
+        out.set(`${idx}|e${page}:${extIndex}`, pv);
+        continue;
+      }
+      if (BANK_READONLY_NRPN.has(p)) continue;
+      // 92-95 are slot 1's double rate/depth INSIDE a patch and the stack
+      // and heap high-water marks IN THE GLOBALS. The stack figure moves
+      // between dumps, so comparing it made a clean load look two values
+      // short -- and that is enough to re-send the whole bank.
+      if (isGlobalOnlyReportNrpn(p, idx !== null)) continue;
+      out.set(`${idx}|n${p}|${ORGAN_SIDED_NRPN.has(p) ? organSideNow : side}`, pv);
       continue;
     }
     if (!isBankReport(cc))
@@ -2464,7 +2693,61 @@ async function fillMissing(have, patchList) {
 }
 
 // Ask the Pod for a dump and hand back its messages.
-function readDump(timeoutMs = 6000) {
+// Wait until the Pod answers something cheap. After a bank load it is busy
+// pulling patch 1's instruments off the card -- 5.2 seconds each, measured
+// -- and a dump requested into the middle of that never completes. That
+// read as "the Pod didn't answer when checking it", which told the user to
+// load the bank again when the load had in fact worked.
+//
+// The CPU report is four messages, so this costs nothing to ask repeatedly.
+function waitForPod(timeoutMs = 20000) {
+  return new Promise((resolve) => {
+    const started = performance.now();
+    let heard = false;
+    const onAny = () => { heard = true; };
+    const tick = () => {
+      if (heard) { podProbe = null; resolve(true); return; }
+      if (performance.now() - started > timeoutMs) { podProbe = null; resolve(false); return; }
+      podProbe = onAny;
+      sendNrpn(7, 127);
+      setTimeout(tick, 500);
+    };
+    tick();
+  });
+}
+let podProbe = null;
+
+// When the Pod last said anything. A dump is 10,534 messages and takes
+// about 1.7 seconds to arrive, so there is usually a tail still coming.
+let lastDeviceMessageAt = 0;
+
+// Wait until the Pod has been quiet for a moment.
+//
+// THIS IS WHY VERIFYING A BANK LOAD KEPT FAILING. A dump ENDS with CC38, so
+// that is what readDump waits for -- and asking for a dump while the tail
+// of an earlier one is still arriving means the earlier CC38 ends the new
+// capture. Measured straight after a bank load: 5,916 messages in 0.95
+// seconds, against 10,534 in 1.7 when idle. Half a dump, which parses as
+// thousands of values missing, and the loader then told the user to load
+// the bank again when the load had worked.
+//
+// Five seconds later the same request returned all 10,534. So does closing
+// and reopening the port, which is the same thing by a blunter route: it
+// throws the backlog away.
+function waitForQuiet(quietMs = 350, timeoutMs = 15000) {
+  return new Promise((resolve) => {
+    const started = performance.now();
+    const tick = () => {
+      const idle = performance.now() - lastDeviceMessageAt;
+      if (idle >= quietMs) { resolve(true); return; }
+      if (performance.now() - started > timeoutMs) { resolve(false); return; }
+      setTimeout(tick, 80);
+    };
+    tick();
+  });
+}
+
+function readDump(timeoutMs = 15000) {
   return new Promise((resolve) => {
     const msgs = [];
     const timer = setTimeout(() => { bankCapture = null; resolve(null); }, timeoutMs);
@@ -2473,12 +2756,104 @@ function readDump(timeoutMs = 6000) {
   });
 }
 // How many of `want`'s values the device doesn't have. null = no answer.
+// Send exactly the values the Pod does not have, each to the patch and side
+// it belongs to. Repairing beats re-sending the whole bank: a bank is ~5,800
+// values and takes seconds, while what is actually missing after a pass is a
+// couple of hundred.
+//
+// The keys are dumpValues()' own: "<patch>|c<cc>|<side>", "<patch>|n<nrpn>|<side>"
+// and "<patch>|e<page>:<index>".
+async function resendMissing(want, have, wait, finalPatch = 0) {
+  const byPatch = new Map();
+  want.forEach((v, k) => {
+    if (have.get(k) === v) return;
+    if (isActivePatchOnly(k) && !have.has(k)) return;
+    const patch = k.split('|')[0];
+    if (patch === 'null') return;        // globals: not part of a patch
+    if (!byPatch.has(patch)) byPatch.set(patch, []);
+    byPatch.get(patch).push([k, v]);
+  });
+  let sent = 0;
+  for (const [patch, items] of byPatch) {
+    sendCC(36, ccValueForIndex(parseInt(patch, 10), NUM_PATCHES));
+    await wait(120);
+    let side = -1, organSide = -1, page = -1;
+    for (const [k, v] of items) {
+      const parts = k.split('|');
+      const addr = parts[1], want_side = parseInt(parts[2] || '0', 10);
+      if (addr[0] === 'e') {
+        const pg = parseInt(addr[1], 10), idx = parseInt(addr.slice(3), 10);
+        if (pg !== page) { sendNrpn(98, pg); page = pg; }
+        sendChroma(idx, v);
+      } else if (addr[0] === 'n') {
+        const num = parseInt(addr.slice(1), 10);
+        if (isPm4SidedNrpn(num) && want_side !== side) { sendNrpn(NRPN.PM4_TARGET, want_side); side = want_side; }
+        if (ORGAN_SIDED_NRPN.has(num) && want_side !== organSide) { sendNrpn(NRPN.ORGAN_TARGET, want_side); organSide = want_side; }
+        sendNrpn(num, v);
+      } else {
+        const num = parseInt(addr.slice(1), 10);
+        if (PM4_SIDED_CC.has(num) && want_side !== side) { sendNrpn(NRPN.PM4_TARGET, want_side); side = want_side; }
+        if (ORGAN_SIDED_CC.has(num) && want_side !== organSide) { sendNrpn(NRPN.ORGAN_TARGET, want_side); organSide = want_side; }
+        sendCC(num, v);
+      }
+      sent++;
+      if (sent % 24 === 0) await wait(4);
+    }
+    if (page > 0) sendNrpn(98, 0);
+  }
+  // Move OFF the last patch repaired. The Pod commits a patch's live edits
+  // when CC36 leaves it, so the final patch in the loop would otherwise keep
+  // its repairs only in the live state and lose them at the next patch
+  // change. Patch 1 is where a bank load leaves the Pod anyway.
+  //
+  // WHERE it lands matters. A bank load ends on patch 1, which is where the
+  // Pod puts itself anyway; a PATCH load has to go back to the patch it was
+  // loading into, or the Pod -- and the editor, which follows it -- walks
+  // away from the patch the user just loaded.
+  if (byPatch.size) {
+    const away = finalPatch === 0 ? 1 : 0;
+    sendCC(36, ccValueForIndex(away, NUM_PATCHES));
+    await wait(150);
+    sendCC(36, ccValueForIndex(finalPatch, NUM_PATCHES));
+    await wait(200);
+  }
+  return sent;
+}
+
+// Page 0 indices 56-121 are the key map and the Rhodes block, and the Pod
+// dumps them for the ACTIVE PATCH ONLY -- deliberately, because sending
+// them for all ten overruns its USB transmit buffer. So a file captured
+// while patch 3 was live carries them for patch 3, a dump taken now carries
+// them for patch 1, and comparing the two reports 66 values missing per
+// patch that are simply not in the answer. Absence, not disagreement.
+const isActivePatchOnly = (k) => {
+  const i = k.indexOf('|e0:');
+  if (i < 0) return false;
+  const idx = parseInt(k.slice(i + 4), 10);
+  return idx >= 56 && idx <= 121;
+};
+
 async function valuesNotLanded(want) {
-  const got = await readDump();
+  // Right after a bank load the Pod is still settling, and a single dump
+  // request into that window comes back empty -- which read as "the Pod
+  // didn't answer", so the repair below never ran and the user was told to
+  // load the bank again by hand. Ask more than once before believing it.
+  let got = null;
+  for (let tries = 0; tries < 3 && !got; tries++) {
+    await waitForPod();
+    await waitForQuiet();      // or the tail of the last dump ends this one
+    got = await readDump();
+    // A dump that comes back far too short is a truncated one, not an
+    // answer. Ten patches cannot be described in a few thousand messages.
+    if (got && got.length < 9000) got = null;
+  }
   if (!got) return null;
   const have = dumpValues(got);
   let missing = 0;
-  want.forEach((v, k) => { if (have.get(k) !== v) missing++; });
+  want.forEach((v, k) => {
+    if (isActivePatchOnly(k) && !have.has(k)) return;
+    if (have.get(k) !== v) missing++;
+  });
   return missing;
 }
 
@@ -2519,13 +2894,27 @@ document.getElementById('loadBankFile').addEventListener('change', async (e) => 
   const remapType = (v) => bankCount === instrumentCount() ? v
     : instrumentCcValue(Math.min(bankCount - 1, Math.floor(v * bankCount / 128)));
   let active = null, sent = 0;
+  // Nothing comes off the card until this is switched off again, so the
+  // per-patch and per-instrument waits below are no longer buying anything.
+  sendOb2(EXT_BULK_PATCH_LOAD, 127);
+  await wait(50);
   const replay = async () => {
+    // Everything is SCHEDULED, not sent as the loop reaches it, so the Pod
+    // gets an even stream rather than bursts (see send()). The gaps the Pod
+    // needs -- it mutes and swaps both engines on a patch change -- are
+    // scheduled too, by pushing the clock forward rather than by awaiting:
+    // awaiting here would let wall-clock time run past the schedule and put
+    // the burst back.
+    beginPacedSend();
+    let inPatches = true, patchNo = 0;
     for (let i = 0; i < m.length; i++) {
-      let [cc, v] = m[i]; // v is remapped below, so not const
+      let [cc, v] = m[i];
+      if (cc === 91) inPatches = false;
       if (cc === 99 && i + 1 < m.length && m[i + 1][0] === 6) {
-        if (!BANK_READONLY_NRPN.has(v)) { sendNrpn(v, m[i + 1][1]); sent++; }
+        if (!BANK_READONLY_NRPN.has(v) && !isGlobalOnlyReportNrpn(v, inPatches)) {
+          sendNrpn(v, m[i + 1][1]); sent++;
+        }
         i++;
-        await wait(4);
         continue;
       }
       if (cc === 38) { active = v; continue; }
@@ -2533,30 +2922,94 @@ document.getElementById('loadBankFile').addEventListener('change', async (e) => 
       if (cc === 20 || cc === 21) v = remapType(v);
       sendCC(cc, v); sent++;
       if (cc === 36) {
-        bankStatus(`Loading patch ${indexFromCcValue(v, NUM_PATCHES) + 1} of ${NUM_PATCHES}…`);
-        await wait(1500); // its instruments may be loading from the card
-      } else if (cc === 20 || cc === 21) {
-        await wait(isSdBacked(indexFromCcValue(v, bankCount)) ? 2500 : 30);
-      } else {
-        await wait(4);
+        sendClock += 60;
+        patchNo = indexFromCcValue(v, NUM_PATCHES) + 1;
+      }
+      // Let the browser breathe and the status line move, without letting
+      // the wall clock overtake the schedule.
+      if ((sent & 511) === 0) {
+        bankStatus(`Sending patch ${patchNo} of ${NUM_PATCHES}\u2026`);
+        await wait(1);
       }
     }
-    if (active !== null) { sendCC(36, active); await wait(2500); }
+    await wait(endPacedSend());
   };
   try {
     await replay();
     const fileValues = dumpValues(m);
     await fillMissing(fileValues, Array.from({ length: NUM_PATCHES }, (_, i) => i));
-    if (active !== null) { sendCC(36, active); await wait(2000); }
-    // Check it landed, and have one more go at the whole bank if it didn't:
-    // a value that never arrived would otherwise be saved over the real one.
+    // Finished: the Pod goes to patch 1 and loads only that patch's
+    // instruments. The other nine load when they are selected.
+    bankStatus('Loading patch 1\u2019s instruments\u2026');
+    // How many of patch 1's two slots come off the card. Wait for the Pod to
+    // report each one finished rather than guessing a duration: a load is
+    // 5.2s on this board and there can be two, against the 6s this waited.
+    // Dumping into the middle of one gets a truncated answer, which reads as
+    // "the Pod didn't answer" and sends the whole bank again.
+    let sdSlots = 0;
+    {
+      let idx = null;
+      for (let i = 0; i < m.length; i++) {
+        const [cc, v] = m[i];
+        if (cc === 91 || cc === 38) break;
+        if (cc === 36) { idx = indexFromCcValue(v, NUM_PATCHES); continue; }
+        if (idx === 0 && (cc === 20 || cc === 21)
+            && isSdBacked(indexFromCcValue(remapType(v), instrumentCount()))) sdSlots++;
+      }
+    }
+    sendOb2(EXT_BULK_PATCH_LOAD, 0);
+    for (let k = 0; k < sdSlots; k++) await awaitSdLoad(wait, 15000);
+    await wait(sdSlots ? 600 : 2000);
+    // Everything after CC91, once more, now that the Pod has settled on its
+    // patch. Not all of it is global: the I/O mode lives in
+    // GlobalFxSettings, which is PER PATCH, so sent in the globals position
+    // it lands in the live state and the patch the Pod settles on then
+    // overwrites it. Exactly one value short of a bank, every time.
+    {
+      beginPacedSend();
+      let past91 = false;
+      for (let i = 0; i < m.length; i++) {
+        const [cc, v] = m[i];
+        if (cc === 91) past91 = true;
+        if (!past91) { if (cc === 99) i++; continue; }
+        if (cc === 99 && i + 1 < m.length && m[i + 1][0] === 6) {
+          if (!BANK_READONLY_NRPN.has(v) && !(v >= 92 && v <= 95)) sendNrpn(v, m[i + 1][1]);
+          i++;
+          continue;
+        }
+        if (cc === 36 || cc === 38 || isBankReport(cc)) continue;
+        sendCC(cc, v);
+      }
+      await wait(endPacedSend());
+    }
+    // Check it landed, and KEEP GOING until it has.
+    //
+    // One pass does not land everything, and that is the device rather than
+    // the wire: a plain MIDI replay of the same bank, with no browser in the
+    // way, also leaves values short after one pass and none after two. The
+    // stragglers are the patch the Pod ends up sitting on -- its own
+    // instrument, volume, pan, LFO and envelope -- which is the patch whose
+    // live state is still being assembled as the load finishes.
+    //
+    // This used to try exactly twice and then tell the user to load it
+    // again by hand. Measured against the board it was still 213 values
+    // short at that point, so "load it again" was the only thing that
+    // worked, and the user had to know to do it.
     const want = dumpValues(m);
     let missing = await valuesNotLanded(want);
-    if (missing) {
-      bankStatus(`${missing} values didn't arrive \u2014 sending the bank again\u2026`);
-      sent = 0;
-      await replay();
-      missing = await valuesNotLanded(want);
+    for (let attempt = 1; attempt <= 3 && missing; attempt++) {
+      bankStatus(`repairing ${missing} values (${attempt} of 3)\u2026`);
+      await waitForPod();
+      const got = await readDump();
+      if (!got) break;
+      await resendMissing(want, dumpValues(got), wait);
+      const again = await valuesNotLanded(want);
+      if (again === null) break;
+      // Stop when a pass stops helping: something is wrong that another
+      // pass will not fix, and saying so beats looping.
+      const helped = missing === null || again < missing;
+      missing = again;
+      if (!helped) break;
     }
     if (bank.userNames) { saveUserNames(bank.userNames); refreshUserNames(); }
     // The ten names the bank was saved with. A bank from before names
@@ -2703,20 +3156,35 @@ document.getElementById('loadPatchFile').addEventListener('change', async (e) =>
     sendCC(36, ccValueForIndex(target, NUM_PATCHES)); // make sure the Pod is on the same patch
     await wait(1500);
     const m = patch.messages;
+    // Scheduled, not burst -- the same reason the bank loader is. A patch is
+    // only ~350 values, but the Pod's input does not care how many are
+    // coming, only how fast they arrive.
+    beginPacedSend();
     for (let i = 0; i < m.length; i++) {
       let [cc, v] = m[i];
       if (cc === 99 && i + 1 < m.length && m[i + 1][0] === 6) {
         if (!BANK_READONLY_NRPN.has(v)) { sendNrpn(v, m[i + 1][1]); sent++; }
         i++;
-        await wait(4);
         continue;
       }
       if (cc === 36 || cc === 38 || isBankReport(cc)) continue;
       if (cc === 20 || cc === 21) v = remapType(v);
+      if (cc === 20 || cc === 21) {
+        // A patch IS loaded in order to be played, so unlike a bank load its
+        // instruments really do have to come off the card.
+        const sdBacked = isSdBacked(indexFromCcValue(v, fileCount));
+        // An instrument really does come off the card here, so the schedule
+        // has to stop while that happens.
+        await wait(endPacedSend());
+        const loaded = sdBacked ? awaitSdLoad(wait) : null;
+        sendCC(cc, v); sent++;
+        if (loaded) await loaded; else await wait(30);
+        beginPacedSend();
+        continue;
+      }
       sendCC(cc, v); sent++;
-      await wait(cc === 20 || cc === 21
-        ? (isSdBacked(indexFromCcValue(v, fileCount)) ? 2500 : 30) : 4);
     }
+    await wait(endPacedSend());
     if (patch.userNames) { saveUserNames(patch.userNames); refreshUserNames(); }
     // Keep the name the file was saved under, so the tab shows it.
     // A patch file from before the split/transpose or the per-slot 4-Op and
@@ -2724,12 +3192,20 @@ document.getElementById('loadPatchFile').addEventListener('change', async (e) =>
     // the patch being replaced happened to have.
     await fillMissing(dumpValues([[36, ccValueForIndex(target, NUM_PATCHES)]].concat(m)), [target]);
     // Check what the Pod actually holds for this patch (see dumpValues).
-    const got = await readDump();
-    let missing = null;
-    if (got) {
-      const have = dumpValues(got), want = dumpValues([[36, ccValueForIndex(target, NUM_PATCHES)]].concat(m));
-      missing = 0;
-      want.forEach((v, k) => { if (have.get(k) !== v) missing++; });
+    const want = dumpValues([[36, ccValueForIndex(target, NUM_PATCHES)]].concat(m));
+    let missing = await valuesNotLanded(want);
+    for (let attempt = 1; attempt <= 3 && missing; attempt++) {
+      patchFileStatus(`repairing ${missing} values (${attempt} of 3)\u2026`);
+      await waitForPod();
+      await waitForQuiet();
+      const dump = await readDump();
+      if (!dump) break;
+      await resendMissing(want, dumpValues(dump), wait, target);
+      const again = await valuesNotLanded(want);
+      if (again === null) break;
+      const helped = missing === null || again < missing;
+      missing = again;
+      if (!helped) break;
     }
     patchFileStatus(missing === null
       ? `Loaded ${file.name} into patch ${target + 1}, but the Pod didn't answer when checking it.`
@@ -3294,7 +3770,10 @@ function applyNrpnFromDevice(param, val) {
   const tr = TRACK.find(([, key]) => NRPN[key] === param);
   if (tr) { document.getElementById(tr[0]).value = String(Math.max(-63, val - 64)); paintTracking(); return; }
   if (param === NRPN.EQ_BYPASS) { document.getElementById('eqBypass').checked = val >= 64; return; }
-  if (param === NRPN.PHASER_TYPE) { document.getElementById('phaserType').value = String(val ? 1 : 0); return; }
+  // Pass the value through. `val ? 1 : 0` collapsed every type above 1 onto
+  // Phase 90, so a dump could only ever report the first two voicings and any
+  // new one would read back wrong.
+  if (param === NRPN.PHASER_TYPE) { document.getElementById('phaserType').value = String(val); return; }
   if (param === NRPN.REVERB_TYPE) { document.getElementById('reverbType').value = String(Math.min(val, 2)); return; }
   if (param === NRPN.VEL_BOOST) { document.getElementById('velBoost').value = String(val); paintTracking(); return; }
   if (param === 66) { cpuSeen.peak = val; showCpu(); return; }  const org = (id) => document.getElementById(`${id}${rxOrganTarget}`);
@@ -3427,11 +3906,22 @@ const CHROMA_LABELS = {
   chromaBLevel: pct,
   // Mirrors the squared mapping in main.cpp: (v/127)^2 * 2s.
   chromaFilterAtk: (v) => `${Math.round(Math.pow(v / 127, 2) * 2000) + 1}ms`,
-  chromaFilterDec: (v) => `${Math.round(Math.pow(v / 127, 2) * 2000) + 1}ms`,
+  // Decay reaches 6s; attack and release are still 2s. Mirrors the
+  // decSecs() curve in main.cpp: 2t^2 + 4t^6, so short decays read exactly as
+  // they always did and only the top of the knob is longer.
+  chromaFilterDec: (v) => {
+    const t = v / 127, ms = Math.round((2 * t * t + 4 * Math.pow(t, 6)) * 1000) + 1;
+    return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(2)}s`;
+  },
   chromaFilterRel: (v) => `${Math.round(Math.pow(v / 127, 2) * 2000) + 1}ms`,
   chromaFilterSus: pct,
-  chromaFilterEnvAmt: (v) => (v === 64 ? 'off'
-    : `${v > 64 ? '+' : ''}${((v - 64) / 63 * 4).toFixed(1)} oct`),
+  // Mirrors main.cpp: 4t + 4t^3, so up to 8 octaves with the small amounts
+  // reading as they always did.
+  chromaFilterEnvAmt: (v) => {
+    if (v === 64) return 'off';
+    const t = (v - 64) / 63, o = t * 4 + t * t * t * 4;
+    return `${o > 0 ? '+' : ''}${o.toFixed(1)} oct`;
+  },
   chromaBTune: (v) => {
     const semis = (v - 64) / 64 * 24;
     return v === 64 ? 'unison' : `${semis > 0 ? '+' : ''}${semis.toFixed(1)} semi`;
@@ -3540,7 +4030,7 @@ function wireChromaSlot(s) {
     // read the same; the two measured filters ride on a separate byte.
     const v = parseInt(ft.value, 10);
     if (v >= 10) {
-      sendChroma(PATCH_FILTER_EXT + s, v - 9);          // 1 = Six-O-Bee, 2 = Two-Rev ladder
+      sendChroma(PATCH_FILTER_EXT + s, v - 9);          // 1 = Six-O-Bee, 2 = Two-Rev ladder, 3 = Nord LP12
     } else {
       sendChroma(PATCH_FILTER_EXT + s, 0);
       sendChroma(idx('chromaFilterType'),
@@ -3580,6 +4070,14 @@ function paintPatchAvailability() {
   showRow(document.getElementById('keyFm'), fmShape);
   showRow(document.getElementById('velFm'), fmShape);
   showRow(document.getElementById('velFb'), onEither(FEEDBACK_INSTRUMENTS));
+
+  // The FM Rhodes' own two controls, per slot: they reach one engine, so they
+  // follow that slot's instrument rather than either side's.
+  [0, 1].forEach((s) => {
+    const isFm = instOf(s) === 'FM Rhds';
+    showRow(document.getElementById('fmFeedback' + s), isFm);
+    showRow(document.getElementById('fmRelease' + s), isFm);
+  });
 
   // The split note means nothing until the split is on. Hide the wrapper
   // around it, NOT its row -- the Split checkbox shares that row.
@@ -3697,7 +4195,8 @@ function paintFilterBox(s) {
   // rather than to any one engine -- every engine that uses the slot filter has
   // it, and it disappears when there is no filter running.
   ['chromaFilterCutoff', 'chromaFilterRes', 'chromaFilterAtk', 'chromaFilterDec',
-   'chromaFilterSus', 'chromaFilterRel', 'chromaFilterEnvAmt', 'obTrack'].forEach((f) =>
+   'chromaFilterSus', 'chromaFilterRel', 'chromaFilterEnvAmt', 'obTrack',
+   'filtVelEnv'].forEach((f) =>
     showRow(document.getElementById(f + s), on));
   // ...and the conditional ones only appear for the filters that read them.
   Object.entries(FILTER_USES).forEach(([f, types]) =>
@@ -3723,7 +4222,7 @@ function paintFilterBox(s) {
 const PATCH_ROUTING = 36, PATCH_FILTER_FM = 37;
 // The spare tail: two entries each, one per slot (main.cpp kPatchSemMode..).
 const PATCH_FILT_MODE = 38, PATCH_ANALOG_SH = 40, PATCH_ANALOG_RAW = 42;
-const PATCH_FILTER_EXT = 44; // 0 = the ten legacy filters, 1 = Six-O-Bee, 2 = Two-Rev ladder
+const PATCH_FILTER_EXT = 44; // 0 = the ten legacy filters, 1 = Six-O-Bee, 2 = Two-Rev ladder, 3 = Nord LP12
 const PATCH_ROUTING_EXT = 46; // 0 = the four legacy routings, 1 = ring mod
 // The rotary cabinet, per patch. Zero in every patch saved before this
 // existed, which is the Classic cabinet those patches were made on.
@@ -3837,6 +4336,18 @@ const EXT_ROTARY_SLOW  = EXT_MOD_DEPTH_BASE + 9;   // 38
 const EXT_ROTARY_FAST  = EXT_ROTARY_SLOW + 1;      // 39
 const EXT_ROTARY_ACCEL = EXT_ROTARY_FAST + 1;      // 40
 const EXT_ORGAN_VIB_WET_BASE = EXT_ROTARY_ACCEL + 1; // 41, +slot
+// FM Rhodes operator feedback, per slot -- 43. Page 1 had room (it was using
+// 0..42); the NRPN space did not, only 1, 99 and 127 are free there.
+const EXT_FM_FEEDBACK = EXT_ORGAN_VIB_WET_BASE + NUM_SLOTS;
+const EXT_FM_RELEASE  = EXT_FM_FEEDBACK + NUM_SLOTS;
+// +slot: velocity -> filter envelope amount. Bipolar, 64 = none.
+const EXT_FILT_VEL_ENV = EXT_FM_RELEASE + NUM_SLOTS;
+// An action, not a setting: 127 says a bank load has started, 0 that it has
+// finished. While it is on the Pod records instrument changes without
+// reading the card; when it clears, the Pod goes to patch 1 and loads that
+// one. Replaying a bank used to pull eight instruments off the card -- 20
+// seconds -- to end up playing two of them.
+const EXT_BULK_PATCH_LOAD = EXT_FILT_VEL_ENV + NUM_SLOTS;
 // Matches main.cpp: 2^((v-64)/32), so 64 is x1 and the ends are x0.25/x3.9.
 const rotaryScaleLabel = (v) => 'x' + Math.pow(2, (v - 64) / 32).toFixed(2);
 // Matches ModDepth() in main.cpp: 63 steps above centre, 64 below, so each
@@ -3877,6 +4388,52 @@ function rotaryScaleSetup() {
 // which is how it sounded before this control existed.
 const organVibWetLabel = (v) => (v >= 127 ? 'full' : v === 0 ? 'off'
                                  : Math.round(v / 127 * 100) + '%');
+const fmReleaseLabel = (v) => {
+  const t = 0.01 + 2 * Math.pow(v / 127, 2);
+  return t < 1 ? `${Math.round(t * 1000)}ms` : `${t.toFixed(2)}s`;
+};
+const fmFeedbackLabel = (v) => (v === 0 ? 'off' : `${Math.round(v / 127 * 100)}%`);
+function fmFeedbackSetup() {
+  [0, 1].forEach((side) => {
+    const el = document.getElementById('fmFeedback' + side);
+    const lab = document.getElementById('fmFeedback' + side + 'Val');
+    if (!el) return;
+    el.addEventListener('input', () => {
+      if (lab) lab.textContent = fmFeedbackLabel(+el.value);
+      sendOb2(EXT_FM_FEEDBACK + side, +el.value);
+    });
+    if (lab) lab.textContent = fmFeedbackLabel(+el.value);
+
+    const rel = document.getElementById('fmRelease' + side);
+    const relLab = document.getElementById('fmRelease' + side + 'Val');
+    if (!rel) return;
+    rel.addEventListener('input', () => {
+      if (relLab) relLab.textContent = fmReleaseLabel(+rel.value);
+      sendOb2(EXT_FM_RELEASE + side, +rel.value);
+    });
+    if (relLab) relLab.textContent = fmReleaseLabel(+rel.value);
+  });
+}
+
+// Bipolar: 64 is none, and the two directions are named rather than signed,
+// because "-80%" does not say which way the sound goes.
+const filtVelEnvLabel = (v) => {
+  if (v === 64) return 'off';
+  const pc = Math.round(Math.abs(v - 64) / 63 * 100);
+  return v > 64 ? `harder = more, ${pc}%` : `harder = less, ${pc}%`;
+};
+function filtVelEnvSetup() {
+  for (let side = 0; side < NUM_SLOTS; side++) {
+    const el = document.getElementById('filtVelEnv' + side);
+    const lab = document.getElementById('filtVelEnv' + side + 'Val');
+    if (!el) continue;
+    el.addEventListener('input', () => {
+      if (lab) lab.textContent = filtVelEnvLabel(+el.value);
+      sendOb2(EXT_FILT_VEL_ENV + side, +el.value);
+    });
+    if (lab) lab.textContent = filtVelEnvLabel(+el.value);
+  }
+}
 function organVibWetSetup() {
   [0, 1].forEach((side) => {
     const el = document.getElementById('organVibWet' + side);
@@ -4309,6 +4866,13 @@ function setChromaFromDevice(param, val) {
   if (param === 98) { rxExtPage = val; return true; }
   if (param === NRPN_EXT_INDEX) { rxExtIndex = val; return true; }
   if (param !== NRPN_EXT_VALUE) return false;
+  // Page 2 and up are the device's measurement reports -- the profiler, the
+  // audio guard, the organ's bus path. They are not settings and there is
+  // nothing here to show them, so they are swallowed. Without this they
+  // would fall into the page-0 branches below, whose tests are on the raw
+  // index, and a profile request would move whichever controls happened to
+  // own indices 0-4.
+  if (rxExtPage > 1) return true;
   // Page 1 first and it returns, for the same reason the firmware does it that
   // way: page 0's branches test the raw index and would claim these numbers.
   if (rxExtPage === 1) {
@@ -4338,6 +4902,15 @@ function setChromaFromDevice(param, val) {
           e.value = String(val);
           const lab = document.getElementById(id + 'Val');
           if (lab) lab.textContent = rotaryScaleLabel(val);
+        }
+      } else if (rxExtIndex >= EXT_FILT_VEL_ENV
+                 && rxExtIndex < EXT_FILT_VEL_ENV + NUM_SLOTS) {
+        const side = rxExtIndex - EXT_FILT_VEL_ENV;
+        const e = document.getElementById('filtVelEnv' + side);
+        if (e) {
+          e.value = String(val);
+          const lab = document.getElementById('filtVelEnv' + side + 'Val');
+          if (lab) lab.textContent = filtVelEnvLabel(val);
         }
       } else if (rxExtIndex >= EXT_ORGAN_VIB_WET_BASE
                  && rxExtIndex < EXT_ORGAN_VIB_WET_BASE + NUM_SLOTS) {
@@ -4510,7 +5083,13 @@ function setChromaFromDevice(param, val) {
         if (el) {
           if (tail[base] === 'analogShape') el.value = String(Math.min(3, Math.floor(val * 4 / 128)));
           else el.value = String(val);
-          el.dispatchEvent(new Event('input', { bubbles: true }));
+          // The event is fired so the control's label updates -- but that
+          // same listener SENDS, and this value just came FROM the device.
+          // Echoing it back is noise at best; during a patch load it is
+          // worse, because the echo lands after the loader's own write and
+          // overwrites it. Two of a patch's slot-1 values came back wrong
+          // that way, every time.
+          fillingUi(() => el.dispatchEvent(new Event('input', { bubbles: true })));
         }
         return true;
       }
@@ -4616,7 +5195,11 @@ Object.entries(GLOBAL_FX).forEach(([id, def]) => {
 // tools/hosttest/instrument_lists_test.py -- the five Expansions and Rhodes
 // Fender were missing, which hid their Start and Loop controls even though
 // the firmware supports both.
-const SAMPLE_INSTRUMENTS = [4, 5, 6, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 61, 63, 64, 65, 66, 67];
+// 68 and 69 are Waylo Rhds and Waylo Piano. They go through the generic
+// sampler (UsesSdSamplePlayer), so the firmware already gives them a start
+// offset, an attack curve and a velocity curve -- without them listed here
+// the editor simply did not draw the rows.
+const SAMPLE_INSTRUMENTS = [5, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 61, 63, 64, 65, 66, 67, 68, 69];
 // Mirrors HasAttackCurve() in main.cpp: the sample engines except Sustain
 // Steel (whose fade is a real ADSR), plus Mda DX10 and 4-Op PM.
 // Sampled (not Sustain Steel, whose fade is a real ADSR), DX10, 4-Op, and
@@ -5215,8 +5798,10 @@ refreshUserNames();
         midiSetup();
         loopSetup();
         modDepthSetup();
+        fmFeedbackSetup();
         rotaryScaleSetup();
         organVibWetSetup();
+        filtVelEnvSetup();
         hoistSaveLoad();
         hoistGlobalAdsr();
         condenseHelp();   // last: it must see every panel, including the built ones
