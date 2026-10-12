@@ -508,7 +508,7 @@
         </div>
         <div class="fx-card">
 <div class="sub" style="margin:10px 0 6px;"><strong>Phaser</strong> — four allpass stages swept smoothly. <em>Classic</em> uses every slider below; <em>Phase 90</em> models the MXR pedal (script logo), so only Wet and Rate (its Speed knob) apply. Wet at 0 is bypass.</div>
-        <div class="row"><label>Type</label><select id="phaserType" style="flex:1;" title="Classic and Phase 90 are phasers: four matched stages, evenly spaced notches. The three Uni-Vibe voicings are not -- each of their four stages has its own capacitor and its own photocell, so the notches land nowhere near harmonically. Values measured from an original unit in Darabundit/Wedelich/Bischoff, DAFx-19."><option value="0">Classic</option><option value="1">Phase 90</option><option value="2">Uni-Vibe 65</option><option value="3">Uni-Vibe Throb</option><option value="4">Uni-Vibe Modern</option></select></div>
+        <div class="row"><label>Type</label><select id="phaserType" style="flex:1;" title="Classic and Phase 90 are phasers: four matched stages, evenly spaced notches. The three Uni-Vibe voicings are not -- each of their four stages has its own capacitor and its own photocell, so the notches land nowhere near harmonically. Values measured from an original unit in Darabundit/Wedelich/Bischoff, DAFx-19. The Vibrato voicings are the pedal&apos;s chorus/vibrato switch thrown: the phase chain alone, no notches, just the warble. Wet is a dry-to-effect mix on all of them."><option value="0">Classic</option><option value="1">Phase 90</option><option value="2">Uni-Vibe 65</option><option value="3">Uni-Vibe Throb</option><option value="4">Uni-Vibe Modern</option><option value="5">Uni-Vibe 65 &mdash; Vibrato</option><option value="6">Uni-Vibe Throb &mdash; Vibrato</option><option value="7">Uni-Vibe Modern &mdash; Vibrato</option></select></div>
         <div class="row"><label>Wet</label><input type="range" id="phaserWet" min="0" max="127" value="0"><span class="val" id="phaserWetVal"></span></div>
         <div class="row"><label>Rate</label><input type="range" id="phaserRate" min="0" max="127" value="40"><span class="val" id="phaserRateVal"></span></div>
         <div class="row"><label>Depth</label><input type="range" id="phaserDepth" min="0" max="127" value="90"><span class="val" id="phaserDepthVal"></span></div>
@@ -862,12 +862,21 @@ const DV_INSTRUMENTS = [
   "SoS Rhds",
   "Salamander Piano",
   "Tonewheel Organ",
-  "Rhds Fender",
+  "Rhds F",
   "Rhds Model",
   "N Piano Soft", "N Rhds Soft",
   "Salamander Med", "Salamander Hard", "Salamander Full",
   'Waylo Rhds', 'Waylo Piano',
   'Waylo Pure 10',
+  'Waylo Pulse Adj',
+  'Waylo Pulse Widen',
+  'N Waylo Gtr 3',
+  'N Waylo Acou 2',
+  'Waylo NLA1',
+  // A falling saw with its fundamental removed, and the arithmetic ideal of
+  // a 10% pulse. Appended, so every index before them keeps its meaning.
+  'Waylo SawNoFund',
+  'Waylo Claude N',
 ];
 const USER_FIRST = 33; // DV_INSTRUMENTS index of User 1
 
@@ -1014,7 +1023,7 @@ function instrumentCcValue(index) { return ccValueForIndex(index, instrumentCoun
 const INSTRUMENT_GROUPS = [
   ['Rhodes & electric pianos', [
     'Waylo Rhds',
-    'Rhds Model', 'Rhds Fender', 'SoS Rhds', 'FM Rhds', 'N Rhds Soft', 'Mda EPiano',
+    'Rhds Model', 'Rhds F', 'SoS Rhds', 'FM Rhds', 'N Rhds Soft', 'Mda EPiano',
     'N Rhds', 'Vintage Vibe', 'Vintage Vibe SD']],
   ['Pianos', [
     'Waylo Piano',
@@ -1024,11 +1033,12 @@ const INSTRUMENT_GROUPS = [
   ['Organs', ['Tonewheel Organ', 'Drawbar Organ']],
   ['Synthesizers', [
     'Sine', 'Saw', 'Square', 'Pulse', 'Chrome VCO', 'Band-limited',
-    'Waylo Six-O-Bee', 'Waylo Two-Rev', 'Waylo Pure 10',
+    'Waylo Six-O-Bee', 'Waylo Two-Rev', 'Waylo Pure 10', 'Waylo Pulse Widen', 'Waylo Pulse Adj', 'Waylo NLA1',
     'Waylinator SQ75', 'Waylinator Saw',
     'Mda DX10', '4-Op PM', 'CDG Rotator', 'Waylo Xfade2']],
   ['Guitars & steel', [
-    'Waylo Tele', 'Sustain Steel', 'Waylo Guitar', 'Acoustic Guitar',
+    'Waylo Tele', 'Sustain Steel', 'Waylo Guitar', 'N Waylo Gtr 3', 'N Waylo Acou 2',
+    'Acoustic Guitar',
     'Gibson Lead', 'Rickenbacker', 'Gibson DC', 'QY Pedal Steel']],
   ['Samplers', [
     'Xpander Timbre', 'Sahara Bass', 'D Lead', 'D Pad', 'FM RDS',
@@ -1227,10 +1237,22 @@ const EQR_IDS = ['eqRLow', 'eqRMid', 'eqRHigh', 'eqRSweep'];
 // enum has to be added here too, or it silently loses everything gated on
 // this -- Studio Piano (49) had no Double box at all, because hasDouble()
 // asks this first.
-function isSdBacked(t) { return (t >= 12 && t <= 21) || (t >= 25 && t <= 36) || t === 39 || (t >= 40 && t <= 44) || t === 49 || t === 50 || t === 51 || (t >= 52 && t <= 59); }
-// Instruments with a double: every SD instrument (not mda Piano), plus Waylo
-// Tele and mda ePiano (a second engine on the same built-in recordings).
-function hasDouble(t) { return (isSdBacked(t) && t !== 39) || t === 5 || t === 9; }
+// IsSdBacked() in instrument_type.h, index for index. This is a COPY of a
+// firmware list and it rotted: it stopped at 59 while instruments were
+// added up to 74, so eleven SD instruments were treated as though they had
+// no card behind them -- Sustain Steel, Rhodes Fender, both Nord softs, all
+// three Salamanders, Waylo Rhodes, Waylo Piano, N Waylo Gtr 3 and N Waylo
+// Acou 2. Two things followed: their Double box never appeared (the bug as
+// reported), and neither bank nor patch loading waited for their samples to
+// come off the card, which is a chance to lose a value mid-transfer.
+// tools/parity/editor_sd_list.py in the plugin repo fails if this drifts
+// from the firmware again.
+function isSdBacked(t) { return (t >= 5 && t <= 6) || t === 9 || (t >= 12 && t <= 21) || (t >= 25 && t <= 36) || (t >= 39 && t <= 44) || (t >= 49 && t <= 50) || (t >= 52 && t <= 59) || t === 61 || (t >= 63 && t <= 69) || (t >= 73 && t <= 74); }
+// DoubleAvailable() in dual_voice.h: every SD instrument except mda Piano,
+// which is on the card but played by its own engine. Waylo Tele (5) and mda
+// ePiano (9) used to be named here by hand because the list above did not
+// have them; it does now.
+function hasDouble(t) { return isSdBacked(t) && t !== 39; }
 // Mirrors ApplyDoubleToEngine() in main.cpp.
 const DBL_LABEL = {
   level:  v => `${Math.round(v / 127 * 100)}%`,
@@ -1613,15 +1635,32 @@ function requestDumpFromDevice() {
   dumpBuffer = {};
   dumpActiveIdx = null;
   dumpInPatches = true;
+  armDumpTimeout();
+  sendNrpn(NRPN.DUMP, 127);
+}
+
+// A SILENCE timeout, not a deadline. It has to be re-armed by every
+// message that arrives, because a full dump is about 17,800 messages
+// and takes far longer than any sensible deadline.
+//
+// As a deadline it broke the bank badly and invisibly: it fired in the
+// middle of the dump, threw away everything collected so far, and the
+// remaining messages were dropped -- until the CC38 that ENDS a dump
+// arrived, saw no buffer, and requested a WHOLE NEW DUMP. That one was
+// abandoned the same way. Whichever buffer happened to be alive during
+// the last 2.5 seconds was the one that got committed, so the browser
+// ended up with the final two or three patches filled in and the other
+// seven holding about 51 of their 347 values. Measured straight after
+// connecting: [55, 51, 51, 51, 51, 51, 55, 347, 347, 347].
+function armDumpTimeout() {
   clearTimeout(dumpTimeoutHandle);
   dumpTimeoutHandle = setTimeout(() => {
-    dot.classList.remove('syncing');
+    document.getElementById('dot').classList.remove('syncing');
     document.getElementById('syncNote').textContent =
       'No response from the device (older firmware, or MIDI-in not connected) — using this browser\'s last-known patches instead.';
     dumpBuffer = null;
     loadPatchIntoUiOnly(currentPatch);
   }, 2500);
-  sendNrpn(NRPN.DUMP, 127);
 }
 
 // SD-backed instrument load diagnostic (CC22=stage, CC28=result -- see
@@ -1806,6 +1845,9 @@ function handleDeviceMidiMessage(msg) {
 
   // CC38 outside a dump means the device changed patch by itself -- its
   // buttons -- so follow it here and ask for a dump to fill the page in.
+  // Still hearing from the device, so it has not gone quiet.
+  if (dumpBuffer !== null) armDumpTimeout();
+
   if (dumpBuffer === null) {
     if (cc === 38 && !bankCapture) {
       const idx = indexFromCcValue(val, NUM_PATCHES);
@@ -1951,8 +1993,8 @@ function buildSlotColumns() {
       </div>
       <div class="row"><label>Vol</label><input type="range" id="slotVol${s}" min="0" max="127" value="127"><span class="val" id="slotVolVal${s}"></span></div>
       <div class="row"><label>Pan</label><input type="range" id="slotPan${s}" min="0" max="127" value="64"><span class="val" id="slotPanVal${s}"></span></div>
-      <div class="row" title="FM Rhodes operator feedback, DX7 style: the modulator's output folded back into its own phase, averaged over its last two samples. At 0 it is the sound this engine has always made; as it comes up the sine sours towards a saw and then towards noise. Live only -- not saved with a patch yet."><label>FM fb</label><input type="range" id="fmFeedback${s}" min="0" max="127" value="0"><span class="val" id="fmFeedback${s}Val">off</span></div>
-      <div class="row" title="How long the tine takes to fall silent after the key is released. This used to be a fixed 30ms, which is why there was no release control. Live only -- not saved with a patch yet."><label>FM release</label><input type="range" id="fmRelease${s}" min="0" max="127" value="0"><span class="val" id="fmRelease${s}Val">30ms</span></div>
+      <div class="row" title="FM Rhodes operator feedback, DX7 style: the modulator's output folded back into its own phase, averaged over its last two samples. At 0 it is the sound this engine has always made; as it comes up the sine sours towards a saw and then towards noise. Saved with the patch."><label>FM fb</label><input type="range" id="fmFeedback${s}" min="0" max="127" value="0"><span class="val" id="fmFeedback${s}Val">off</span></div>
+      <div class="row" title="How long the tine takes to fall silent after the key is released. This used to be a fixed 30ms, which is why there was no release control. Saved with the patch."><label>FM release</label><input type="range" id="fmRelease${s}" min="0" max="127" value="0"><span class="val" id="fmRelease${s}Val">30ms</span></div>
       <div class="row"><label>Pitch LFO rate</label><input type="range" id="slotLfoRate${s}" min="0" max="127" value="0"><span class="val" id="slotLfoRateVal${s}"></span></div>
       <div class="row"><label>Pitch LFO depth</label><input type="range" id="slotLfoDepth${s}" min="0" max="127" value="0"><span class="val" id="slotLfoDepthVal${s}"></span></div>
       <div class="row"><label>PW</label><input type="range" id="slotPw${s}" min="0" max="127" value="64"><span class="val" id="slotPwVal${s}"></span></div>
@@ -1966,12 +2008,29 @@ function buildSlotColumns() {
         <div class="sub" style="margin-bottom:4px;"><strong>Band-limited</strong> &mdash; Olivier B&eacute;langer's oscillators. Their harmonics are <em>never generated</em> rather than generated and filtered away, so the <em>Timbre</em> control and the mod wheel set how many there are &mdash; that is the "sharp" parameter, and it is what these are worth having for.</div>
         <div class="row"><label>Wave</label><select id="plugexWave${s}" style="flex:1;"><option value="0">Sine</option><option value="1">Triangle</option><option value="2">Square</option><option value="3" selected>Saw</option><option value="4">Ramp</option><option value="5">Pulse</option><option value="6">Bi-pulse</option><option value="7">Sample &amp; hold</option></select></div>
       </div>
+      <div class="dbl-box" id="pulseBox${s}" style="display:none;">
+        <div class="sub" style="margin-bottom:4px;"><strong>Pulse</strong> &mdash; this oscillator's own two controls. They are its own patch settings, not the Six-O-Bee's Shape and Pulse Width, and the mod wheel does not reach them.</div>
+        <div class="row" id="nla1Row${s}" style="display:none;"><label>Waveform</label><select id="nla1Mode${s}" style="flex:1;"><option value="0">Fixed pulse 1 &mdash; a plain rectangle</option><option value="1">Fixed pulse 2 &mdash; rounded, asymmetric</option><option value="2">Fixed pulse 3 &mdash; two pulses</option><option value="3">Half sine &mdash; one hump</option><option value="4">Full sine &mdash; one cycle, then silence</option><option value="5">Double hump &mdash; two humps</option></select></div>
+        <div class="row"><label id="pulseSmoothL${s}">Smoothing</label><input type="range" id="pulseSmooth${s}" min="0" max="127" value="0" style="flex:1;"><span class="val" id="pulseSmoothV${s}">&ndash;</span></div>
+        <div class="row"><label id="pulseWidthL${s}">Width</label><input type="range" id="pulseWidth${s}" min="0" max="127" value="64" style="flex:1;"><span class="val" id="pulseWidthV${s}">&ndash;</span></div>
+        <div class="sub" style="margin:10px 0 4px;"><strong>Mod matrix</strong> &mdash; how far velocity, the mod wheel and the note number move those two. Centre is <em>none</em>; either side sets how much and which way. Velocity is centred on 64 and the note number on middle C, &plusmn;full at three octaves, so a depth means the same musical thing here as it does elsewhere. The wheel is one-sided, so its depth alone decides the direction.</div>
+        <div class="row"><label>Width &larr; Velocity</label><input type="range" id="pmWidthVel${s}" min="0" max="127" value="64" style="flex:1;"><span class="val" id="pmWidthVelV${s}">none</span></div>
+        <div class="row"><label>Width &larr; Mod wheel</label><input type="range" id="pmWidthWheel${s}" min="0" max="127" value="64" style="flex:1;"><span class="val" id="pmWidthWheelV${s}">none</span></div>
+        <div class="row"><label>Width &larr; Note number</label><input type="range" id="pmWidthKey${s}" min="0" max="127" value="64" style="flex:1;"><span class="val" id="pmWidthKeyV${s}">none</span></div>
+        <div class="row"><label>Smoothing &larr; Velocity</label><input type="range" id="pmSmoothVel${s}" min="0" max="127" value="64" style="flex:1;"><span class="val" id="pmSmoothVelV${s}">none</span></div>
+        <div class="row"><label>Smoothing &larr; Mod wheel</label><input type="range" id="pmSmoothWheel${s}" min="0" max="127" value="64" style="flex:1;"><span class="val" id="pmSmoothWheelV${s}">none</span></div>
+        <div class="row"><label>Smoothing &larr; Note number</label><input type="range" id="pmSmoothKey${s}" min="0" max="127" value="64" style="flex:1;"><span class="val" id="pmSmoothKeyV${s}">none</span></div>
+      </div>
       <div class="filter-box" id="filterBox${s}">
         <div class="sub" style="margin-bottom:4px;"><strong>Filter</strong> &mdash; this side's own, one per side. <em>Waylo Classic</em> is the CEM-style topology: four one-pole sections with resonance feedback, and the 2-pole taps after the second &mdash; a different filter, not a gentler slope, which is why the 4-pole thins out as resonance rises and the 2-pole doesn't. The two <em>Ladder</em> entries are transistor-ladder models &mdash; Stilson resonates strongly, Improved much less at playing levels, which is how those models are. (Krajeski and Microtracker were removed to make room; their slots in the numbering are kept, so an older patch on either now plays Stilson rather than re-reading as some other filter entirely.) Each side has ONE filter, and its cutoff belongs to the <strong>oldest held note</strong> &mdash; so a new note joining a chord no longer drags the filter out from under the notes already sounding, which is what made a loud note re-open the filter on everything. Sine/Saw/Square/Pulse and the two Waylinators filter per voice inside the engine and are unaffected. <em>Off</em> costs nothing. The mod wheel opens the cutoff (and a Chrome VCO's width), and <em>Key&nbsp;&rarr;&nbsp;Filter</em> / <em>Vel&nbsp;&rarr;&nbsp;Filter</em> move it too. How the two sides' filters connect &mdash; independent, parallel, series, or a variable mix &mdash; is <strong>Filter routing &amp; tracking</strong>, directly below these two columns.</div>
-        <div class="row"><label>Filter</label><select id="chromaFilterType${s}" style="flex:1;"><option value="0">Off</option><option value="1" selected>Waylo Classic 4-pole</option><option value="2">Waylo Classic 2-pole</option><option value="3">Chrome 2-pole</option><option value="4">Ladder: Stilson</option><option value="7">Ladder: Improved</option><option value="8">Waylo Diode 2-pole</option><option value="9">Waylo Multi 4-pole (15 pole mixes)</option><option value="10">Waylo Six-O-Bee 2-pole</option><option value="11">Waylo Two-Rev 4-pole</option><option value="12">Waylo Nord LP12 2-pole</option></select></div>
+        <div class="row"><label>Filter</label><select id="chromaFilterType${s}" style="flex:1;"><option value="0">Off</option><option value="1" selected>Waylo Classic 4-pole</option><option value="2">Waylo Classic 2-pole</option><option value="3">Chrome 2-pole</option><option value="4">Ladder: Stilson</option><option value="7">Ladder: Improved</option><option value="8">Waylo Diode 2-pole</option><option value="9">Waylo Multi 4-pole (15 pole mixes)</option><option value="10">Waylo Six-O-Bee 2-pole</option><option value="11">Waylo Two-Rev 4-pole</option><option value="12">Waylo NLP12 2-pole</option></select></div>
         <div class="sub" id="filterNote${s}" style="display:none; margin:-4px 0 8px; color:var(--muted);"></div>
         <div class="row"><label>Cutoff</label><input type="range" id="chromaFilterCutoff${s}" min="0" max="127" value="90"><span class="val" id="chromaFilterCutoff${s}Val"></span></div>
         <div class="row"><label>Resonance</label><input type="range" id="chromaFilterRes${s}" min="0" max="127" value="0"><span class="val" id="chromaFilterRes${s}Val"></span></div>
+        <div class="row"><label>Bypass filter</label><input type="checkbox" id="filterBypass${s}" style="accent-color:var(--accent); width:17px; height:17px;"><span class="val" id="filterBypassV${s}">off</span></div>
+        <div class="sub" style="margin:-4px 0 8px; color:var(--muted);">Takes this side's filter out of the signal path altogether, whatever it is set to &mdash; for a sampled instrument you want dry, with the other side's filter untouched. The filter's own settings are kept, so it comes back as it was.</div>
+        <div class="row"><label>Per-voice filter</label><input type="checkbox" id="perVoice${s}" style="accent-color:var(--accent); width:17px; height:17px;"><span class="val" id="perVoiceV${s}">off</span></div>
+        <div class="sub" id="perVoiceNote${s}" style="display:none; margin:-4px 0 8px; color:var(--muted);">Four filters, reused: each note takes one and sets its cutoff from <em>its own</em> velocity and pitch. A fifth note shares the least-busy filter rather than going unfiltered, so polyphony is unchanged. Only on the oscillator engines, and only for the 2-pole filters (Chrome 2-pole, Six-O-Bee, NLP12) &mdash; the pool is one filter design, and standing it in for a ladder would not sound like the ladder.</div>
         <div class="row"><label>High-pass</label><input type="checkbox" id="chromaFilterHighPass${s}" style="accent-color:var(--accent); width:17px; height:17px;"><span class="sub" style="margin-left:6px;">LP/HP [37] &mdash; one side low-pass and the other high-pass makes a band-pass</span></div>
         <div class="row"><label>Pole mix</label><select id="xpanderMode${s}" style="flex:1;"><option value="0">LP4 &mdash; 24dB lowpass</option><option value="1">LP3 &mdash; 18dB lowpass</option><option value="2">LP2 &mdash; 12dB lowpass</option><option value="3">LP1 &mdash; 6dB lowpass</option><option value="4">HP3 &mdash; 18dB highpass</option><option value="5">HP2 &mdash; 12dB highpass</option><option value="6">HP1 &mdash; 6dB highpass</option><option value="7">BP4 &mdash; 24dB bandpass</option><option value="8">BP2 &mdash; 12dB bandpass</option><option value="9">N2 &mdash; 12dB notch</option><option value="10">PH3 &mdash; 18dB phaser</option><option value="11">HP2+LP1</option><option value="12">HP3+LP1</option><option value="13">N2+LP1</option><option value="14">PH3+LP1</option></select></div>
         <div class="row"><label>Six-O-Bee filter mode</label><input type="range" id="sixObMode${s}" min="0" max="127" value="0" style="flex:1;"><span class="val" id="sixObModeV${s}">low-pass</span></div>
@@ -4030,7 +4089,7 @@ function wireChromaSlot(s) {
     // read the same; the two measured filters ride on a separate byte.
     const v = parseInt(ft.value, 10);
     if (v >= 10) {
-      sendChroma(PATCH_FILTER_EXT + s, v - 9);          // 1 = Six-O-Bee, 2 = Two-Rev ladder, 3 = Nord LP12
+      sendChroma(PATCH_FILTER_EXT + s, v - 9);          // 1 = Six-O-Bee, 2 = Two-Rev ladder, 3 = NLP12
     } else {
       sendChroma(PATCH_FILTER_EXT + s, 0);
       sendChroma(idx('chromaFilterType'),
@@ -4216,13 +4275,30 @@ function paintFilterBox(s) {
   // Oscillator controls that belong to one engine.
   Object.entries(INSTRUMENT_ONLY).forEach(([f, insts]) =>
     showRow(document.getElementById(f + s), insts.includes(inst)));
+  const pv = document.getElementById('perVoice' + s);
+  if (pv) {
+    const ftv = ftEl ? ftEl.value : '0';
+    const extEl = null;
+    const usable = PER_VOICE_OSCS.includes(inst)
+                   && PER_VOICE_FILTERS.includes(String(ft));
+    showRow(pv, usable);
+    const note = document.getElementById('perVoiceNote' + s);
+    if (note) note.style.display = usable && pv.checked ? '' : 'none';
+  }
+  const pulseBox = document.getElementById('pulseBox' + s);
+  if (pulseBox) {
+    pulseBox.style.display = PULSE_OSCS.includes(inst) ? 'block' : 'none';
+    const nrow = document.getElementById('nla1Row' + s);
+    if (nrow) nrow.style.display = inst === 'Waylo NLA1' ? '' : 'none';
+    paintPulseRows(s, inst);
+  }
 }
 
 // The two patch-wide Chroma settings, which sit past both slots' fields.
 const PATCH_ROUTING = 36, PATCH_FILTER_FM = 37;
 // The spare tail: two entries each, one per slot (main.cpp kPatchSemMode..).
 const PATCH_FILT_MODE = 38, PATCH_ANALOG_SH = 40, PATCH_ANALOG_RAW = 42;
-const PATCH_FILTER_EXT = 44; // 0 = the ten legacy filters, 1 = Six-O-Bee, 2 = Two-Rev ladder, 3 = Nord LP12
+const PATCH_FILTER_EXT = 44; // 0 = the ten legacy filters, 1 = Six-O-Bee, 2 = Two-Rev ladder, 3 = NLP12
 const PATCH_ROUTING_EXT = 46; // 0 = the four legacy routings, 1 = ring mod
 // The rotary cabinet, per patch. Zero in every patch saved before this
 // existed, which is the Classic cabinet those patches were made on.
@@ -4315,6 +4391,9 @@ const EXT_COPY_SLOT = EXT_TUNE_BASE + NUM_SLOTS;        // 16
 // takes the oldest held note's cutoff. The number stays because the loop
 // indices are defined from it and the firmware agrees.
 const EXT_PER_VOICE_BASE = EXT_COPY_SLOT + 1;           // 17
+const PER_VOICE_OSCS = ['Waylo Six-O-Bee', 'Waylo Two-Rev', 'Waylo Pure 10',
+                        'Waylo Pulse Adj', 'Waylo Pulse Widen'];
+const PER_VOICE_FILTERS = ['3', '10', '12'];   // Chrome 2-pole, SEM, LP12
 // Looping, per side and saved with the patch -- see kExtLoopOnBase in main.cpp.
 const EXT_LOOP_ON_BASE = EXT_PER_VOICE_BASE + NUM_SLOTS;   // 19, +slot
 const EXT_LOOP_START   = EXT_LOOP_ON_BASE + NUM_SLOTS;     // 21, +slot
@@ -4348,6 +4427,28 @@ const EXT_FILT_VEL_ENV = EXT_FM_RELEASE + NUM_SLOTS;
 // one. Replaying a bank used to pull eight instruments off the card -- 20
 // seconds -- to end up playing two of them.
 const EXT_BULK_PATCH_LOAD = EXT_FILT_VEL_ENV + NUM_SLOTS;
+// The two pulse oscillators' own controls (main.cpp kExtPulseSmooth /
+// kExtPulseWidth). Their own patch bytes rather than the analog block's,
+// so neither the Six-O-Bee's sliders nor the mod wheel can move them.
+const EXT_PULSE_SMOOTH = EXT_BULK_PATCH_LOAD + 1;
+const EXT_PULSE_WIDTH  = EXT_PULSE_SMOOTH + NUM_SLOTS;
+// The pulse mod matrix (main.cpp kExtPulseMod). Destination-major --
+// width's three sources then smoothing's -- with a slot pair at each.
+const EXT_PULSE_MOD = EXT_PULSE_WIDTH + NUM_SLOTS;
+const PM_IDS = ['pmWidthVel', 'pmWidthWheel', 'pmWidthKey',
+                'pmSmoothVel', 'pmSmoothWheel', 'pmSmoothKey'];
+// Which of the six NLA1 waveforms (main.cpp kExtFixedMode). One byte a
+// slot rather than six instruments.
+const EXT_FIXED_MODE = EXT_PULSE_MOD + 6 * NUM_SLOTS;
+// Per slot: take that slot's filter out of the signal path entirely. So a
+// sampled instrument in the right slot can run with no filter while the
+// left slot keeps its own (main.cpp kExtFilterBypass).
+const EXT_FILTER_BYPASS = EXT_FIXED_MODE + NUM_SLOTS;
+const NLA1_WAVES = ['Fixed pulse 1', 'Fixed pulse 2', 'Fixed pulse 3',
+                    'Half sine', 'Full sine', 'Double hump'];
+const pmIdx = (k, slot) => EXT_PULSE_MOD + k * NUM_SLOTS + slot;
+const pmLabel = (v) => v === 64 ? 'none'
+  : (v > 64 ? '+' : '\u2212') + Math.round(Math.abs(v - 64) * 100 / 63) + '%';
 // Matches main.cpp: 2^((v-64)/32), so 64 is x1 and the ends are x0.25/x3.9.
 const rotaryScaleLabel = (v) => 'x' + Math.pow(2, (v - 64) / 32).toFixed(2);
 // Matches ModDepth() in main.cpp: 63 steps above centre, 64 below, so each
@@ -4505,6 +4606,7 @@ function sendOb2(index, value) {
 }
 
 function obSetup() {
+  pulseSetup();
   for (let sl = 0; sl < NUM_SLOTS; sl++) {
     const bind = (id, field, label) => {
       const el = document.getElementById(id + sl);
@@ -4817,6 +4919,112 @@ function kmSetup() {
 }
 
 // Labels: the Six-O-Bee shape knob's landmarks, and the Two-Rev's wrapping width.
+// What the two Pulse controls mean on each engine that has them. Keep in
+// step with AnalogOsc::UpdateAdjust() in src/analog_osc.h -- these
+// readouts are the only place the ranges are visible, so a mapping
+// changed there and not here is a slider that lies rather than a build
+// that breaks.
+const PULSE_OSCS = ['Waylo Pulse Adj', 'Waylo Pulse Widen', 'Waylo NLA1'];
+const PULSE_CTL = {
+  'Waylo Pulse Adj': {
+    smooth: ['Smoothing (a)',
+             (v) => 'a = ' + (0.1 * v / 127).toFixed(3) + ' cycle'],
+    width:  ['Width (w)',
+             (v) => Math.round(100 * (0.02 + 0.93 * v / 127)) + '%'],
+  },
+  'Waylo NLA1': {
+    // The excitation lasts a fixed TIME, so the duty grows with pitch
+    // and the tone changes as you play up the keyboard. That is the
+    // whole point of it, not a side effect to be normalised away.
+    smooth: ['Shape', (v) => (v / 127).toFixed(2)],
+    width:  ['Width', (v) => (0.05 * Math.pow(100, v / 127)).toFixed(2) + ' ms'],
+  },
+  'Waylo Pulse Widen': {
+    smooth: ['Widening',
+             (v) => Math.round(100 * v / 127) + ' \u00b5s/cycle'],
+    // Exponential 2-50%, so the knob's centre reads 10%.
+    width:  ['Width at C1',
+             (v) => (2 * Math.pow(25, v / 127)).toFixed(1) + '%'],
+  },
+};
+
+function paintPulseRows(s, inst) {
+  const spec = PULSE_CTL[inst];
+  if (!spec) return;
+  for (const key of ['smooth', 'width']) {
+    const id = key === 'smooth' ? 'pulseSmooth' : 'pulseWidth';
+    const lab = document.getElementById(id + 'L' + s);
+    const el = document.getElementById(id + s);
+    const val = document.getElementById(id + 'V' + s);
+    if (lab) lab.textContent = spec[key][0];
+    if (el && val) val.textContent = spec[key][1](parseInt(el.value, 10));
+  }
+}
+
+function filterBypassSetup() {
+  for (let sl = 0; sl < NUM_SLOTS; sl++) {
+    const el = document.getElementById('filterBypass' + sl);
+    if (!el) continue;
+    el.addEventListener('change', () => {
+      const lab = document.getElementById('filterBypassV' + sl);
+      if (lab) lab.textContent = el.checked ? 'on' : 'off';
+      // Page 1, so sendOb2 -- see the note on the per-voice switch.
+      sendOb2(EXT_FILTER_BYPASS + sl, el.checked ? 127 : 0);
+    });
+  }
+}
+
+function perVoiceSetup() {
+  for (let sl = 0; sl < NUM_SLOTS; sl++) {
+    const el = document.getElementById('perVoice' + sl);
+    if (!el) continue;
+    el.addEventListener('change', () => {
+      const v = el.checked ? 127 : 0;
+      const lab = document.getElementById('perVoiceV' + sl);
+      if (lab) lab.textContent = el.checked ? 'on' : 'off';
+      // sendOb2, NOT sendChroma: this is a PAGE 1 index and sendChroma
+      // writes whatever page the device is on, which is page 0. Index 17
+      // on page 0 is slot 1's Xpander pole mix, so this checkbox was
+      // moving the pole mix and never touching the per-voice filter.
+      sendOb2(EXT_PER_VOICE_BASE + sl, v);
+    });
+  }
+}
+
+function pulseSetup() {
+  perVoiceSetup();
+  filterBypassSetup();
+  for (let sl = 0; sl < NUM_SLOTS; sl++) {
+    const el = document.getElementById('nla1Mode' + sl);
+    if (el) el.addEventListener('change',
+      () => sendOb2(EXT_FIXED_MODE + sl, parseInt(el.value, 10)));
+  }
+  for (let sl = 0; sl < NUM_SLOTS; sl++) {
+    PM_IDS.forEach((id, k) => {
+      const el = document.getElementById(id + sl);
+      const val = document.getElementById(id + 'V' + sl);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        if (val) val.textContent = pmLabel(+el.value);
+        sendOb2(pmIdx(k, sl), +el.value);
+      });
+      if (val) val.textContent = pmLabel(+el.value);
+    });
+    for (const key of ['smooth', 'width']) {
+      const id = key === 'smooth' ? 'pulseSmooth' : 'pulseWidth';
+      const base = key === 'smooth' ? EXT_PULSE_SMOOTH : EXT_PULSE_WIDTH;
+      const el = document.getElementById(id + sl);
+      if (!el) continue;
+      el.addEventListener('input', () => {
+        const instEl = document.getElementById('slotType' + sl);
+        const inst = instEl ? DV_INSTRUMENTS[parseInt(instEl.value, 10)] : '';
+        paintPulseRows(sl, inst);
+        sendOb2(base + sl, +el.value);
+      });
+    }
+  }
+}
+
 const sixObShapeLabel = (v) => v < 4 ? 'sawtooth'
   : (v < 20 ? 'saw + a little pulse' : (v < 32 ? 'fundamental cancels'
   : (v > 123 ? 'square' : 'pulse ' + Math.round(v / 127 * 100) + '%')));
@@ -4902,6 +5110,73 @@ function setChromaFromDevice(param, val) {
           e.value = String(val);
           const lab = document.getElementById(id + 'Val');
           if (lab) lab.textContent = rotaryScaleLabel(val);
+        }
+      } else if (rxExtIndex >= EXT_PER_VOICE_BASE
+                 && rxExtIndex < EXT_PER_VOICE_BASE + NUM_SLOTS) {
+        const sl = rxExtIndex - EXT_PER_VOICE_BASE;
+        const e = document.getElementById('perVoice' + sl);
+        if (e) {
+          e.checked = val >= 64;
+          const lab = document.getElementById('perVoiceV' + sl);
+          if (lab) lab.textContent = e.checked ? 'on' : 'off';
+        }
+      } else if (rxExtIndex >= EXT_FM_FEEDBACK
+                 && rxExtIndex < EXT_FM_FEEDBACK + NUM_SLOTS) {
+        // The device dumps these per patch now. Without a branch here the
+        // sliders never moved when a patch arrived, however correct the
+        // values were on the device.
+        const sl = rxExtIndex - EXT_FM_FEEDBACK;
+        const e = document.getElementById('fmFeedback' + sl);
+        if (e) {
+          e.value = String(val);
+          const lab = document.getElementById('fmFeedback' + sl + 'Val');
+          if (lab) lab.textContent = fmFeedbackLabel(val);
+        }
+      } else if (rxExtIndex >= EXT_FM_RELEASE
+                 && rxExtIndex < EXT_FM_RELEASE + NUM_SLOTS) {
+        const sl = rxExtIndex - EXT_FM_RELEASE;
+        const e = document.getElementById('fmRelease' + sl);
+        if (e) {
+          e.value = String(val);
+          const lab = document.getElementById('fmRelease' + sl + 'Val');
+          if (lab) lab.textContent = fmReleaseLabel(val);
+        }
+      } else if (rxExtIndex >= EXT_FILTER_BYPASS
+                 && rxExtIndex < EXT_FILTER_BYPASS + NUM_SLOTS) {
+        const sl = rxExtIndex - EXT_FILTER_BYPASS;
+        const e = document.getElementById('filterBypass' + sl);
+        if (e) {
+          e.checked = val >= 64;
+          const lab = document.getElementById('filterBypassV' + sl);
+          if (lab) lab.textContent = e.checked ? 'on' : 'off';
+        }
+      } else if (rxExtIndex >= EXT_FIXED_MODE
+                 && rxExtIndex < EXT_FIXED_MODE + NUM_SLOTS) {
+        const el = document.getElementById(
+          'nla1Mode' + (rxExtIndex - EXT_FIXED_MODE));
+        if (el) el.value = String(Math.min(val, NLA1_WAVES.length - 1));
+      } else if (rxExtIndex >= EXT_PULSE_MOD
+                 && rxExtIndex < EXT_PULSE_MOD + PM_IDS.length * NUM_SLOTS) {
+        const off = rxExtIndex - EXT_PULSE_MOD;
+        const el = document.getElementById(
+          PM_IDS[Math.floor(off / NUM_SLOTS)] + (off % NUM_SLOTS));
+        if (el) {
+          el.value = String(val);
+          const lab = document.getElementById(
+            PM_IDS[Math.floor(off / NUM_SLOTS)] + 'V' + (off % NUM_SLOTS));
+          if (lab) lab.textContent = pmLabel(val);
+        }
+      } else if (rxExtIndex >= EXT_PULSE_SMOOTH
+                 && rxExtIndex < EXT_PULSE_WIDTH + NUM_SLOTS) {
+        const smooth = rxExtIndex < EXT_PULSE_WIDTH;
+        const side = rxExtIndex - (smooth ? EXT_PULSE_SMOOTH : EXT_PULSE_WIDTH);
+        const e = document.getElementById(
+          (smooth ? 'pulseSmooth' : 'pulseWidth') + side);
+        if (e) {
+          e.value = String(val);
+          const instEl = document.getElementById('slotType' + side);
+          paintPulseRows(side,
+            instEl ? DV_INSTRUMENTS[parseInt(instEl.value, 10)] : '');
         }
       } else if (rxExtIndex >= EXT_FILT_VEL_ENV
                  && rxExtIndex < EXT_FILT_VEL_ENV + NUM_SLOTS) {
@@ -5193,13 +5468,13 @@ Object.entries(GLOBAL_FX).forEach(([id, def]) => {
 // main.cpp, which is the SD catalog plus Vintage Vibe, Waylo Tele and Sustain
 // Steel, minus the mda piano (its own engine). Kept in step by
 // tools/hosttest/instrument_lists_test.py -- the five Expansions and Rhodes
-// Fender were missing, which hid their Start and Loop controls even though
+// Rhds F was missing, which hid their Start and Loop controls even though
 // the firmware supports both.
 // 68 and 69 are Waylo Rhds and Waylo Piano. They go through the generic
 // sampler (UsesSdSamplePlayer), so the firmware already gives them a start
 // offset, an attack curve and a velocity curve -- without them listed here
 // the editor simply did not draw the rows.
-const SAMPLE_INSTRUMENTS = [5, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 61, 63, 64, 65, 66, 67, 68, 69];
+const SAMPLE_INSTRUMENTS = [5, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 61, 63, 64, 65, 66, 67, 68, 69, 73, 74];
 // Mirrors HasAttackCurve() in main.cpp: the sample engines except Sustain
 // Steel (whose fade is a real ADSR), plus Mda DX10 and 4-Op PM.
 // Sampled (not Sustain Steel, whose fade is a real ADSR), DX10, 4-Op, and
