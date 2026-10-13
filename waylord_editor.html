@@ -524,11 +524,11 @@
         <div class="row"><label>Pre-delay</label><input type="range" id="reverbPreDelay" min="0" max="127" value="0"><span class="val" id="reverbPreDelayVal"></span></div>
         </div>
         <div class="fx-card">
-<div class="sub" style="margin:10px 0 6px;"><strong>Harmonic tremolo</strong> — fades between the bands either side of the crossover in antiphase, so the wobble moves through the spectrum rather than just the level.</div>
-        <div class="row"><label>Wet</label><input type="range" id="htremWet" min="0" max="127" value="0"><span class="val" id="htremWetVal"></span></div>
-        <div class="row"><label>Rate</label><input type="range" id="htremRate" min="0" max="127" value="87"><span class="val" id="htremRateVal"></span></div>
-        <div class="row"><label>Depth</label><input type="range" id="htremDepth" min="0" max="127" value="89"><span class="val" id="htremDepthVal"></span></div>
-        <div class="row"><label>Crossover</label><input type="range" id="htremCrossover" min="0" max="127" value="64"><span class="val" id="htremCrossoverVal"></span></div>
+<div class="sub" style="margin:10px 0 6px;"><strong>Harmonic tremolo — REMOVED</strong> — fades between the bands either side of the crossover in antiphase, so the wobble moves through the spectrum rather than just the level. <strong>Taken out of the firmware to free space.</strong> These four sliders are disabled but still saved and still travel with a patch, so no old bank is misread — CC 16–19 still mean what they meant.</div>
+        <div class="row"><label>Wet</label><input type="range" id="htremWet" disabled min="0" max="127" value="0"><span class="val" id="htremWetVal"></span></div>
+        <div class="row"><label>Rate</label><input type="range" id="htremRate" disabled min="0" max="127" value="87"><span class="val" id="htremRateVal"></span></div>
+        <div class="row"><label>Depth</label><input type="range" id="htremDepth" disabled min="0" max="127" value="89"><span class="val" id="htremDepthVal"></span></div>
+        <div class="row"><label>Crossover</label><input type="range" id="htremCrossover" disabled min="0" max="127" value="64"><span class="val" id="htremCrossoverVal"></span></div>
         </div>
         <div class="fx-card">
 <div class="sub" style="margin:10px 0 6px;"><strong>Ring mod</strong> — mda RingMod: the mix is multiplied by a sine. Wet at 0 is bypass.</div>
@@ -609,9 +609,10 @@
         <option value="3">4 &mdash; effects only, stereo in, stereo out</option>
         <option value="4">5 &mdash; effects only, mono in, stereo out</option>
         <option value="5">6 &mdash; effects only, mono in, mono out</option>
+        <option value="6">7 &mdash; synth / samples + input, everything mono</option>
       </select>
     </div>
-    <div class="sub" style="margin:-4px 0 12px;">This is <strong>saved with the patch</strong>, so one patch can be a mono effects pedal and the next a stereo synth. In the effects-only modes the patch's own effects still do the work &mdash; a patch with just phaser and reverb is a phaser and reverb pedal &mdash; the engines simply aren't heard. The Input level below still sets how much input; a patch that never set one gets unity.<br><br><strong>Tapping the Pod's encoder bypasses the engines</strong> and lets the input through the patch's effects; tapping again brings them back. Two states, not six &mdash; stepping through all six live was a good way to end up somewhere you didn't intend, with only an LED colour to tell you. The LEDs go <span style="color:#f55;">red</span> while bypassed. Bypass is never saved: a patch always loads un-bypassed. <strong>Holding</strong> the encoder still jumps back to patch 1.</div>
+    <div class="sub" style="margin:-4px 0 12px;">This is <strong>saved with the patch</strong>, so one patch can be a mono effects pedal and the next a stereo synth. <strong>Mode 7</strong> is everything in mono: the engines AND the input, both inputs summed to one signal and one sum out of both jacks &mdash; the one combination the others cannot make, since mode 3 blends engines with input only in stereo and the two mono-in modes drop the engines. In the effects-only modes the patch's own effects still do the work &mdash; a patch with just phaser and reverb is a phaser and reverb pedal &mdash; the engines simply aren't heard. The Input level below still sets how much input; a patch that never set one gets unity.<br><br><strong>Tapping the Pod's encoder bypasses the engines</strong> and lets the input through the patch's effects; tapping again brings them back. Two states, not six &mdash; stepping through all six live was a good way to end up somewhere you didn't intend, with only an LED colour to tell you. The LEDs go <span style="color:#f55;">red</span> while bypassed. Bypass is never saved: a patch always loads un-bypassed. <strong>Holding</strong> the encoder still jumps back to patch 1.</div>
     <div class="mini-cols">
       <div>
         <div class="row"><label>Input level</label><input type="range" id="audioInLevel" min="0" max="127" value="0"><span class="val" id="audioInLevelVal"></span></div>
@@ -667,15 +668,19 @@
     <div class="group-body">
 <div class="panel">
         <h2>Device <span style="color:var(--muted); font-weight:400; text-transform:none; letter-spacing:0;">— flash-backed, survives power off</span></h2>
-        <div class="sub" style="margin-bottom:10px;">Save commits whatever's currently live and writes all 10 patch slots to the Pod's flash in one go. On Connect, this page reads the 10 patches back FROM the device.</div>
+        <div class="sub" style="margin-bottom:10px;">Save commits whatever's currently live and writes all 10 patch slots to the Pod's flash in one go. On Connect, this page reads the 10 patches back FROM the device. <strong>Read state from device</strong> does that read again on demand and changes nothing on the Pod &mdash; use it whenever this page looks out of step with what you are hearing. <strong>Reload last save</strong> is different and destructive: it makes the Pod reload from flash first, discarding anything unsaved.</div>
         <div class="sub" style="margin-bottom:10px;"><strong>Init patch</strong> sets the patch you have selected to a bare starting point &mdash; a sine on both sides, and every effect, filter, routing and modulation at neutral, so the mod wheel does nothing until you give it a depth. It is the thing to start a new sound from, and the thing to fall back to when a patch has drifted somewhere odd and you want to hear what one change actually does. It only changes what is live: nothing reaches flash until you press Save.</div>
         <div class="btns">
           <button id="saveDeviceBtn" class="primary">Save all patches to device</button>
+          <button id="readStateBtn">Read state from device</button>
           <button id="reloadDeviceBtn">Reload last save</button>
           <button id="initPatchBtn">Init patch</button>
           <button id="factoryResetBtn" class="danger">Factory reset</button>
           <button id="bootloaderBtn" class="danger">Reboot to DFU</button>
         </div>
+        <div class="sub" style="margin-top:12px; margin-bottom:6px;"><strong>Controller CC remapping</strong> &mdash; send one CC number as another, so a knob your keyboard will not let you reassign can drive something here. Two independent mappings; a row does nothing while From and To are the same. Global, not per patch, and saved with <em>Save all patches to device</em>. The NRPN transport (6, 38, 98, 99) cannot be remapped &mdash; that is how this page talks to the Pod &mdash; and a destination of 120 or above is ignored, because those arrive as Channel Mode messages rather than CCs.</div>
+        <div class="row"><label>Map 1</label><span class="sub">From CC</span><input type="number" id="ccMapSrc0" min="0" max="119" value="0" style="width:72px;"><span class="sub">to CC</span><input type="number" id="ccMapDst0" min="0" max="119" value="0" style="width:72px;"><span class="val" id="ccMapV0">off</span></div>
+        <div class="row"><label>Map 2</label><span class="sub">From CC</span><input type="number" id="ccMapSrc1" min="0" max="119" value="0" style="width:72px;"><span class="sub">to CC</span><input type="number" id="ccMapDst1" min="0" max="119" value="0" style="width:72px;"><span class="val" id="ccMapV1">off</span></div>
         <div class="sub" style="margin:14px 0 10px;"><strong>Banks on this computer</strong> — a bank is everything the Pod holds: all 10 patches plus every global setting (effects, organ, 4-Op, velocity curves, sample starts, tracking). Save downloads it as a file; Load sends a file's bank to the Pod, which takes around half a minute because each patch's instruments load from the SD card on the way. Loading replaces what's live but doesn't write flash &mdash; press Save all patches to device afterwards to keep it.</div>
         <div class="btns">
           <button id="saveBankBtn">Save bank to computer&hellip;</button>
@@ -877,6 +882,16 @@ const DV_INSTRUMENTS = [
   // a 10% pulse. Appended, so every index before them keeps its meaning.
   'Waylo SawNoFund',
   'Waylo Claude N',
+  // The acoustic re-sampled with a root on every semitone. Dyn is the
+  // one-gain version, which keeps the note-to-note dynamics of the take.
+  'N Waylo Acou 3',
+  'N Waylo Acou 3 Dyn',
+  // The MollerSteel capture as a plain multisample bank: 16 roots at minor
+  // thirds x 3 tone layers, 48kHz, against the original Sustain Steel's 5
+  // roots at 24kHz. Last, because this list's ORDER is the firmware's enum
+  // order -- an index is what a saved patch stores and what the device is
+  // sent.
+  'Sustain Steel 2',
 ];
 const USER_FIRST = 33; // DV_INSTRUMENTS index of User 1
 
@@ -886,7 +901,23 @@ const USER_FIRST = 33; // DV_INSTRUMENTS index of User 1
 // what every existing patch plays. They are filtered out of the menus
 // instead, so they cannot be chosen; the firmware substitutes a sine if an
 // old patch still names one (IsRetired() in instrument_type.h).
-const RETIRED_INSTRUMENTS = new Set(['Piano 3', 'Vintage Vibe']);
+// Withdrawn 2026-10-10: N Waylo Acou 2 is superseded by the Acou 3 banks
+// (43 roots instead of 13), Salamander Med sits between Hard and Full.
+// Their NAMES stay in DV_INSTRUMENTS at their original indices (74, 65)
+// for the same reason Piano 3's does -- that index is what a saved patch
+// stores and what CC20 maps onto.
+// Drawbar Organ and Mda DX10 withdrawn 2026-10-12 to free SRAM -- and unlike
+// the others their ENGINES are gone, which is the only way retiring an
+// instrument frees anything: OrganSynth was 5,788 bytes a slot and Dx10Synth
+// 696, plus their code. The TONEWHEEL organ stays; different engine.
+const RETIRED_INSTRUMENTS = new Set(['Piano 3', 'Vintage Vibe',
+                                    'N Waylo Acou 2', 'Salamander Med',
+                                    'Drawbar Organ', 'Mda DX10',
+                                    // Superseded by Sustain Steel 2: 16 roots
+                                    // at 48kHz against 5 at 24kHz, and on the
+                                    // generic sampler, so Loop and the Double
+                                    // actually work for it.
+                                    'Sustain Steel']);
 const isRetired = (i) => RETIRED_INSTRUMENTS.has(DV_INSTRUMENTS[i]);
 
 // --- which controls actually do anything, given the rest of the patch ----
@@ -1034,10 +1065,12 @@ const INSTRUMENT_GROUPS = [
   ['Synthesizers', [
     'Sine', 'Saw', 'Square', 'Pulse', 'Chrome VCO', 'Band-limited',
     'Waylo Six-O-Bee', 'Waylo Two-Rev', 'Waylo Pure 10', 'Waylo Pulse Widen', 'Waylo Pulse Adj', 'Waylo NLA1',
+    'Waylo SawNoFund', 'Waylo Claude N',
     'Waylinator SQ75', 'Waylinator Saw',
     'Mda DX10', '4-Op PM', 'CDG Rotator', 'Waylo Xfade2']],
   ['Guitars & steel', [
-    'Waylo Tele', 'Sustain Steel', 'Waylo Guitar', 'N Waylo Gtr 3', 'N Waylo Acou 2',
+    'Waylo Tele', 'Sustain Steel', 'Sustain Steel 2', 'Waylo Guitar', 'N Waylo Gtr 3', 'N Waylo Acou 2',
+    'N Waylo Acou 3', 'N Waylo Acou 3 Dyn',
     'Acoustic Guitar',
     'Gibson Lead', 'Rickenbacker', 'Gibson DC', 'QY Pedal Steel']],
   ['Samplers', [
@@ -1247,12 +1280,32 @@ const EQR_IDS = ['eqRLow', 'eqRMid', 'eqRHigh', 'eqRSweep'];
 // come off the card, which is a chance to lose a value mid-transfer.
 // tools/parity/editor_sd_list.py in the plugin repo fails if this drifts
 // from the firmware again.
-function isSdBacked(t) { return (t >= 5 && t <= 6) || t === 9 || (t >= 12 && t <= 21) || (t >= 25 && t <= 36) || (t >= 39 && t <= 44) || (t >= 49 && t <= 50) || (t >= 52 && t <= 59) || t === 61 || (t >= 63 && t <= 69) || (t >= 73 && t <= 74); }
-// DoubleAvailable() in dual_voice.h: every SD instrument except mda Piano,
-// which is on the card but played by its own engine. Waylo Tele (5) and mda
-// ePiano (9) used to be named here by hand because the list above did not
-// have them; it does now.
-function hasDouble(t) { return isSdBacked(t) && t !== 39; }
+// IT DRIFTED AGAIN: Sustain Steel 2 was appended as index 80 and this
+// list still stopped at 79, so it had no Double box -- reported as "there
+// is no double checkbox in the browser", the identical symptom to the
+// eleven instruments above. Adding an instrument means editing this
+// range as well as the firmware enum.
+function isSdBacked(t) { return (t >= 5 && t <= 6) || t === 9 || (t >= 12 && t <= 21) || (t >= 25 && t <= 36) || (t >= 39 && t <= 44) || (t >= 49 && t <= 50) || (t >= 52 && t <= 59) || t === 61 || (t >= 63 && t <= 69) || (t >= 73 && t <= 74) || (t >= 78 && t <= 80); }
+// IsAnalogOscEngine() in instrument_type.h: Six-O-Bee, Two-Rev, Pure 10,
+// Pulse Adj, Pulse Widen, NLA1, SawNoFund, Claude N. They get a double too
+// -- a second detuned copy of the note -- and this list is why the box did
+// not appear for them: hasDouble() asked only about SD instruments, and so
+// did render_check's --sdlist, so the parity test compared two copies of the
+// same mistake and passed. The firmware would have honoured the control.
+function isAnalogOscEngine(t) {
+  return t === 47 || t === 48 || (t >= 70 && t <= 72) || (t >= 75 && t <= 77);
+}
+// DoubleAvailableForType() in instrument_type.h: every SD instrument except
+// mda Piano (39), which is on the card but played by its own engine, plus
+// every oscillator engine.
+// IsSimpleWaveEngine() in instrument_type.h: Sine, Saw, Square, Pulse --
+// indices 0..3. They have a double now too, rendered from each voice's own
+// phase accumulator rather than a second oscillator.
+function isSimpleWaveEngine(t) { return t >= 0 && t <= 3; }
+function hasDouble(t) {
+  return (isSdBacked(t) && t !== 39) || isAnalogOscEngine(t)
+         || isSimpleWaveEngine(t);
+}
 // Mirrors ApplyDoubleToEngine() in main.cpp.
 const DBL_LABEL = {
   level:  v => `${Math.round(v / 127 * 100)}%`,
@@ -2028,9 +2081,8 @@ function buildSlotColumns() {
         <div class="row"><label>Cutoff</label><input type="range" id="chromaFilterCutoff${s}" min="0" max="127" value="90"><span class="val" id="chromaFilterCutoff${s}Val"></span></div>
         <div class="row"><label>Resonance</label><input type="range" id="chromaFilterRes${s}" min="0" max="127" value="0"><span class="val" id="chromaFilterRes${s}Val"></span></div>
         <div class="row"><label>Bypass filter</label><input type="checkbox" id="filterBypass${s}" style="accent-color:var(--accent); width:17px; height:17px;"><span class="val" id="filterBypassV${s}">off</span></div>
+        <div class="row"><label>Bypass ADSR</label><input type="checkbox" id="ampBypass${s}" style="accent-color:var(--accent); width:17px; height:17px;"><span class="val" id="ampBypassV${s}">off</span></div>
         <div class="sub" style="margin:-4px 0 8px; color:var(--muted);">Takes this side's filter out of the signal path altogether, whatever it is set to &mdash; for a sampled instrument you want dry, with the other side's filter untouched. The filter's own settings are kept, so it comes back as it was.</div>
-        <div class="row"><label>Per-voice filter</label><input type="checkbox" id="perVoice${s}" style="accent-color:var(--accent); width:17px; height:17px;"><span class="val" id="perVoiceV${s}">off</span></div>
-        <div class="sub" id="perVoiceNote${s}" style="display:none; margin:-4px 0 8px; color:var(--muted);">Four filters, reused: each note takes one and sets its cutoff from <em>its own</em> velocity and pitch. A fifth note shares the least-busy filter rather than going unfiltered, so polyphony is unchanged. Only on the oscillator engines, and only for the 2-pole filters (Chrome 2-pole, Six-O-Bee, NLP12) &mdash; the pool is one filter design, and standing it in for a ladder would not sound like the ladder.</div>
         <div class="row"><label>High-pass</label><input type="checkbox" id="chromaFilterHighPass${s}" style="accent-color:var(--accent); width:17px; height:17px;"><span class="sub" style="margin-left:6px;">LP/HP [37] &mdash; one side low-pass and the other high-pass makes a band-pass</span></div>
         <div class="row"><label>Pole mix</label><select id="xpanderMode${s}" style="flex:1;"><option value="0">LP4 &mdash; 24dB lowpass</option><option value="1">LP3 &mdash; 18dB lowpass</option><option value="2">LP2 &mdash; 12dB lowpass</option><option value="3">LP1 &mdash; 6dB lowpass</option><option value="4">HP3 &mdash; 18dB highpass</option><option value="5">HP2 &mdash; 12dB highpass</option><option value="6">HP1 &mdash; 6dB highpass</option><option value="7">BP4 &mdash; 24dB bandpass</option><option value="8">BP2 &mdash; 12dB bandpass</option><option value="9">N2 &mdash; 12dB notch</option><option value="10">PH3 &mdash; 18dB phaser</option><option value="11">HP2+LP1</option><option value="12">HP3+LP1</option><option value="13">N2+LP1</option><option value="14">PH3+LP1</option></select></div>
         <div class="row"><label>Six-O-Bee filter mode</label><input type="range" id="sixObMode${s}" min="0" max="127" value="0" style="flex:1;"><span class="val" id="sixObModeV${s}">low-pass</span></div>
@@ -3284,6 +3336,16 @@ document.getElementById('saveDeviceBtn').addEventListener('click', () => {
   sendNrpn(NRPN.SAVE, 127);
   renderPatchTabs();
 });
+// READ STATE: pull the device's CURRENT state into this page and repaint,
+// changing nothing on the Pod. Asked for because the page can end up out of
+// step with the device ("state still not loading properly into browser") and
+// there was no way to resync without either reconnecting or pressing Reload
+// last save -- which is NOT the same thing: that one overwrites the live
+// state from flash first, so any unsaved edit is gone. This one only reads.
+document.getElementById('readStateBtn').addEventListener('click', () => {
+  if (!midiOut) { alert('Connect to the Pod first.'); return; }
+  requestDumpFromDevice();
+});
 document.getElementById('reloadDeviceBtn').addEventListener('click', () => {
   if (!confirm('Reload from the device\'s last save? Any edits since your last Save will be lost.')) return;
   sendNrpn(NRPN.LOAD, 127);
@@ -3308,9 +3370,15 @@ document.getElementById('bootloaderBtn').addEventListener('click', () => {
 // to two octaves up.
 function sendInitPatch() {
   const cc = (n, v) => send([0xB0, n & 0x7F, v & 0x7F]);
-  // Effects: every wet to zero, both dry paths full so signal passes clean.
-  [3, 16, 32, 35, 54, 75, 81, 86, 43, 44, 37].forEach(n => cc(n, 0));
+  // Effects: every wet to zero, both dry paths full so signal passes clean...
+  [3, 16, 32, 35, 54, 75, 43, 44, 37].forEach(n => cc(n, 0));
   cc(80, 127); cc(85, 127);
+  // ...EXCEPT chorus wet (81) and delay wet (86), which init to FULL at the
+  // user's request. They used to be in the list above, so an init patch
+  // landed with both effects silent and you had to find two sliders before
+  // the sound resembled the instrument. The firmware's own defaults were
+  // already 127; only this function disagreed.
+  cc(81, 127); cc(86, 127);
   // Amp bypassed, and its two mod-wheel routings at none.
   sendNrpn(115 + 0, 0); sendNrpn(115 + 9, 64);
   sendNrpn(115 + 10, 64); sendNrpn(115 + 11, 0);
@@ -3322,8 +3390,12 @@ function sendInitPatch() {
   [NRPN.VEL_FM, NRPN.VEL_FB, NRPN.VEL_FILTER,
    NRPN.KEY_FILTER, NRPN.KEY_FM, NRPN.VEL_TONE].forEach(n => sendNrpn(n, 64));
   sendNrpn(NRPN.VEL_BOOST, 0); cc(94, 0);
-  // A clean gate, so a held note is steady enough to hear one change at a time.
-  cc(39, 0); cc(40, 0); cc(41, 127); cc(42, 0);
+  // A near-gate, so a held note is steady enough to hear one change at a
+  // time -- but with the edges taken off at the user's request: attack 5
+  // (~79ms) and release 40 (~630ms) rather than 0 and 0. A true zero
+  // release cuts a note dead, which reads as a click on anything with body.
+  // Decay 0 and sustain full keep it a gate in between.
+  cc(39, 5); cc(40, 0); cc(41, 127); cc(42, 40);
   [0, 1, 2, 3].forEach(i => sendNrpn(NRPN.ADSR_FINE_BASE + i, 0));
   sendNrpn(NRPN.WAYL_ADSR, 0);
   for (let s = 0; s < NUM_SLOTS; s++) {
@@ -3817,7 +3889,15 @@ function applyNrpnFromDevice(param, val) {
   if (param === NRPN.AUDIO_IN_LEVEL) { audioInLevelEl.value = String(val); paintAudioIn(); return; }
   if (param === NRPN.AUDIO_IN_MONO) { audioInMonoEl.checked = val >= 64; return; }
   if (param === NRPN.MONO_OUT) { monoOutEl.checked = val >= 64; return; }
-  if (param === NRPN.IO_MODE) { ioModeEl.value = String(Math.min(val, 5)); return; }
+  if (param === NRPN.IO_MODE) {
+    // Clamped against the OPTION COUNT, not a literal. This was
+    // Math.min(val, 5) with six modes, so adding a seventh would have shown
+    // mode 6 as mode 6 but any future eighth as the seventh -- the same way
+    // a hard-coded clamp turned three new phaser voicings into Phase 90.
+    const last = ioModeEl.options.length - 1;
+    ioModeEl.value = String(Math.min(val, last));
+    return;
+  }
   if (param === NRPN.SPLIT_ON) { splitOnEl.checked = val >= 64; paintSplit(); return; }
   if (param === NRPN.SPLIT_NOTE) { splitNoteEl.value = String(Math.min(val, 127)); paintSplit(); return; }
   if (param >= NRPN.TRANSPOSE_BASE && param < NRPN.TRANSPOSE_BASE + NUM_SLOTS) {
@@ -4275,16 +4355,6 @@ function paintFilterBox(s) {
   // Oscillator controls that belong to one engine.
   Object.entries(INSTRUMENT_ONLY).forEach(([f, insts]) =>
     showRow(document.getElementById(f + s), insts.includes(inst)));
-  const pv = document.getElementById('perVoice' + s);
-  if (pv) {
-    const ftv = ftEl ? ftEl.value : '0';
-    const extEl = null;
-    const usable = PER_VOICE_OSCS.includes(inst)
-                   && PER_VOICE_FILTERS.includes(String(ft));
-    showRow(pv, usable);
-    const note = document.getElementById('perVoiceNote' + s);
-    if (note) note.style.display = usable && pv.checked ? '' : 'none';
-  }
   const pulseBox = document.getElementById('pulseBox' + s);
   if (pulseBox) {
     pulseBox.style.display = PULSE_OSCS.includes(inst) ? 'block' : 'none';
@@ -4386,16 +4456,16 @@ const EXT_MIDI_BASE = OB_PER_SLOT * NUM_SLOTS;          // 10
 const MIDI_CHANNEL = 0, MIDI_IGNORE_CC = 1, MIDI_SLOT_CH = 2;
 const EXT_TUNE_BASE = EXT_MIDI_BASE + 4;                // 14
 const EXT_COPY_SLOT = EXT_TUNE_BASE + NUM_SLOTS;        // 16
-// +slot: per-voice filtering, saved per patch -- see kExtPerVoiceBase.
 // Reserved, nothing reads it: per-voice filtering is gone and every filter
 // takes the oldest held note's cutoff. The number stays because the loop
 // indices are defined from it and the firmware agrees.
-const EXT_PER_VOICE_BASE = EXT_COPY_SLOT + 1;           // 17
-const PER_VOICE_OSCS = ['Waylo Six-O-Bee', 'Waylo Two-Rev', 'Waylo Pure 10',
-                        'Waylo Pulse Adj', 'Waylo Pulse Widen'];
-const PER_VOICE_FILTERS = ['3', '10', '12'];   // Chrome 2-pole, SEM, LP12
+// RETIRED as a control: a filter per voice is simply what the oscillator
+// engines do now, so there is nothing to switch. The constant stays because
+// EXT_LOOP_ON_BASE below is worked out from it -- removing it would shift
+// every extended index after it and change the meaning of saved patches.
+const EXT_RETIRED_PER_VOICE = EXT_COPY_SLOT + 1;        // 17
 // Looping, per side and saved with the patch -- see kExtLoopOnBase in main.cpp.
-const EXT_LOOP_ON_BASE = EXT_PER_VOICE_BASE + NUM_SLOTS;   // 19, +slot
+const EXT_LOOP_ON_BASE = EXT_RETIRED_PER_VOICE + NUM_SLOTS; // 19, +slot
 const EXT_LOOP_START   = EXT_LOOP_ON_BASE + NUM_SLOTS;     // 21, +slot
 const EXT_LOOP_END     = EXT_LOOP_START + NUM_SLOTS;       // 23, +slot
 const EXT_LOOP_XFADE   = EXT_LOOP_END + NUM_SLOTS;         // 25, +slot
@@ -4444,6 +4514,16 @@ const EXT_FIXED_MODE = EXT_PULSE_MOD + 6 * NUM_SLOTS;
 // sampled instrument in the right slot can run with no filter while the
 // left slot keeps its own (main.cpp kExtFilterBypass).
 const EXT_FILTER_BYPASS = EXT_FIXED_MODE + NUM_SLOTS;
+// Page 1. kExtPoolReport in main.cpp sits between these two and is a
+// REPORT the device sends, not a control, so it takes one index of its
+// own and the bypass follows it.
+const EXT_POOL_REPORT = EXT_FILTER_BYPASS + NUM_SLOTS;
+const EXT_AMP_BYPASS  = EXT_POOL_REPORT + 1;
+// CC remapping: two mappings, each a source CC and a destination CC.
+// src == dst means off, which is the default (0 -> 0).
+const EXT_CCMAP_COUNT = 2;
+const EXT_CCMAP_SRC   = EXT_AMP_BYPASS + NUM_SLOTS;
+const EXT_CCMAP_DST   = EXT_CCMAP_SRC + EXT_CCMAP_COUNT;
 const NLA1_WAVES = ['Fixed pulse 1', 'Fixed pulse 2', 'Fixed pulse 3',
                     'Half sine', 'Full sine', 'Double hump'];
 const pmIdx = (k, slot) => EXT_PULSE_MOD + k * NUM_SLOTS + slot;
@@ -4961,6 +5041,35 @@ function paintPulseRows(s, inst) {
   }
 }
 
+function ccMapLabel(k) {
+  const a = document.getElementById('ccMapSrc' + k);
+  const b = document.getElementById('ccMapDst' + k);
+  const lab = document.getElementById('ccMapV' + k);
+  if (!a || !b || !lab) return;
+  const sv = parseInt(a.value, 10), dv = parseInt(b.value, 10);
+  lab.textContent = (sv === dv) ? 'off'
+                  : (dv >= 120) ? 'ignored (120+)'
+                  : `CC${sv} \u2192 CC${dv}`;
+}
+function ccMapSetup() {
+  for (let k = 0; k < EXT_CCMAP_COUNT; k++) {
+    const a = document.getElementById('ccMapSrc' + k);
+    const b = document.getElementById('ccMapDst' + k);
+    if (!a || !b) continue;
+    const send = () => {
+      const sv = Math.max(0, Math.min(127, parseInt(a.value, 10) || 0));
+      const dv = Math.max(0, Math.min(127, parseInt(b.value, 10) || 0));
+      ccMapLabel(k);
+      // Page 1, so sendOb2 -- sendChroma would write page 0 at that index.
+      sendOb2(EXT_CCMAP_SRC + k, sv);
+      sendOb2(EXT_CCMAP_DST + k, dv);
+    };
+    a.addEventListener('change', send);
+    b.addEventListener('change', send);
+    ccMapLabel(k);
+  }
+}
+
 function filterBypassSetup() {
   for (let sl = 0; sl < NUM_SLOTS; sl++) {
     const el = document.getElementById('filterBypass' + sl);
@@ -4972,28 +5081,25 @@ function filterBypassSetup() {
       sendOb2(EXT_FILTER_BYPASS + sl, el.checked ? 127 : 0);
     });
   }
-}
-
-function perVoiceSetup() {
+  // Bypass the amp ADSR on this slot: full level while the note is held,
+  // stopping when it is let go, with the other slot keeping the patch's
+  // envelope. Page 1 as well, so sendOb2 and not sendChroma -- sending a
+  // page-1 index with sendChroma writes whatever page 0 has at that number.
   for (let sl = 0; sl < NUM_SLOTS; sl++) {
-    const el = document.getElementById('perVoice' + sl);
+    const el = document.getElementById('ampBypass' + sl);
     if (!el) continue;
     el.addEventListener('change', () => {
-      const v = el.checked ? 127 : 0;
-      const lab = document.getElementById('perVoiceV' + sl);
+      const lab = document.getElementById('ampBypassV' + sl);
       if (lab) lab.textContent = el.checked ? 'on' : 'off';
-      // sendOb2, NOT sendChroma: this is a PAGE 1 index and sendChroma
-      // writes whatever page the device is on, which is page 0. Index 17
-      // on page 0 is slot 1's Xpander pole mix, so this checkbox was
-      // moving the pole mix and never touching the per-voice filter.
-      sendOb2(EXT_PER_VOICE_BASE + sl, v);
+      sendOb2(EXT_AMP_BYPASS + sl, el.checked ? 127 : 0);
     });
   }
 }
 
+
 function pulseSetup() {
-  perVoiceSetup();
   filterBypassSetup();
+  ccMapSetup();
   for (let sl = 0; sl < NUM_SLOTS; sl++) {
     const el = document.getElementById('nla1Mode' + sl);
     if (el) el.addEventListener('change',
@@ -5070,10 +5176,38 @@ const twoRevModLabel = (v) => {
 // Following the device: its dump sends the index, then the value.
 let rxExtIndex = 0;
 let rxExtPage = 0;
+// main.cpp's kRepLoadMsHi/kRepLoadMsLo on page 2 (kExtPageReports). Held as
+// literals because this page cannot see the enum; the firmware pins them
+// with a static_assert so a reordering there breaks the build, not this.
+const REP_LOAD_MS_HI = 16, REP_LOAD_MS_LO = 17;
+let rxLoadMsHi = 0;
+// Appended to the load-status line rather than given a box of its own: the
+// SD clock went from 12.5MHz to 50MHz and this is how you see whether that
+// did anything. 0ms means no card access was needed -- the instrument was
+// already resident in one of the two banks -- which is worth distinguishing
+// from a fast load, so it is said in words.
+function showSdLoadTime(ms) {
+  const e = document.getElementById('sdLoadStatus');
+  if (!e) return;
+  const base = e.textContent.replace(/ \u2014 (loaded in|already resident).*$/, '');
+  e.textContent = ms === 0
+    ? base + ' \u2014 already resident, no card read'
+    : base + ' \u2014 loaded in ' + (ms / 1000).toFixed(2) + ' s';
+}
 function setChromaFromDevice(param, val) {
   if (param === 98) { rxExtPage = val; return true; }
   if (param === NRPN_EXT_INDEX) { rxExtIndex = val; return true; }
   if (param !== NRPN_EXT_VALUE) return false;
+  // How long the last instrument load blocked for, which IS shown -- see
+  // main.cpp's kRepLoadMsHi. Two 7-bit halves, Hi then Lo, so the display
+  // happens on Lo. Intercepted ahead of the blanket page>1 swallow below.
+  // A static_assert in main.cpp fails the firmware build if appending a
+  // report field shifts these two numbers out from under this.
+  if (rxExtPage === 2 && (rxExtIndex === REP_LOAD_MS_HI || rxExtIndex === REP_LOAD_MS_LO)) {
+    if (rxExtIndex === REP_LOAD_MS_HI) { rxLoadMsHi = val; return true; }
+    showSdLoadTime((rxLoadMsHi << 7) | val);
+    return true;
+  }
   // Page 2 and up are the device's measurement reports -- the profiler, the
   // audio guard, the organ's bus path. They are not settings and there is
   // nothing here to show them, so they are swallowed. Without this they
@@ -5111,15 +5245,6 @@ function setChromaFromDevice(param, val) {
           const lab = document.getElementById(id + 'Val');
           if (lab) lab.textContent = rotaryScaleLabel(val);
         }
-      } else if (rxExtIndex >= EXT_PER_VOICE_BASE
-                 && rxExtIndex < EXT_PER_VOICE_BASE + NUM_SLOTS) {
-        const sl = rxExtIndex - EXT_PER_VOICE_BASE;
-        const e = document.getElementById('perVoice' + sl);
-        if (e) {
-          e.checked = val >= 64;
-          const lab = document.getElementById('perVoiceV' + sl);
-          if (lab) lab.textContent = e.checked ? 'on' : 'off';
-        }
       } else if (rxExtIndex >= EXT_FM_FEEDBACK
                  && rxExtIndex < EXT_FM_FEEDBACK + NUM_SLOTS) {
         // The device dumps these per patch now. Without a branch here the
@@ -5140,6 +5265,25 @@ function setChromaFromDevice(param, val) {
           e.value = String(val);
           const lab = document.getElementById('fmRelease' + sl + 'Val');
           if (lab) lab.textContent = fmReleaseLabel(val);
+        }
+      } else if (rxExtIndex >= EXT_CCMAP_SRC
+                 && rxExtIndex < EXT_CCMAP_SRC + EXT_CCMAP_COUNT) {
+        const k = rxExtIndex - EXT_CCMAP_SRC;
+        const e = document.getElementById('ccMapSrc' + k);
+        if (e) { e.value = val; ccMapLabel(k); }
+      } else if (rxExtIndex >= EXT_CCMAP_DST
+                 && rxExtIndex < EXT_CCMAP_DST + EXT_CCMAP_COUNT) {
+        const k = rxExtIndex - EXT_CCMAP_DST;
+        const e = document.getElementById('ccMapDst' + k);
+        if (e) { e.value = val; ccMapLabel(k); }
+      } else if (rxExtIndex >= EXT_AMP_BYPASS
+                 && rxExtIndex < EXT_AMP_BYPASS + NUM_SLOTS) {
+        const sl = rxExtIndex - EXT_AMP_BYPASS;
+        const e = document.getElementById('ampBypass' + sl);
+        if (e) {
+          e.checked = val >= 64;
+          const lab = document.getElementById('ampBypassV' + sl);
+          if (lab) lab.textContent = e.checked ? 'on' : 'off';
         }
       } else if (rxExtIndex >= EXT_FILTER_BYPASS
                  && rxExtIndex < EXT_FILTER_BYPASS + NUM_SLOTS) {
@@ -5470,11 +5614,19 @@ Object.entries(GLOBAL_FX).forEach(([id, def]) => {
 // tools/hosttest/instrument_lists_test.py -- the five Expansions and Rhodes
 // Rhds F was missing, which hid their Start and Loop controls even though
 // the firmware supports both.
+// 78, 79 and 80 are N Waylo Acou 3, Acou 3 Dyn and Sustain Steel 2. All
+// three go through the generic sampler, and all three were missing, so
+// paintLoop() hid the whole loop box for them -- reported as "there is no
+// loop in sustain steel 2", and the two Acou 3 banks had silently had no
+// Loop or Start rows since they were added. This is the THIRD
+// hand-maintained copy of a firmware list in this page (with
+// DV_INSTRUMENTS' order and isSdBacked's ranges), and the third to rot
+// the same way: appending an instrument means editing all of them.
 // 68 and 69 are Waylo Rhds and Waylo Piano. They go through the generic
 // sampler (UsesSdSamplePlayer), so the firmware already gives them a start
 // offset, an attack curve and a velocity curve -- without them listed here
 // the editor simply did not draw the rows.
-const SAMPLE_INSTRUMENTS = [5, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 61, 63, 64, 65, 66, 67, 68, 69, 73, 74];
+const SAMPLE_INSTRUMENTS = [5, 6, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 40, 41, 42, 43, 44, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 61, 63, 64, 65, 66, 67, 68, 69, 73, 74, 78, 79, 80];
 // Mirrors HasAttackCurve() in main.cpp: the sample engines except Sustain
 // Steel (whose fade is a real ADSR), plus Mda DX10 and 4-Op PM.
 // Sampled (not Sustain Steel, whose fade is a real ADSR), DX10, 4-Op, and
