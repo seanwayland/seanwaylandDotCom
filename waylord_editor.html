@@ -227,7 +227,24 @@
     }
     .help-more:hover, .help-more:focus { opacity: 1; outline: none; }
     .sub[data-open="1"] { opacity: 1; }
-  </style>
+  
+  /* Per-slot note range: a piano you drag the ends of. The two <input
+     type=range> behind each keyboard are the real state -- the SVG is a way
+     of editing them, so the patch bank, the dump and the round-trip test see
+     ordinary controls and need to know nothing about this. */
+  .nr-slot { margin-bottom:10px; }
+  .nr-head { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .nr-name { font-size:11.5px; color:var(--muted); text-transform:uppercase;
+             letter-spacing:.08em; min-width:42px; }
+  .nr-kbd { display:block; width:100%; height:52px; touch-action:none;
+            cursor:ew-resize; background:var(--surface-2);
+            border:1px solid var(--border); border-radius:6px; }
+  .nr-hidden { display:none; }
+  .nr-all { font-size:11px; padding:2px 8px; color:var(--muted);
+            background:var(--surface-2); border:1px solid var(--border);
+            border-radius:5px; cursor:pointer; }
+  .nr-all:hover { color:var(--text); border-color:var(--accent-dim); }
+</style>
 </head>
 <body>
 <div class="shell">
@@ -304,6 +321,34 @@
       </span>
     </div>
     <div class="sub" style="margin-top:4px;">With Split on, keys below the split point play the Left engine only and keys from it up play the Right one &mdash; two instruments under one keyboard. Off, both engines play everything, as they always have. Each slot's Transpose shifts what that side plays, up to two octaves either way; a note already sounding keeps the side and the pitch it started on. Saved with the patch.</div>
+    <!-- NOTE RANGE, per slot, per patch. Under the split because it is the
+         other half of "which keys play what": the split hands each engine a
+         side of one break point, this gives each engine its own window, so
+         they can overlap, leave a gap, or be one key wide. -->
+    <div id="noteRangeWrap" style="margin-top:14px;">
+      <label style="width:auto; display:block; margin-bottom:6px;">Note range &mdash; which incoming keys each engine answers</label>
+      <div class="nr-slot">
+        <div class="nr-head">
+          <span class="nr-name">Left</span>
+          <span class="val" id="nrLabel0" style="min-width:104px;"></span>
+          <button type="button" class="nr-all" id="nrAll0">Whole keyboard</button>
+        </div>
+        <svg class="nr-kbd" id="nrKbd0" viewBox="0 0 1024 52" preserveAspectRatio="none"></svg>
+        <input type="range" class="nr-hidden" id="noteLo0" min="0" max="127" value="0">
+        <input type="range" class="nr-hidden" id="noteHi0" min="0" max="127" value="127">
+      </div>
+      <div class="nr-slot">
+        <div class="nr-head">
+          <span class="nr-name">Right</span>
+          <span class="val" id="nrLabel1" style="min-width:104px;"></span>
+          <button type="button" class="nr-all" id="nrAll1">Whole keyboard</button>
+        </div>
+        <svg class="nr-kbd" id="nrKbd1" viewBox="0 0 1024 52" preserveAspectRatio="none"></svg>
+        <input type="range" class="nr-hidden" id="noteLo1" min="0" max="127" value="0">
+        <input type="range" class="nr-hidden" id="noteHi1" min="0" max="127" value="127">
+      </div>
+      <div class="sub">Drag across a keyboard to set that engine's range &mdash; it becomes exactly the span you dragged over, and a single click makes it one key. <b>Whole keyboard</b> puts it back. Notes outside it do not reach that engine at all, so it stays silent for them &mdash; the other engine still plays as its own range says. Both ends are inclusive, and a one-key range is allowed. This is applied to the key that arrives, <em>before</em> that slot's Transpose, so it is a keyboard zone rather than a pitch limit. Saved per patch.</div>
+    </div>
     <div class="sub">Each slot has its own pulse width (only audible when that slot is set to Pulse) and Timbre offset (64 = no offset; the mod wheel still moves both slots together, this just biases one slightly brighter/darker than the other). Pan defaults hard-left/hard-right — bring either toward the middle to blend it across both ears.</div>
   </div>
 <div class="panel span-all">
@@ -536,6 +581,13 @@
         <div class="row"><label>Freq</label><input type="range" id="ringFreq" min="0" max="127" value="64"><span class="val" id="ringFreqVal"></span></div>
         <div class="row"><label>Fine</label><input type="range" id="ringFine" min="0" max="127" value="64"><span class="val" id="ringFineVal"></span></div>
         <div class="row"><label>Feedback</label><input type="range" id="ringFeedback" min="0" max="127" value="0"><span class="val" id="ringFeedbackVal"></span></div>
+        </div>
+        <div class="fx-card">
+<div class="sub" style="margin:10px 0 6px;" title="After the Boss OC-2. It squares the incoming note up and divides it with flip-flops, but what you hear is NOT the square wave: the divided square is used to multiply the signal itself, so the octave keeps the instrument's own envelope and tone. Sits first in the chain, ahead of the amp, the way an octave pedal sits first on a pedalboard. It is monophonic, like the pedal -- one note at a time tracks cleanly, a chord does not."><strong>Octave</strong> &mdash; an octave divider after the OC-2. Both octave levels at 0 is bypass. <em>Monophonic</em>: play one note at a time.</div>
+        <div class="row" title="One octave below the note played (the pedal's OCT1 / VR1)."><label>Oct 1</label><input type="range" id="octOct1" min="0" max="127" value="0"><span class="val" id="octOct1Val"></span></div>
+        <div class="row" title="Two octaves below the note played (the pedal's OCT2 / VR2). Derived from Oct 1, as it is in the circuit."><label>Oct 2</label><input type="range" id="octOct2" min="0" max="127" value="0"><span class="val" id="octOct2Val"></span></div>
+        <div class="row" title="How much of the untouched signal goes through. The pedal's DIRECT is fixed; here it is a control, so the octaves can be used on their own."><label>Direct</label><input type="range" id="octDry" min="0" max="127" value="127"><span class="val" id="octDryVal"></span></div>
+        <div class="row" title="Moves both octave filters' corners together. Centre is the pedal's own voicing -- dark and synth-like. Up is brighter and keeps more of the square's edge."><label>Tone</label><input type="range" id="octTone" min="0" max="127" value="64"><span class="val" id="octToneVal"></span></div>
         </div>
         </div>
 </div>
@@ -887,10 +939,15 @@ const DV_INSTRUMENTS = [
   'N Waylo Acou 3',
   'N Waylo Acou 3 Dyn',
   // The MollerSteel capture as a plain multisample bank: 16 roots at minor
-  // thirds x 3 tone layers, 48kHz, against the original Sustain Steel's 5
-  // roots at 24kHz. Last, because this list's ORDER is the firmware's enum
-  // order -- an index is what a saved patch stores and what the device is
-  // sent.
+  // thirds x 3 tone layers, 48kHz, against 5 roots at 24kHz in the original
+  // Sustain Steel. Last, because the ORDER of this list is the enum order in
+  // the firmware -- an index is what a saved patch stores and what the device
+  // is sent.
+  //
+  // NO APOSTROPHES IN COMMENTS INSIDE THIS ARRAY. The plugin's
+  // tools/gen_instrument_names.py reads the array with a quoted-string
+  // regex, so an apostrophe reads as a string and inflates the count --
+  // it refused to generate with "editor lists 82, the enum has 81".
   'Sustain Steel 2',
 ];
 const USER_FIRST = 33; // DV_INSTRUMENTS index of User 1
@@ -1734,7 +1791,7 @@ const SD_LOAD_STAGE_NAMES = {
   6: 'PCM data read failed',
   7: 'raw SD card handshake (BSP_SD_Init) failed right before the file open -- the same call that works fine at boot',
   8: 'instrument is not registered in the firmware SD catalog (kCatalog in sd_instrument_loader.cpp) -- no file was ever opened',
-  9: 'not loaded, and no failure was recorded -- no load was attempted',
+  9: 'no card content loaded for this slot, and no error was recorded',
 };
 function showSdLoadStatus(stage, result) {
   const el = document.getElementById('sdLoadStatus');
@@ -1743,6 +1800,18 @@ function showSdLoadStatus(stage, result) {
   if (stage === 0) {
     el.textContent = `${name}: loaded OK`;
     el.style.color = '#2a2';
+  } else if (stage === 9) {
+    // NOT a failure. Stage 9 is main.cpp's ReportSdLoad() saying the slot
+    // holds no SD content and the loader recorded no error -- "no load was
+    // attempted". Painting that red said
+    //
+    //   SD instrument: FAILED -- not loaded, and no failure was recorded
+    //
+    // which announces a failure and denies one in the same sentence, and it
+    // appeared on an ordinary bank load. Stages 1-8 are real failures and
+    // are still red.
+    el.textContent = `${name}: ${SD_LOAD_STAGE_NAMES[9]}`;
+    el.style.color = '#b80';
   } else {
     const stageName = SD_LOAD_STAGE_NAMES[stage] || `unknown stage ${stage}`;
     const resultText = result ? ` (FatFs FRESULT ${result})` : '';
@@ -1907,8 +1976,24 @@ function handleDeviceMidiMessage(msg) {
       if (idx !== currentPatch) {
         currentPatch = idx;
         renderPatchTabs();
-        if (patches[idx]) loadPatchIntoUiOnly(idx); // what this page last knew
-        requestDumpFromDevice(); // ...then the device's own values
+        if (patches[idx]) {
+          // WHAT THIS PAGE LAST KNEW, AND NOTHING ELSE. It used to follow up
+          // with requestDumpFromDevice() every single time -- all ten
+          // patches, about 20,000 MIDI messages, measured at 3.2 SECONDS of
+          // the Pod doing nothing but talking to this page. Pressing a patch
+          // button while playing bought a three-second gap with notes
+          // hanging through it, and the dump was only ever confirming values
+          // this page already had.
+          //
+          // The browser bank is written on every edit and refreshed by the
+          // dumps that DO happen (connect, Load bank, the read-state
+          // button), so it is the same data. When the page has never seen
+          // this patch there is nothing to show, and only then is it worth
+          // the three seconds.
+          loadPatchIntoUiOnly(idx);
+        } else {
+          requestDumpFromDevice();
+        }
       }
     }
     return;
@@ -2044,6 +2129,7 @@ function buildSlotColumns() {
         <select id="pm4Preset${s}"></select>
         <label class="dx10-adsr"><input type="checkbox" id="pm4Adsr${s}">ADSR</label>
       </div>
+      <div class="row" title="Take this engine out of the audio path completely. Volume 0 still runs the engine every sample and throws the result away -- measured at 3% of the audio block for a silent sine, before its double and filter. Bypass runs none of it. Saved per patch."><label>Bypass</label><input type="checkbox" id="slotBypass${s}" style="accent-color:var(--accent); width:17px; height:17px;"><span class="val" id="slotBypassVal${s}"></span></div>
       <div class="row"><label>Vol</label><input type="range" id="slotVol${s}" min="0" max="127" value="127"><span class="val" id="slotVolVal${s}"></span></div>
       <div class="row"><label>Pan</label><input type="range" id="slotPan${s}" min="0" max="127" value="64"><span class="val" id="slotPanVal${s}"></span></div>
       <div class="row" title="FM Rhodes operator feedback, DX7 style: the modulator's output folded back into its own phase, averaged over its last two samples. At 0 it is the sound this engine has always made; as it comes up the sine sours towards a saw and then towards noise. Saved with the patch."><label>FM fb</label><input type="range" id="fmFeedback${s}" min="0" max="127" value="0"><span class="val" id="fmFeedback${s}Val">off</span></div>
@@ -2204,6 +2290,25 @@ function buildSlotColumns() {
     wireChromaSlot(s);
     paintFilterBox(s);
 
+    {
+      const bp = document.getElementById(`slotBypass${s}`);
+      const paint = () => {
+        document.getElementById(`slotBypassVal${s}`).textContent =
+          bp.checked ? 'engine off \u2014 no CPU' : '';
+        // Everything below it is inert while the engine is not running, so
+        // the column says so rather than looking live.
+        const col = bp.closest('.slot-col') || bp.closest('div');
+        if (col) col.style.opacity = bp.checked ? '0.55' : '1';
+      };
+      bp.addEventListener('change', () => {
+        sendOb2(EXT_SLOT_BYPASS + s, bp.checked ? 127 : 0);
+        paint();
+        commitUiIntoPatch(currentPatch);
+        savePatchesToBrowser();
+      });
+      paint();
+    }
+
     document.getElementById(`slotGlide${s}`).addEventListener('change', (e) => {
       sendCC(66 + s, e.target.checked ? 127 : 0);
       paintPatchAvailability();   // the rate only matters while it glides
@@ -2321,6 +2426,9 @@ function commitUiIntoPatch(idx) {
   const pulseWidth = slotIndices.map(s => parseInt(document.getElementById(`slotPw${s}`).value, 10));
   const timbreOffset = slotIndices.map(s => parseInt(document.getElementById(`slotTimbre${s}`).value, 10));
   const glide = slotIndices.map(s => document.getElementById(`slotGlide${s}`).checked ? 127 : 0);
+  const bypass = slotIndices.map(s => document.getElementById(`slotBypass${s}`).checked ? 127 : 0);
+  const noteLo = slotIndices.map(s => parseInt(document.getElementById(`noteLo${s}`).value, 10));
+  const noteHi = slotIndices.map(s => parseInt(document.getElementById(`noteHi${s}`).value, 10));
   // Everything this patch holds that isn't read off a control here -- its
   // own effects, both 4-Op pages, both organs, the tracking sliders (see
   // recordFx) -- has to survive being rebuilt. Dropping it meant whichever
@@ -2329,6 +2437,7 @@ function commitUiIntoPatch(idx) {
   const keepFx = patches[idx] ? patches[idx].fx : undefined;
   patches[idx] = {
     type, volume, pan, lfoRate, lfoDepth, pulseWidth, timbreOffset, glide,
+    noteLo, noteHi, bypass,
     adsrAttack: adsrCoarse('adsrAttack'), adsrDecay: adsrCoarse('adsrDecay'),
     adsrSustain: adsrCoarse('adsrSustain'), adsrRelease: adsrCoarse('adsrRelease'),
     adsrFine: ADSR_IDS.map(id => parseInt(document.getElementById(id).value, 10) % 128),
@@ -2367,6 +2476,24 @@ function loadPatchIntoUiOnly(idx) {
     setSlider(`slotPw${s}`, `slotPwVal${s}`, p.pulseWidth[s]);
     setSlider(`slotTimbre${s}`, `slotTimbreVal${s}`, p.timbreOffset[s]);
     document.getElementById(`slotGlide${s}`).checked = (p.glide ? p.glide[s] : 0) >= 64;
+    // A bank saved before the range existed has neither array. Undefined
+    // must read as the WHOLE keyboard -- `|| 0` on the high note would be
+    // note 0, which is a silent patch rather than an unchanged one.
+    {
+      // Absent in a bank saved before this existed -- which must read as NOT
+      // bypassed, or loading an old bank silences both engines.
+      const bp = document.getElementById(`slotBypass${s}`);
+      bp.checked = (p.bypass ? p.bypass[s] : 0) >= 64;
+      document.getElementById(`slotBypassVal${s}`).textContent =
+        bp.checked ? 'engine off \u2014 no CPU' : '';
+      const col = bp.closest('.slot-col') || bp.closest('div');
+      if (col) col.style.opacity = bp.checked ? '0.55' : '1';
+    }
+    const nLo = p.noteLo && p.noteLo[s] !== undefined ? p.noteLo[s] : 0;
+    const nHi = p.noteHi && p.noteHi[s] !== undefined ? p.noteHi[s] : 127;
+    document.getElementById(`noteLo${s}`).value = String(nLo);
+    document.getElementById(`noteHi${s}`).value = String(nHi);
+    nrPaint(s);
   }
   const fine = p.adsrFine || [0, 0, 0, 0];
   [p.adsrAttack, p.adsrDecay, p.adsrSustain, p.adsrRelease].forEach((c, k) => {
@@ -4524,6 +4651,16 @@ const EXT_AMP_BYPASS  = EXT_POOL_REPORT + 1;
 const EXT_CCMAP_COUNT = 2;
 const EXT_CCMAP_SRC   = EXT_AMP_BYPASS + NUM_SLOTS;
 const EXT_CCMAP_DST   = EXT_CCMAP_SRC + EXT_CCMAP_COUNT;
+// Each slot's note range. Mirrors kExtNoteLo / kExtNoteHi in main.cpp; both
+// are +slot. 77 and 79 today -- derived, never written as literals, because
+// every block above them has moved at least once.
+const EXT_NOTE_LO     = EXT_CCMAP_DST + EXT_CCMAP_COUNT;
+const EXT_NOTE_HI     = EXT_NOTE_LO + NUM_SLOTS;
+// Whether a slot is out of the audio path. kExtSlotBypass in main.cpp.
+const EXT_SLOT_BYPASS = EXT_NOTE_HI + NUM_SLOTS;
+// The octave pedal: OCT1, OCT2, DIRECT, Tone. kExtOctaveBase in main.cpp.
+const EXT_OCTAVE_BASE = EXT_SLOT_BYPASS + NUM_SLOTS;
+const OCTAVE_FIELDS   = ['octOct1', 'octOct2', 'octDry', 'octTone'];
 const NLA1_WAVES = ['Fixed pulse 1', 'Fixed pulse 2', 'Fixed pulse 3',
                     'Half sine', 'Full sine', 'Double hump'];
 const pmIdx = (k, slot) => EXT_PULSE_MOD + k * NUM_SLOTS + slot;
@@ -4554,6 +4691,22 @@ function modDepthSetup() {
 const ROTARY_SCALES = [['rotarySlow', EXT_ROTARY_SLOW],
                        ['rotaryFast', EXT_ROTARY_FAST],
                        ['rotaryAccel', EXT_ROTARY_ACCEL]];
+// The octave pedal's four values. Tone reads as a multiplier on the filter
+// corner, the three levels as a percentage.
+function octaveSetup() {
+  OCTAVE_FIELDS.forEach((id, k) => {
+    const el = document.getElementById(id), lab = document.getElementById(id + 'Val');
+    if (!el) return;
+    const paint = () => { if (lab) lab.textContent = octaveLabel(id, +el.value); };
+    el.addEventListener('input', () => { paint(); sendOb2(EXT_OCTAVE_BASE + k, +el.value); });
+    paint();
+  });
+}
+// Matches SetTone() in octave_fx.h: 0.5 * 4^(v/127), so 64 is about x1.
+const octaveLabel = (id, v) => id === 'octTone'
+  ? 'x' + (0.5 * Math.pow(4, v / 127)).toFixed(2)
+  : (v === 0 ? 'off' : Math.round(v / 127 * 100) + '%');
+
 function rotaryScaleSetup() {
   ROTARY_SCALES.forEach(([id, idx]) => {
     const el = document.getElementById(id), lab = document.getElementById(id + 'Val');
@@ -4679,6 +4832,157 @@ function midiSetup() {
 }
 
 // A page-1 write by absolute index, for the blocks past the Oberheim one.
+// --- per-slot note range: the piano keyboards under Split ---------------
+//
+// The <input type="range"> pair behind each keyboard holds the value; this
+// draws them and edits them. Keeping the state in ordinary inputs is what
+// lets the patch bank, the device dump and the round-trip test treat it like
+// every other control instead of needing a special case each.
+const NR_WHITE = [0, 2, 4, 5, 7, 9, 11];
+const NR_KEYS = (() => {
+  // One pass: every note 0-127 gets an x and a width, white keys tiling and
+  // black keys sitting over the joins. viewBox units, not pixels, so the
+  // keyboard stretches to whatever width the panel gives it.
+  const out = [];
+  let whites = 0;
+  for (let n = 0; n < 128; n++) if (NR_WHITE.includes(n % 12)) whites++;
+  const w = 1024 / whites;
+  let x = 0;
+  for (let n = 0; n < 128; n++) {
+    if (NR_WHITE.includes(n % 12)) {
+      out.push({ note: n, x, w, black: false });
+      x += w;
+    } else {
+      // Centred on the join it straddles, 62% of a white key wide.
+      out.push({ note: n, x: x - w * 0.31, w: w * 0.62, black: true });
+    }
+  }
+  return out;
+})();
+
+function nrEl(slot) {
+  return { lo: document.getElementById(`noteLo${slot}`),
+           hi: document.getElementById(`noteHi${slot}`) };
+}
+
+function nrBuild(slot) {
+  const svg = document.getElementById(`nrKbd${slot}`);
+  if (!svg || svg.dataset.built) return;
+  const ns = 'http://www.w3.org/2000/svg';
+  // Whites first so the blacks paint over them.
+  for (const pass of [false, true])
+    for (const k of NR_KEYS) {
+      if (k.black !== pass) continue;
+      const r = document.createElementNS(ns, 'rect');
+      r.setAttribute('x', k.x.toFixed(3));
+      r.setAttribute('y', k.black ? 0 : 0);
+      r.setAttribute('width', Math.max(0.6, k.w - 0.5).toFixed(3));
+      r.setAttribute('height', k.black ? 32 : 52);
+      r.setAttribute('data-note', k.note);
+      r.setAttribute('shape-rendering', 'crispEdges');
+      svg.appendChild(r);
+    }
+  svg.dataset.built = '1';
+}
+
+function nrPaint(slot) {
+  const svg = document.getElementById(`nrKbd${slot}`);
+  if (!svg) return;
+  const { lo, hi } = nrEl(slot);
+  let a = parseInt(lo.value, 10), b = parseInt(hi.value, 10);
+  if (a > b) { const t = a; a = b; b = t; }
+  for (const r of svg.querySelectorAll('rect')) {
+    const n = +r.getAttribute('data-note');
+    const inRange = n >= a && n <= b;
+    const black = NR_WHITE.includes(n % 12) === false;
+    r.setAttribute('fill', inRange ? (black ? '#2f6f52' : 'var(--accent)')
+                                   : (black ? '#15141b' : '#4a4857'));
+    r.setAttribute('stroke', black ? 'none' : '#15141b');
+    r.setAttribute('stroke-width', black ? '0' : '0.5');
+  }
+  const lab = document.getElementById(`nrLabel${slot}`);
+  if (lab) lab.textContent = a === 0 && b === 127
+      ? 'whole keyboard'
+      : `${noteName(a)} \u2013 ${noteName(b)}` + (a === b ? ' (one key)' : '');
+}
+
+function nrSet(slot, a, b, send) {
+  const { lo, hi } = nrEl(slot);
+  a = Math.max(0, Math.min(127, a));
+  b = Math.max(0, Math.min(127, b));
+  if (a > b) { const t = a; a = b; b = t; }
+  lo.value = String(a);
+  hi.value = String(b);
+  nrPaint(slot);
+  // UNCONDITIONAL. This used to skip the send when the inputs already held
+  // the values -- which is always true at the end of a drag, because the
+  // drag writes them as it goes. The keyboard moved and the Pod never heard
+  // a thing. The caller decides whether anything is worth sending; this only
+  // decides how.
+  if (send) {
+    sendOb2(EXT_NOTE_LO + slot, a);
+    sendOb2(EXT_NOTE_HI + slot, b);
+  }
+}
+
+function nrNoteAt(svg, ev) {
+  const box = svg.getBoundingClientRect();
+  if (box.width <= 0) return 0;
+  const u = (ev.clientX - box.left) / box.width * 1024;
+  // Blacks first: they are drawn on top, so they must be hit first too.
+  for (const pass of [true, false])
+    for (const k of NR_KEYS)
+      if (k.black === pass && u >= k.x && u < k.x + k.w) return k.note;
+  return u <= 0 ? 0 : 127;
+}
+
+function nrSetup() {
+  for (let sl = 0; sl < NUM_SLOTS; sl++) {
+    nrBuild(sl);
+    const svg = document.getElementById(`nrKbd${sl}`);
+    const all = document.getElementById(`nrAll${sl}`);
+    if (all) all.addEventListener('click', () => nrSet(sl, 0, 127, true));
+    if (!svg) continue;
+    // DRAG ACROSS = THE RANGE YOU DRAGGED ACROSS. The first version grabbed
+    // whichever end was nearer and dragged that one about, so pulling from
+    // middle C to the top left the range at "middle C upwards" -- the low
+    // end had been dragged, not a span selected. It read as the control
+    // ignoring the drag.
+    let anchor = null, wasLo = 0, wasHi = 0;
+    const down = (ev) => {
+      const { lo, hi } = nrEl(sl);
+      wasLo = +lo.value; wasHi = +hi.value;
+      anchor = nrNoteAt(svg, ev);
+      lo.value = hi.value = String(anchor);
+      nrPaint(sl);
+      svg.setPointerCapture(ev.pointerId);
+      ev.preventDefault();
+    };
+    const move = (ev) => {
+      if (anchor === null) return;
+      const n = nrNoteAt(svg, ev);
+      const { lo, hi } = nrEl(sl);
+      lo.value = String(Math.min(anchor, n));
+      hi.value = String(Math.max(anchor, n));
+      nrPaint(sl);
+    };
+    const up = () => {
+      if (anchor === null) return;
+      anchor = null;
+      const { lo, hi } = nrEl(sl);
+      // Only when the drag actually moved something -- but then always,
+      // whatever the inputs happen to say now.
+      if (+lo.value !== wasLo || +hi.value !== wasHi)
+        nrSet(sl, +lo.value, +hi.value, true);
+    };
+    svg.addEventListener('pointerdown', down);
+    svg.addEventListener('pointermove', move);
+    svg.addEventListener('pointerup', up);
+    svg.addEventListener('pointercancel', up);
+    nrPaint(sl);
+  }
+}
+
 function sendOb2(index, value) {
   sendNrpn(98, 1);
   sendChroma(index, value);
@@ -5235,6 +5539,33 @@ function setChromaFromDevice(param, val) {
         put('slotTune' + i, val);
         const lab = document.getElementById('slotTuneVal' + i);
         if (lab) lab.textContent = tuneLabel(val);
+      } else if (rxExtIndex >= EXT_OCTAVE_BASE
+                 && rxExtIndex < EXT_OCTAVE_BASE + OCTAVE_FIELDS.length) {
+        const id = OCTAVE_FIELDS[rxExtIndex - EXT_OCTAVE_BASE];
+        put(id, val);
+        const lab = document.getElementById(id + 'Val');
+        if (lab) lab.textContent = octaveLabel(id, val);
+      } else if (rxExtIndex >= EXT_SLOT_BYPASS
+                 && rxExtIndex < EXT_SLOT_BYPASS + NUM_SLOTS) {
+        const i = rxExtIndex - EXT_SLOT_BYPASS;
+        const el = document.getElementById('slotBypass' + i);
+        if (el) {
+          el.checked = val >= 64;
+          const lab = document.getElementById('slotBypassVal' + i);
+          if (lab) lab.textContent = el.checked ? 'engine off \u2014 no CPU' : '';
+          const col = el.closest('.slot-col') || el.closest('div');
+          if (col) col.style.opacity = el.checked ? '0.55' : '1';
+        }
+      } else if (rxExtIndex >= EXT_NOTE_LO && rxExtIndex < EXT_NOTE_HI + NUM_SLOTS) {
+        // The dump sends lo and hi for a slot one after the other, so the
+        // first of the pair lands while the other input still holds the
+        // previous patch's value. Written straight to the input and painted,
+        // WITHOUT nrSet's swap -- a swap here would reorder a half-applied
+        // pair and the second message would then "fix" the wrong end.
+        const f = rxExtIndex - EXT_NOTE_LO;
+        const i = f % NUM_SLOTS;
+        const el = document.getElementById((f < NUM_SLOTS ? 'noteLo' : 'noteHi') + i);
+        if (el) { el.value = String(val); nrPaint(i); }
       } else if (rxExtIndex === EXT_ROTARY_SLOW || rxExtIndex === EXT_ROTARY_FAST
                  || rxExtIndex === EXT_ROTARY_ACCEL) {
         const id = rxExtIndex === EXT_ROTARY_SLOW ? 'rotarySlow'
@@ -6082,7 +6413,12 @@ refreshUserNames();
     document.documentElement.style.setProperty('--knob-image', 'url("' + KNOB_IMAGE_URL + '")');
 
     const MIN_ANGLE = -135, MAX_ANGLE = 135;
-    const SKIP = '.drawbar input[type=range], .ss-row input[type=range]';
+    // .nr-slot: the note-range pair behind each piano keyboard. They are the
+    // keyboard's state, not controls of their own -- knobbing them put two
+    // live knobs under every keyboard that changed the range WITHOUT sending
+    // it or repainting, so the picture and the device silently disagreed.
+    const SKIP = '.drawbar input[type=range], .ss-row input[type=range],'
+               + ' .nr-slot input[type=range]';
     const DRAG_RANGE_PX = 180;   // pixels of vertical travel for the full range
     const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
 
@@ -6222,11 +6558,13 @@ refreshUserNames();
         knobifyAll(); kmSetup(); rhSetup();
         outToneSetup();
         obSetup();
+        nrSetup();
         midiSetup();
         loopSetup();
         modDepthSetup();
         fmFeedbackSetup();
         rotaryScaleSetup();
+        octaveSetup();
         organVibWetSetup();
         filtVelEnvSetup();
         hoistSaveLoad();
