@@ -582,12 +582,6 @@
         <div class="row"><label>Fine</label><input type="range" id="ringFine" min="0" max="127" value="64"><span class="val" id="ringFineVal"></span></div>
         <div class="row"><label>Feedback</label><input type="range" id="ringFeedback" min="0" max="127" value="0"><span class="val" id="ringFeedbackVal"></span></div>
         </div>
-        <div class="fx-card">
-<div class="sub" style="margin:10px 0 6px;" title="After the Boss OC-2. It squares the incoming note up and divides it with flip-flops, but what you hear is NOT the square wave: the divided square is used to multiply the signal itself, so the octave keeps the instrument's own envelope and tone. Sits first in the chain, ahead of the amp, the way an octave pedal sits first on a pedalboard. It is monophonic, like the pedal -- one note at a time tracks cleanly, a chord does not."><strong>Octave</strong> &mdash; an octave divider after the OC-2. Both octave levels at 0 is bypass. <em>Monophonic</em>: play one note at a time.</div>
-        <div class="row" title="One octave below the note played (the pedal's OCT1 / VR1)."><label>Oct 1</label><input type="range" id="octOct1" min="0" max="127" value="0"><span class="val" id="octOct1Val"></span></div>
-        <div class="row" title="Two octaves below the note played (the pedal's OCT2 / VR2). Derived from Oct 1, as it is in the circuit."><label>Oct 2</label><input type="range" id="octOct2" min="0" max="127" value="0"><span class="val" id="octOct2Val"></span></div>
-        <div class="row" title="How much of the untouched signal goes through. The pedal's DIRECT is fixed; here it is a control, so the octaves can be used on their own."><label>Direct</label><input type="range" id="octDry" min="0" max="127" value="127"><span class="val" id="octDryVal"></span></div>
-        <div class="row" title="Moves both octave filters' corners together. Centre is the pedal's own voicing -- dark and synth-like. Up is brighter and keeps more of the square's edge."><label>Tone</label><input type="range" id="octTone" min="0" max="127" value="64"><span class="val" id="octToneVal"></span></div>
         </div>
         </div>
 </div>
@@ -4658,9 +4652,6 @@ const EXT_NOTE_LO     = EXT_CCMAP_DST + EXT_CCMAP_COUNT;
 const EXT_NOTE_HI     = EXT_NOTE_LO + NUM_SLOTS;
 // Whether a slot is out of the audio path. kExtSlotBypass in main.cpp.
 const EXT_SLOT_BYPASS = EXT_NOTE_HI + NUM_SLOTS;
-// The octave pedal: OCT1, OCT2, DIRECT, Tone. kExtOctaveBase in main.cpp.
-const EXT_OCTAVE_BASE = EXT_SLOT_BYPASS + NUM_SLOTS;
-const OCTAVE_FIELDS   = ['octOct1', 'octOct2', 'octDry', 'octTone'];
 const NLA1_WAVES = ['Fixed pulse 1', 'Fixed pulse 2', 'Fixed pulse 3',
                     'Half sine', 'Full sine', 'Double hump'];
 const pmIdx = (k, slot) => EXT_PULSE_MOD + k * NUM_SLOTS + slot;
@@ -4691,22 +4682,6 @@ function modDepthSetup() {
 const ROTARY_SCALES = [['rotarySlow', EXT_ROTARY_SLOW],
                        ['rotaryFast', EXT_ROTARY_FAST],
                        ['rotaryAccel', EXT_ROTARY_ACCEL]];
-// The octave pedal's four values. Tone reads as a multiplier on the filter
-// corner, the three levels as a percentage.
-function octaveSetup() {
-  OCTAVE_FIELDS.forEach((id, k) => {
-    const el = document.getElementById(id), lab = document.getElementById(id + 'Val');
-    if (!el) return;
-    const paint = () => { if (lab) lab.textContent = octaveLabel(id, +el.value); };
-    el.addEventListener('input', () => { paint(); sendOb2(EXT_OCTAVE_BASE + k, +el.value); });
-    paint();
-  });
-}
-// Matches SetTone() in octave_fx.h: 0.5 * 4^(v/127), so 64 is about x1.
-const octaveLabel = (id, v) => id === 'octTone'
-  ? 'x' + (0.5 * Math.pow(4, v / 127)).toFixed(2)
-  : (v === 0 ? 'off' : Math.round(v / 127 * 100) + '%');
-
 function rotaryScaleSetup() {
   ROTARY_SCALES.forEach(([id, idx]) => {
     const el = document.getElementById(id), lab = document.getElementById(id + 'Val');
@@ -5539,12 +5514,6 @@ function setChromaFromDevice(param, val) {
         put('slotTune' + i, val);
         const lab = document.getElementById('slotTuneVal' + i);
         if (lab) lab.textContent = tuneLabel(val);
-      } else if (rxExtIndex >= EXT_OCTAVE_BASE
-                 && rxExtIndex < EXT_OCTAVE_BASE + OCTAVE_FIELDS.length) {
-        const id = OCTAVE_FIELDS[rxExtIndex - EXT_OCTAVE_BASE];
-        put(id, val);
-        const lab = document.getElementById(id + 'Val');
-        if (lab) lab.textContent = octaveLabel(id, val);
       } else if (rxExtIndex >= EXT_SLOT_BYPASS
                  && rxExtIndex < EXT_SLOT_BYPASS + NUM_SLOTS) {
         const i = rxExtIndex - EXT_SLOT_BYPASS;
@@ -6564,7 +6533,6 @@ refreshUserNames();
         modDepthSetup();
         fmFeedbackSetup();
         rotaryScaleSetup();
-        octaveSetup();
         organVibWetSetup();
         filtVelEnvSetup();
         hoistSaveLoad();
