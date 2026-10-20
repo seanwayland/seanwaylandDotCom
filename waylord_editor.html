@@ -294,15 +294,27 @@
       <h3 style="margin:16px 0 6px; font-size:14px;">Plugging it in</h3>
       <table class="hwmap">
         <tr><td>MIDI in</td>
-            <td>Your keyboard goes here. This is a different path from USB and works on its own &mdash; no computer needed.</td></tr>
+            <td><strong>3.5mm TRS, Type A.</strong> Your keyboard goes here. A Type&nbsp;A TRS-to-5-pin-DIN adaptor <strong>comes with the instrument</strong>, so you only need an ordinary 5-pin DIN MIDI cable. This is a different path from USB and works on its own &mdash; no computer needed.</td></tr>
         <tr><td>USB</td>
-            <td>Power, and MIDI to and from a computer. This page talks to the Pod over USB; a DAW can play it over USB too.</td></tr>
+            <td>Power, and MIDI to and from a computer. This page talks to the Pod over USB; a DAW can play it over USB too. <strong>Powering it from a computer adds noise</strong> &mdash; use a phone charger or a USB power bank for a quiet signal.</td></tr>
         <tr><td>Audio out</td>
-            <td>Stereo. The headphone output carries the same sum, so you can monitor without a desk.</td></tr>
+            <td><strong>3.5mm stereo, line level.</strong> Use a stereo breakout to two mono jacks for a desk or an interface.</td></tr>
+        <tr><td>Headphones</td>
+            <td>Its own amplifier with <strong>its own volume control</strong>, so you can monitor without a desk.</td></tr>
         <tr><td>Audio in</td>
-            <td>Optional. Runs a guitar or anything else through the same effects &mdash; see <em>Input level</em> below.</td></tr>
+            <td><strong>3.5mm stereo, line level.</strong> Optional. Runs a guitar or anything else through the same effects &mdash; see <em>Input level</em> below.</td></tr>
         <tr><td>SD card</td>
             <td>Every sampled instrument. The Pod still boots and plays its oscillators without one, but the sampled sounds will be silent.</td></tr>
+      </table>
+
+      <h3 style="margin:16px 0 6px; font-size:14px;">Cables that work</h3>
+      <table class="hwmap">
+        <tr><td>Power</td>
+            <td>Amazon Basics <strong>USB-A to Micro USB</strong> charging cable. Into a phone charger or a power bank rather than a computer, unless you want the computer's noise with it.</td></tr>
+        <tr><td>Audio</td>
+            <td>Hosa <strong>CMP-159</strong> &mdash; stereo breakout, 3.5mm TRS to dual 1/4" TS, 10 foot. One of these does the output; a second does the input if you want to run something through it.</td></tr>
+        <tr><td>MIDI</td>
+            <td>Any ordinary <strong>5-pin DIN MIDI cable</strong>, into the Type&nbsp;A adaptor supplied with the instrument.</td></tr>
       </table>
 
       <h3 style="margin:16px 0 6px; font-size:14px;">The controls</h3>
@@ -321,6 +333,20 @@
             <td>Brightness on both slots, and the rotary speaker's speed: down stops it, middle slow, up fast.</td></tr>
         <tr><td>The two LEDs</td>
             <td>Each slot's instrument has a colour (left LED = Left slot), brightening on every MIDI message so you can see notes arriving. After loading from the card they go green, or blink red as many times as the stage that failed.</td></tr>
+      </table>
+
+      <h3 style="margin:16px 0 6px; font-size:14px;">What to expect</h3>
+      <table class="hwmap">
+        <tr><td>Changing patches</td>
+            <td>The <strong>buttons on the instrument are faster</strong> than the buttons on this page. Use them when you are playing.</td></tr>
+        <tr><td>Sampled patches</td>
+            <td>Take longer to arrive than the oscillator ones, because their samples are being read off the card. That wait is the card, not a fault.</td></tr>
+        <tr><td>Loading a bank</td>
+            <td>About <strong>30 seconds</strong> from this page, because all ten patches and their samples go across. Be patient and let it finish.</td></tr>
+        <tr><td>While anything is loading</td>
+            <td><strong>Don't play.</strong> Notes sent while a patch or bank is arriving &mdash; from here, the plugin or the app &mdash; can land in the middle of it.</td></tr>
+        <tr><td>Editing</td>
+            <td><strong>This page is the one to edit with.</strong> The plugin can edit too, but the browser is the better editor.</td></tr>
       </table>
 
       <h3 style="margin:16px 0 6px; font-size:14px;">Using this page</h3>
