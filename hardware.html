@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waylo Hardware</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#eee7d6;
+    --ink:#201b16;
+    --ink-dim:#5b5240;
+    --panel:#e2d8c0;
+    --panel-2:#d8ccae;
+    --line:#c3b48d;
+    --accent:#a8691f;
+    --accent-ink:#201b16;
+    --accent2:#276b64;
+    --danger:#a6392a;
+    --shadow: 0 1px 0 rgba(32,27,22,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#15120d;
+      --ink:#ece2ca;
+      --ink-dim:#a89975;
+      --panel:#211b12;
+      --panel-2:#2b2317;
+      --line:#3d3320;
+      --accent:#d99a4e;
+      --accent-ink:#15120d;
+      --accent2:#59baac;
+      --danger:#e26a56;
+      --shadow: 0 1px 0 rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#15120d;
+    --ink:#ece2ca;
+    --ink-dim:#a89975;
+    --panel:#211b12;
+    --panel-2:#2b2317;
+    --line:#3d3320;
+    --accent:#d99a4e;
+    --accent-ink:#15120d;
+    --accent2:#59baac;
+    --danger:#e26a56;
+    --shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+
+  *{ box-sizing:border-box; }
+  html{ color-scheme: light dark; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    font-size:16px; line-height:1.6;
+  }
+  ::selection{ background:var(--accent); color:var(--accent-ink); }
+
+  .head-face{ font-family:'Big Shoulders Display', 'Arial Narrow', sans-serif; text-transform:uppercase; letter-spacing:.02em; }
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; text-transform:uppercase; letter-spacing:.14em;
+    font-size:.72rem; color:var(--accent); font-weight:600;
+  }
+
+  a{ color:var(--accent2); }
+
+  .shell{ display:flex; max-width:1180px; margin:0 auto; }
+
+  /* ---- sidebar ---- */
+  nav.toc{
+    flex:0 0 220px; position:sticky; top:0; align-self:flex-start;
+    height:100vh; overflow-y:auto; padding:2.4rem 1.2rem 2rem 2rem;
+    border-right:1px solid var(--line);
+  }
+  nav.toc .brand{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:1.5rem;
+    letter-spacing:.01em; margin:0 0 .15rem;
+  }
+  nav.toc .brand small{ display:block; font-family:'IBM Plex Mono',monospace; font-weight:400;
+    font-size:.68rem; letter-spacing:.1em; color:var(--ink-dim); text-transform:uppercase; margin-top:.35rem; }
+  nav.toc ul{ list-style:none; margin:1.8rem 0 0; padding:0; }
+  nav.toc li{ margin-bottom:.15rem; }
+  nav.toc a{
+    display:block; padding:.4rem .5rem; border-radius:4px; text-decoration:none;
+    color:var(--ink-dim); font-size:.86rem; font-weight:500;
+  }
+  nav.toc a:hover{ color:var(--ink); background:var(--panel); }
+  nav.toc .num{ font-family:'IBM Plex Mono',monospace; color:var(--accent); margin-right:.5em; font-size:.78em; }
+
+  main{ flex:1; min-width:0; padding:2.4rem 2.4rem 6rem; max-width:900px; }
+
+  header.hero{ margin-bottom:2.6rem; }
+  header.hero h1{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    font-size:clamp(2.6rem, 6vw, 4.2rem); line-height:.92; margin:.3rem 0 .5rem; text-wrap:balance;
+  }
+  header.hero p.tag{ margin:0 0 1.6rem; color:var(--ink-dim); font-size:1.05rem; max-width:38em; }
+
+  section{ margin-bottom:3.4rem; scroll-margin-top:1.5rem; }
+  section > .eyebrow{ display:block; margin-bottom:.4rem; }
+  section h2{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:700;
+    font-size:2rem; margin:0 0 1rem; letter-spacing:.01em; text-wrap:balance;
+  }
+  section h3{
+    font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:1.05rem; margin:1.6rem 0 .5rem;
+  }
+  section p{ max-width:62ch; }
+  section > p:first-of-type{ margin-top:0; }
+
+  /* ---- diagram ---- */
+  .diagram-wrap{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:1.4rem 1.4rem 1.1rem; box-shadow:var(--shadow); margin:1.6rem 0 2rem;
+  }
+  .diagram-wrap svg{ width:100%; height:auto; display:block; }
+  .diagram-caption{
+    display:flex; justify-content:space-between; margin-top:.6rem;
+    font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--ink-dim); letter-spacing:.04em;
+  }
+  .badge{ fill:var(--accent); }
+  .badge-text{ fill:var(--accent-ink); font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:13px; }
+  .panel-line{ stroke:var(--line); }
+  .panel-fill{ fill:var(--panel-2); }
+  .knob-fill{ fill:var(--paper); stroke:var(--ink-dim); }
+  .led-dot{ fill:var(--accent2); }
+  @media (prefers-reduced-motion: no-preference){
+    .led-dot{ animation: pulse 2.6s ease-in-out infinite; }
+  }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+
+  /* ---- control entries ---- */
+  .control{
+    display:grid; grid-template-columns:2.4rem 1fr; gap:.9rem 1rem;
+    padding:1.1rem 0; border-top:1px solid var(--line);
+  }
+  .control:first-of-type{ border-top:none; padding-top:.3rem; }
+  .control .num{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:1.7rem;
+    color:var(--accent); line-height:1;
+  }
+  .control h4{ margin:0 0 .3rem; font-size:1.02rem; font-weight:600; }
+  .control .detail{ margin:0; max-width:60ch; }
+  .control .detail + .detail{ margin-top:.5rem; }
+  .control .sub{
+    margin:.6rem 0 0; padding-left:1.1rem; border-left:2px solid var(--line);
+    font-size:.94rem; color:var(--ink-dim);
+  }
+  .control .sub li{ margin-bottom:.35rem; }
+  .control .sub b{ color:var(--ink); font-weight:600; }
+
+  /* ---- callout ---- */
+  .callout{
+    background:var(--panel); border-left:3px solid var(--accent2); border-radius:0 8px 8px 0;
+    padding:.9rem 1.1rem; margin:1.2rem 0; font-size:.94rem;
+  }
+  .callout.warn{ border-left-color:var(--danger); }
+  .callout strong{ display:block; font-family:'IBM Plex Mono',monospace; text-transform:uppercase;
+    font-size:.68rem; letter-spacing:.1em; margin-bottom:.3rem; }
+  .callout.warn strong{ color:var(--danger); }
+  .callout:not(.warn) strong{ color:var(--accent2); }
+
+  /* ---- slot / preset table ---- */
+  .slotgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.9rem; margin:1.2rem 0; }
+  .slotcard{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:1rem 1.1rem;
+  }
+  .slotcard .n{ font-family:'IBM Plex Mono',monospace; color:var(--accent); font-size:.76rem;
+    letter-spacing:.08em; text-transform:uppercase; }
+  .slotcard h4{ margin:.3rem 0 .4rem; font-size:1.15rem; }
+  .slotcard p{ margin:0; font-size:.88rem; color:var(--ink-dim); }
+
+  /* ---- table ---- */
+  .tblwrap{ overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:1.2rem 0; }
+  table{ border-collapse:collapse; width:100%; min-width:520px; font-size:.9rem; }
+  thead th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; font-size:.68rem;
+    letter-spacing:.08em; color:var(--ink-dim); background:var(--panel); padding:.6rem .9rem;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{ padding:.55rem .9rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  tbody tr:last-child td{ border-bottom:none; }
+  td.cc{ font-family:'IBM Plex Mono',monospace; color:var(--accent); white-space:nowrap; }
+
+  /* ---- steps ---- */
+  ol.steps{ margin:1.2rem 0; padding:0; list-style:none; counter-reset:step; }
+  ol.steps li{
+    counter-increment:step; position:relative; padding:.15rem 0 .15rem 2.4rem; margin-bottom:1rem;
+  }
+  ol.steps li::before{
+    content:counter(step); position:absolute; left:0; top:0;
+    width:1.7rem; height:1.7rem; border-radius:50%; background:var(--accent); color:var(--accent-ink);
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:.85rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps p{ margin:0; }
+  ol.steps .note{ margin-top:.35rem; color:var(--ink-dim); font-size:.88rem; }
+
+  code{
+    font-family:'IBM Plex Mono',monospace; font-size:.88em; background:var(--panel);
+    padding:.1em .38em; border-radius:4px; border:1px solid var(--line);
+  }
+
+  footer{
+    border-top:1px solid var(--line); padding-top:1.4rem; margin-top:3rem;
+    font-size:.82rem; color:var(--ink-dim); display:flex; justify-content:space-between; flex-wrap:wrap; gap:.5rem;
+  }
+
+  @media (max-width:860px){
+    .shell{ display:block; }
+    nav.toc{ position:relative; height:auto; width:auto; border-right:none; border-bottom:1px solid var(--line);
+      padding:1.6rem 1.4rem; }
+    nav.toc ul{ display:flex; flex-wrap:wrap; gap:.2rem .6rem; margin-top:1rem; }
+    nav.toc li{ margin:0; }
+    main{ padding:2rem 1.4rem 4rem; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <main style="margin:0 auto;">
+    <header class="hero">
+      <span class="eyebrow">Waylo Audio &middot; hardware</span>
+      <h1>The instruments</h1>
+      <p class="tag">Three instruments built on Electro-Smith Daisy hardware. Each one is edited from a page in this browser &mdash; nothing to install &mdash; and each has a reference guide.</p>
+
+      <div class="callout">
+        <strong>Before you start</strong>
+        All three editors need <b>Chrome or Edge</b>. Safari and Firefox do not
+        support the browser APIs that talk to hardware. Connect the instrument
+        over USB <em>first</em>, then open the page and press Connect.
+      </div>
+    </header>
+
+    <section id="waylord">
+      <span class="eyebrow">01 &mdash; Sampler and synthesiser</span>
+      <h2>WAYLORD</h2>
+      <p>Two instruments at once &mdash; a Left and a Right slot, layered or split across the keyboard &mdash; through one chain of amp, delay, chorus, phaser, ring modulator, rotary speaker, reverb and tremolo. Ten patches live in the instrument; the samples live on a microSD card you can swap. More than eighty instruments: oscillators, FM, a tonewheel organ, and sampled pianos, Rhodes, guitars and pedal steels.</p>
+      <p>It comes in two formats. The <b>Pod</b> is the Electro-Smith Daisy Pod, with 3.5mm connectors throughout. The <b>Stompbox</b> is pedal-format: 5-pin DIN MIDI in and thru, quarter-inch ins and outs, a 9V supply, a headphone output and a true-bypass footswitch. Same sound, same patches, same editor &mdash; different sockets.</p>
+      <div class="slotgrid">
+        <div class="slotcard">
+          <span class="n">Guide</span>
+          <h4><a href="WAYLORD_GUIDE.html">Owner's reference</a></h4>
+          <p>Controls, patches, instruments, effects, the card, MIDI, firmware and troubleshooting. Covers both formats.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Editor &mdash; Stompbox</span>
+          <h4><a href="waylord_stomp_editor.html">Stompbox editor</a></h4>
+          <p>For the pedal-format board. Web MIDI, over USB.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Editor &mdash; Pod</span>
+          <h4><a href="waylord_editor.html">Pod editor</a></h4>
+          <p>For the Daisy Pod. Web MIDI, over USB.</p>
+        </div>
+      </div>
+      <div class="callout warn">
+        <strong>The two formats need different firmware</strong>
+        They are not interchangeable. Use the installer named for your format.
+        The Pod's firmware will appear to run on a Stompbox while reading the
+        card incorrectly.
+      </div>
+    </section>
+
+    <section id="wayloud">
+      <span class="eyebrow">02 &mdash; Delay pedal</span>
+      <h2>WayloUD Delay</h2>
+      <p>Eight modulated stereo delay voices on a Daisy Pod, each with its own time, feedback, pan, level and LFO &mdash; the delay matrix from the WayloUD plugin, in a box. Thirty-two factory presets and ninety-nine of your own, with two knobs, two buttons and an encoder that browses patches, switches the input/output routing and quick-saves.</p>
+      <p>It also <b>imports Magicstomp patches</b>: the editor reads a <code>.ub9</code> file and converts the Eight Band Parallel Delay, Eight Multi-Tap Mod Delay, Mod Delay and Symphonic effects onto the eight voices. Reverb, pitch-shift, phaser, distortion and amp-sim patches have nothing to convert to and are skipped.</p>
+      <div class="slotgrid">
+        <div class="slotcard">
+          <span class="n">Guide</span>
+          <h4><a href="WAYLOUD_DELAY_GUIDE.html">Owner's reference</a></h4>
+          <p>Every control, the preset slots, the Magicstomp import and the MIDI map.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Editor</span>
+          <h4><a href="waylo_ud_editor.html">WayloUD editor</a></h4>
+          <p>All eight voices, the presets and the importer. Web Serial, over USB.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="waylinator">
+      <span class="eyebrow">03 &mdash; Polyphonic synthesiser</span>
+      <h2>Waylinator</h2>
+      <p>A polyphonic synthesiser on a Daisy Pod, built around patches that <b>play more than you press</b>: chord machines, note rotators that step a harmony through a sequence as you play, transposition and remapping patches where the bottom of the keyboard changes what the top does, and a set of patches driven by breath for an EWI. Three banks &mdash; standard, breath-driven, and audio-input blend &mdash; with chorus and delay on the knobs.</p>
+      <div class="slotgrid">
+        <div class="slotcard">
+          <span class="n">Guide</span>
+          <h4><a href="WAYLINATOR_EDITOR_GUIDE.html">Editor guide</a></h4>
+          <p>The long one: every patch, the rotators, the chord editor, the zones, the EWI reference and the quick-start workflows.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Editor</span>
+          <h4><a href="editor.html">Waylinator editor</a></h4>
+          <p>Parameters, patches and the chord editor, with CSV backup and restore. Web Serial, over USB.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Note</span>
+          <h4>Not <span class="mono">waylinator_editor</span></h4>
+          <p>The pages named <code>waylinator_editor*.html</code> are old copies of the WAYLORD editor, from before it had its own address. The Waylinator's editor is the one above.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="shared">
+      <span class="eyebrow">04 &mdash; All three</span>
+      <h2>Things that are true of all of them</h2>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Topic</th><th>&nbsp;</th></tr></thead>
+          <tbody>
+            <tr><td><b>Browser</b></td><td>Chrome or Edge. Safari and Firefox support neither Web MIDI nor Web Serial.</td></tr>
+            <tr><td><b>Cable</b></td><td>A micro-USB <em>data</em> cable. A charge-only cable looks identical and carries nothing.</td></tr>
+            <tr><td><b>Editing is live</b></td><td>Changes are heard immediately and are <em>not</em> kept until you save to the device. Try anything; reload to get back.</td></tr>
+            <tr><td><b>Firmware updates</b></td><td>Never touch your sounds or your patches. An interrupted update leaves the board in its bootloader, not broken &mdash; run it again.</td></tr>
+            <tr><td><b>Plugins</b></td><td>The plugin versions of these sounds are in the <a href="shop/">shop</a>, with a free version of every one.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>Waylo Audio &mdash; hardware</span>
+      <span class="mono">seanwayland.com</span>
+    </footer>
+  </main>
+</div>
+</body>
+</html>

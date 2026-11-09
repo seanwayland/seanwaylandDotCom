@@ -167,7 +167,7 @@
   </p>
   <br>
   <p style="color:#aaa; font-size:11px; margin-top:40px;">
-    Open <strong>editor.html</strong> in Chrome or Edge · Connect via USB · Play
+    Open <strong>seanwayland.com/editor.html</strong> in Chrome or Edge · Connect via USB · Play
   </p>
 </div>
 
@@ -206,18 +206,18 @@
   <ul>
     <li><strong>Browser:</strong> Google Chrome or Microsoft Edge (any recent version). Firefox and Safari do not support Web Serial.</li>
     <li><strong>Cable:</strong> Micro-USB to your computer — the same cable used to flash firmware.</li>
-    <li><strong>No install required</strong> — open <code>editor.html</code> directly from your file system.</li>
+    <li><strong>No install required</strong> — open <a href="editor.html">seanwayland.com/editor.html</a>, or a local copy of <code>editor.html</code> from your own file system. Either works.</li>
   </ul>
 
   <div class="tip">
     <strong>Tip</strong>
-    If you see "Web Serial not supported" in the status area, switch to Chrome or Edge and make sure you opened the file as <code>file://…/editor.html</code> (not inside another application).
+    If you see "Web Serial not supported" in the status area, switch to Chrome or Edge. The page has to be open in the browser itself — over <code>https://</code> or as <code>file://…/editor.html</code> — not inside another application’s built-in web view.
   </div>
 
   <h2>2 · Connecting to the Device</h2>
   <ol class="steps">
     <li>Plug the Daisy Pod into your computer with USB. Power it on.</li>
-    <li>Open <code>editor.html</code> in Chrome or Edge.</li>
+    <li>Open <a href="editor.html">seanwayland.com/editor.html</a> in Chrome or Edge.</li>
     <li>Click <strong>Connect</strong> at the top of the page. A browser dialog will appear listing available serial ports — select your Daisy Pod (typically labelled "USB Serial Device" or similar).</li>
     <li>The button label changes to <strong>Disconnect</strong> and a green dot appears. The editor automatically reads the current device state — you will see the values appear in the Device Log within a second.</li>
     <li>Wait for the status bar to say <strong>Device state loaded. Ready to edit and write.</strong> before making any changes. Do not click Write to Device before this message appears.</li>
@@ -868,6 +868,44 @@
     Import the MIDI, click through the chord cells to verify the notes look right,
     adjust any chords manually in the piano editor if needed, then Send to Device.
   </div>
+
+  <h2>Lick Chords — patches 28 and 29</h2>
+  <p>
+    The <strong>Lick Chords</strong> panel is a second, separate importer, and it
+    feeds two patches the chord scales do not touch: <strong>28
+    (WAYLO_LICK_CHORD_1)</strong> and <strong>29 (WAYLO_LICK_CHORD_2)</strong>.
+    These play chords whose notes <em>move through a melody</em> — a lick —
+    rather than sitting still.
+  </p>
+  <ul>
+    <li>Playing a note at <strong>C4 or above</strong> selects a position in the
+      melody: C4 = 0, C#4 = 1, D4 = 2, and so on.</li>
+    <li>Each voice has its own <strong>starting position</strong> in the melody,
+      counted from 0. The chord-notes field records which MIDI notes that works
+      out to, and it has to agree with the melody at that starting position.</li>
+    <li>As the position advances, <strong>every voice steps forward</strong>
+      through the melody. A voice that runs off the end wraps back to the
+      beginning an octave higher.</li>
+    <li>Notes <strong>below C4</strong> set transposition silently, exactly as
+      they do on the CHORD_SCALE patches.</li>
+  </ul>
+
+  <h2>The MIDI file a Lick Chord import expects</h2>
+  <p>
+    <strong>MIDI → Patch 28</strong> and <strong>MIDI → Patch 29</strong> read a
+    file laid out like this:
+  </p>
+  <ul>
+    <li><strong>Bar 1, whole notes</strong> — the chord voices, as actual MIDI
+      notes with their octaves, sorted low to high.</li>
+    <li><strong>Everything after bar 1</strong> — the melody, in order. Any
+      duration; only the order matters.</li>
+  </ul>
+  <p>
+    The starting positions are <em>not</em> taken from the file — enter those by
+    hand after the import. Then <strong>Send to Device</strong>, as with
+    everything else on this page.
+  </p>
 </div>
 
 <!-- ══ ROTATORS ══════════════════════════════════════════════════════════════ -->

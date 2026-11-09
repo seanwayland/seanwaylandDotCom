@@ -273,9 +273,10 @@
       <h2 class="group-title">Import Magicstomp Patch</h2>
       <div class="tiny">
         Load a Yamaha Magicstomp library file (.ub9, 99 patches). Accepted types:
-        <strong>EightBandParallelDelay</strong> (primary &mdash; its 8 independent delay bands map
-        almost 1:1 onto WayloUD's 8 voices, each with its own time/feedback/pan/level/LFO) and
-        <strong>ModDelay</strong> (a single mono delay+LFO, mapped onto Voice 1 with Voices 2-8 silenced).
+        <strong>EightBandParallelDelay</strong> and <strong>EightMultiTapModDelay</strong> (8 independent
+        delay bands/taps map almost 1:1 onto WayloUD's 8 voices, each with its own
+        time/feedback/pan/level/LFO), and <strong>ModDelay</strong> and <strong>Symphonic</strong> (each a
+        single mono delay/chorus voice, mapped onto Voice 1 with Voices 2-8 silenced).
         Everything else &mdash; reverb, pitch-shift, phaser, distortion/amp, acoustic-multi, etc. &mdash;
         has no equivalent in WayloUD's engine and won't show up here. Patches not matching an accepted
         type are simply not listed/converted.
@@ -860,6 +861,8 @@
     const UB9_PATCH_NAME_LENGTH = 12;
     const MAGICSTOMP_MODDELAY_TYPE = 0x0f;
     const MAGICSTOMP_EIGHT_BAND_PARALLEL_DELAY_TYPE = 0x01;
+    const MAGICSTOMP_EIGHT_MULTI_TAP_MOD_DELAY_TYPE = 0x05;
+    const MAGICSTOMP_SYMPHONIC_TYPE = 0x14;
     // Both widgets' ParameterOffsets are relative to the start of the
     // effect-specific section, which begins after the 32-byte common header
     // (PatchType/Control1-3/PatchName all live in that first 32 bytes) —
@@ -890,11 +893,25 @@
     };
     // Offsets within an individual band's 11-byte block.
     const EIGHT_BAND_FIELD = {
-      Feedback: 2, // 1 byte, 0..10 scale (raw*0.1)
-      Speed: 6,    // 1 byte, 0..10 scale (raw*0.1) — LFO speed
-      Depth: 7,    // 1 byte, 0..10 scale (raw*0.1) — LFO depth
-      Pan: 8,      // 1 byte, raw*0.2 - 10 (-10..+10, matches Magicstomp convention of - =left/+ =right)
-      Level: 9,    // 1 byte, 0..10 scale (raw*0.1) — per-band gain
+      Feedback: 2,   // 1 byte, 0..10 scale (raw*0.1)
+      TapPercent: 5, // 1 byte, 0..100 direct percent — real/editable even on multi-tap's taps 2-8
+      Speed: 6,      // 1 byte, 0..10 scale (raw*0.1) — LFO speed
+      Depth: 7,      // 1 byte, 0..10 scale (raw*0.1) — LFO depth
+      Pan: 8,        // 1 byte, raw*0.2 - 10 (-10..+10, matches Magicstomp convention of - =left/+ =right)
+      Level: 9,      // 1 byte, 0..10 scale (raw*0.1) — per-band gain
+    };
+
+    // Symphonic (SymphonicWidget in MagicstompFrenzy) — a single mono
+    // chorus voice (LFO freq/depth + one mod-delay-time + mix), plus a
+    // 3-band EQ that has no WayloUD equivalent and is dropped, same as
+    // ModDelay's HPF/LPF. Offsets/scaling pulled from the upstream repo
+    // (github.com/dulnikovsky/magicstompfrenzy) since the local reference
+    // copy went missing partway through development.
+    const SYMPHONIC_OFFSETS = {
+      Freq: UB9_EFFECT_SECTION_OFFSET + 0x10,      // 2 bytes, Hz = raw*0.05 + 0.05 (0.05..40Hz)
+      Depth: UB9_EFFECT_SECTION_OFFSET + 0x12,     // 2 bytes, percent 0..100 direct (no scale)
+      ModDelayTime: UB9_EFFECT_SECTION_OFFSET + 0x14, // 2 bytes, ms = raw*0.1 (0..500ms)
+      Mix: UB9_EFFECT_SECTION_OFFSET + 0x28,       // 1 byte, percent 0..100 direct
     };
 
     // Big-endian 7-bit-per-byte packing (every raw SysEx data byte is <128).
@@ -969,11 +986,26 @@
       return p;
     }
 
-    // Converts an EightBandParallelDelay patch into a 52-element WayloUD
-    // params array. Near 1:1 structural match: each of the 8 Magicstomp
-    // bands (time/feedback/pan/level/LFO speed+depth) becomes one WayloUD
-    // voice with the same role.
-    function convertEightBandParallelDelay(block) {
+    // Shared by EightBandParallelDelay and EightMultiTapModDelay — both use
+    // the identical MultibandDelayWidget/DelayBandWidget byte layout (8
+    // bands/taps, each 11 bytes: feedback/speed/depth/pan/level at the same
+    // offsets). The only thing that differs between the two types is the
+    // per-band delay-time scale/add constants, which DelayBandWidget derives
+    // from that type's minTime/maxTime bucket
+    // (maxTime>5000 -> *0.5+0.5, >2000 -> *0.2+0.2, else -> *0.1+0.1).
+    // Near 1:1 structural match either way: each Magicstomp band becomes one
+    // WayloUD voice with the same role (time/feedback/pan/level/LFO speed+depth).
+    // `multiTap`: for EightMultiTapModDelay, only Tap 1's Time/Feedback are
+    // real/independent in the Magicstomp hardware — taps 2-8 have those
+    // fields disabled in MagicstompFrenzy's own editor (confirmed against
+    // delaybandwidget.cpp: tapOnly=true for taps 2-8), and their raw time
+    // bytes in the patch are unused leftover defaults, not real values. The
+    // real per-tap time for taps 2-8 is Tap1's time scaled by that tap's own
+    // "Tap %" field (which stays live/editable for every tap), and there's
+    // only Tap1's single shared feedback loop, not independent per-tap ones.
+    // EightBandParallelDelay doesn't have this restriction — all 8 bands are
+    // fully independent (tapOnly=false for every band).
+    function convertMultibandDelay(block, timeScale, timeAdd, multiTap) {
       const p = new Array(52).fill(0);
 
       const effectLevelRaw = readUb9SevenBit(block, EIGHT_BAND_OFFSETS.EffectLevel, 2);
@@ -986,12 +1018,28 @@
       p[42] = 1.0; // Global Rate macro neutral
       p[43] = 1.0; // Global Depth macro neutral
 
-      for (let v = 0; v < 8; v++) {
-        const timeRaw = readUb9SevenBit(block, EIGHT_BAND_OFFSETS.DelayTimeBase + 2 * v, 2);
-        const timeMs = timeRaw * 0.1 + 0.1;
+      let tap1TimeMs = 0;
+      let tap1Feedback = 0;
 
+      for (let v = 0; v < 8; v++) {
         const bandOff = EIGHT_BAND_OFFSETS.BandBase + EIGHT_BAND_OFFSETS.BandLength * v;
-        const feedback = block[bandOff + EIGHT_BAND_FIELD.Feedback] * 0.1;
+        let timeMs;
+        let feedback;
+
+        if (multiTap && v > 0) {
+          const tapPercent = block[bandOff + EIGHT_BAND_FIELD.TapPercent];
+          timeMs = tap1TimeMs * (tapPercent / 100);
+          feedback = 0; // only Tap 1 has a real feedback loop
+        } else {
+          const timeRaw = readUb9SevenBit(block, EIGHT_BAND_OFFSETS.DelayTimeBase + 2 * v, 2);
+          timeMs = timeRaw * timeScale + timeAdd;
+          feedback = block[bandOff + EIGHT_BAND_FIELD.Feedback] * 0.1;
+          if (multiTap) {
+            tap1TimeMs = timeMs;
+            tap1Feedback = feedback;
+          }
+        }
+
         const speed = block[bandOff + EIGHT_BAND_FIELD.Speed] * 0.1;
         const depth = block[bandOff + EIGHT_BAND_FIELD.Depth] * 0.1;
         const panRaw = block[bandOff + EIGHT_BAND_FIELD.Pan] * 0.2 - 10; // -10..+10
@@ -1008,6 +1056,56 @@
       return p;
     }
 
+    // EightBandParallelDelay: minTime=0.1, maxTime=696.0 -> *0.1+0.1 bucket.
+    function convertEightBandParallelDelay(block) {
+      return convertMultibandDelay(block, 0.1, 0.1, false);
+    }
+
+    // EightMultiTapModDelay: minTime=0.2, maxTime=5890.0 -> *0.5+0.5 bucket
+    // (the >5000 tier) for Tap 1 only; taps 2-8 derive from Tap 1's time (see
+    // convertMultibandDelay's multiTap handling).
+    function convertEightMultiTapModDelay(block) {
+      return convertMultibandDelay(block, 0.5, 0.5, true);
+    }
+
+    // Symphonic: a single mono chorus voice (LFO freq/depth + one mod-delay
+    // time + mix), so it maps onto Voice 1 the same way ModDelay does, with
+    // Voices 2-8 silenced. No feedback parameter exists for this type (it's
+    // a chorus, not a delay-with-repeats), so Voice 1's feedback is left 0.
+    function convertSymphonicPatch(block) {
+      const p = new Array(52).fill(0);
+
+      const freqHz = readUb9SevenBit(block, SYMPHONIC_OFFSETS.Freq, 2) * 0.05 + 0.05;
+      const depthPercent = readUb9SevenBit(block, SYMPHONIC_OFFSETS.Depth, 2); // already 0..100, no scale
+      const modDelayMs = readUb9SevenBit(block, SYMPHONIC_OFFSETS.ModDelayTime, 2) * 0.1;
+      const mixPercent = block[SYMPHONIC_OFFSETS.Mix];
+
+      const wet = Math.max(0, Math.min(1, mixPercent / 100));
+      const dry = 1 - wet;
+
+      const time = Math.max(0, Math.min(1, modDelayMs / 1000));
+      const modDepth = Math.max(0, Math.min(1, depthPercent / 100));
+      // Same heuristic Hz-to-relative-modrate scale-down as ModDelay — see
+      // its comment for why there's no exact unit equivalence here.
+      const modRate = Math.max(0, Math.min(1, freqHz / 10));
+
+      p[0] = dry;
+      p[1] = time;       // Delay 1 Time
+      p[9] = 1.0;        // Delay 1 Gain — only active voice
+      p[17] = modDepth;  // Delay 1 Mod Depth
+      p[25] = modRate;   // Delay 1 Mod Rate
+      p[41] = wet;
+      p[42] = 1.0;       // Global Rate macro neutral
+      p[43] = 1.0;       // Global Depth macro neutral
+      p[44] = 0.5;       // Delay 1 Pan — center (Symphonic is a single mono voice)
+
+      for (let v = 1; v < 8; v++) {
+        p[44 + v] = 0.5; // pan center, harmless since gain is 0
+      }
+
+      return p;
+    }
+
     // Registry of Magicstomp effect types this importer can convert. Extend
     // this (plus a matching convert* function) to accept more types later.
     const ACCEPTED_MAGICSTOMP_TYPES = {
@@ -1018,6 +1116,14 @@
       [MAGICSTOMP_MODDELAY_TYPE]: {
         name: "ModDelay",
         convert: convertModDelayPatch,
+      },
+      [MAGICSTOMP_EIGHT_MULTI_TAP_MOD_DELAY_TYPE]: {
+        name: "EightMultiTapModDelay",
+        convert: convertEightMultiTapModDelay,
+      },
+      [MAGICSTOMP_SYMPHONIC_TYPE]: {
+        name: "Symphonic",
+        convert: convertSymphonicPatch,
       },
     };
 

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WAYLORD</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#eee7d6;
+    --ink:#201b16;
+    --ink-dim:#5b5240;
+    --panel:#e2d8c0;
+    --panel-2:#d8ccae;
+    --line:#c3b48d;
+    --accent:#a8691f;
+    --accent-ink:#201b16;
+    --accent2:#276b64;
+    --danger:#a6392a;
+    --shadow: 0 1px 0 rgba(32,27,22,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#15120d;
+      --ink:#ece2ca;
+      --ink-dim:#a89975;
+      --panel:#211b12;
+      --panel-2:#2b2317;
+      --line:#3d3320;
+      --accent:#d99a4e;
+      --accent-ink:#15120d;
+      --accent2:#59baac;
+      --danger:#e26a56;
+      --shadow: 0 1px 0 rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#15120d;
+    --ink:#ece2ca;
+    --ink-dim:#a89975;
+    --panel:#211b12;
+    --panel-2:#2b2317;
+    --line:#3d3320;
+    --accent:#d99a4e;
+    --accent-ink:#15120d;
+    --accent2:#59baac;
+    --danger:#e26a56;
+    --shadow: 0 1px 0 rgba(0,0,0,.4);
+  }
+
+  *{ box-sizing:border-box; }
+  html{ color-scheme: light dark; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    font-size:16px; line-height:1.6;
+  }
+  ::selection{ background:var(--accent); color:var(--accent-ink); }
+
+  .head-face{ font-family:'Big Shoulders Display', 'Arial Narrow', sans-serif; text-transform:uppercase; letter-spacing:.02em; }
+  .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; text-transform:uppercase; letter-spacing:.14em;
+    font-size:.72rem; color:var(--accent); font-weight:600;
+  }
+
+  a{ color:var(--accent2); }
+
+  .shell{ display:flex; max-width:1180px; margin:0 auto; }
+
+  /* ---- sidebar ---- */
+  nav.toc{
+    flex:0 0 220px; position:sticky; top:0; align-self:flex-start;
+    height:100vh; overflow-y:auto; padding:2.4rem 1.2rem 2rem 2rem;
+    border-right:1px solid var(--line);
+  }
+  nav.toc .brand{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:1.5rem;
+    letter-spacing:.01em; margin:0 0 .15rem;
+  }
+  nav.toc .brand small{ display:block; font-family:'IBM Plex Mono',monospace; font-weight:400;
+    font-size:.68rem; letter-spacing:.1em; color:var(--ink-dim); text-transform:uppercase; margin-top:.35rem; }
+  nav.toc ul{ list-style:none; margin:1.8rem 0 0; padding:0; }
+  nav.toc li{ margin-bottom:.15rem; }
+  nav.toc a{
+    display:block; padding:.4rem .5rem; border-radius:4px; text-decoration:none;
+    color:var(--ink-dim); font-size:.86rem; font-weight:500;
+  }
+  nav.toc a:hover{ color:var(--ink); background:var(--panel); }
+  nav.toc .num{ font-family:'IBM Plex Mono',monospace; color:var(--accent); margin-right:.5em; font-size:.78em; }
+
+  main{ flex:1; min-width:0; padding:2.4rem 2.4rem 6rem; max-width:900px; }
+
+  header.hero{ margin-bottom:2.6rem; }
+  header.hero h1{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800;
+    font-size:clamp(2.6rem, 6vw, 4.2rem); line-height:.92; margin:.3rem 0 .5rem; text-wrap:balance;
+  }
+  header.hero p.tag{ margin:0 0 1.6rem; color:var(--ink-dim); font-size:1.05rem; max-width:38em; }
+
+  section{ margin-bottom:3.4rem; scroll-margin-top:1.5rem; }
+  section > .eyebrow{ display:block; margin-bottom:.4rem; }
+  section h2{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:700;
+    font-size:2rem; margin:0 0 1rem; letter-spacing:.01em; text-wrap:balance;
+  }
+  section h3{
+    font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size:1.05rem; margin:1.6rem 0 .5rem;
+  }
+  section p{ max-width:62ch; }
+  section > p:first-of-type{ margin-top:0; }
+
+  /* ---- diagram ---- */
+  .diagram-wrap{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:1.4rem 1.4rem 1.1rem; box-shadow:var(--shadow); margin:1.6rem 0 2rem;
+  }
+  .diagram-wrap svg{ width:100%; height:auto; display:block; }
+  .diagram-caption{
+    display:flex; justify-content:space-between; margin-top:.6rem;
+    font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--ink-dim); letter-spacing:.04em;
+  }
+  .badge{ fill:var(--accent); }
+  .badge-text{ fill:var(--accent-ink); font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:13px; }
+  .panel-line{ stroke:var(--line); }
+  .panel-fill{ fill:var(--panel-2); }
+  .knob-fill{ fill:var(--paper); stroke:var(--ink-dim); }
+  .led-dot{ fill:var(--accent2); }
+  @media (prefers-reduced-motion: no-preference){
+    .led-dot{ animation: pulse 2.6s ease-in-out infinite; }
+  }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.45; } }
+
+  /* ---- control entries ---- */
+  .control{
+    display:grid; grid-template-columns:2.4rem 1fr; gap:.9rem 1rem;
+    padding:1.1rem 0; border-top:1px solid var(--line);
+  }
+  .control:first-of-type{ border-top:none; padding-top:.3rem; }
+  .control .num{
+    font-family:'Big Shoulders Display', sans-serif; font-weight:800; font-size:1.7rem;
+    color:var(--accent); line-height:1;
+  }
+  .control h4{ margin:0 0 .3rem; font-size:1.02rem; font-weight:600; }
+  .control .detail{ margin:0; max-width:60ch; }
+  .control .detail + .detail{ margin-top:.5rem; }
+  .control .sub{
+    margin:.6rem 0 0; padding-left:1.1rem; border-left:2px solid var(--line);
+    font-size:.94rem; color:var(--ink-dim);
+  }
+  .control .sub li{ margin-bottom:.35rem; }
+  .control .sub b{ color:var(--ink); font-weight:600; }
+
+  /* ---- callout ---- */
+  .callout{
+    background:var(--panel); border-left:3px solid var(--accent2); border-radius:0 8px 8px 0;
+    padding:.9rem 1.1rem; margin:1.2rem 0; font-size:.94rem;
+  }
+  .callout.warn{ border-left-color:var(--danger); }
+  .callout strong{ display:block; font-family:'IBM Plex Mono',monospace; text-transform:uppercase;
+    font-size:.68rem; letter-spacing:.1em; margin-bottom:.3rem; }
+  .callout.warn strong{ color:var(--danger); }
+  .callout:not(.warn) strong{ color:var(--accent2); }
+
+  /* ---- slot / preset table ---- */
+  .slotgrid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.9rem; margin:1.2rem 0; }
+  .slotcard{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:1rem 1.1rem;
+  }
+  .slotcard .n{ font-family:'IBM Plex Mono',monospace; color:var(--accent); font-size:.76rem;
+    letter-spacing:.08em; text-transform:uppercase; }
+  .slotcard h4{ margin:.3rem 0 .4rem; font-size:1.15rem; }
+  .slotcard p{ margin:0; font-size:.88rem; color:var(--ink-dim); }
+
+  /* ---- table ---- */
+  .tblwrap{ overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:1.2rem 0; }
+  table{ border-collapse:collapse; width:100%; min-width:520px; font-size:.9rem; }
+  thead th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; text-transform:uppercase; font-size:.68rem;
+    letter-spacing:.08em; color:var(--ink-dim); background:var(--panel); padding:.6rem .9rem;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{ padding:.55rem .9rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  tbody tr:last-child td{ border-bottom:none; }
+  td.cc{ font-family:'IBM Plex Mono',monospace; color:var(--accent); white-space:nowrap; }
+
+  /* ---- steps ---- */
+  ol.steps{ margin:1.2rem 0; padding:0; list-style:none; counter-reset:step; }
+  ol.steps li{
+    counter-increment:step; position:relative; padding:.15rem 0 .15rem 2.4rem; margin-bottom:1rem;
+  }
+  ol.steps li::before{
+    content:counter(step); position:absolute; left:0; top:0;
+    width:1.7rem; height:1.7rem; border-radius:50%; background:var(--accent); color:var(--accent-ink);
+    font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:.85rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps p{ margin:0; }
+  ol.steps .note{ margin-top:.35rem; color:var(--ink-dim); font-size:.88rem; }
+
+  code{
+    font-family:'IBM Plex Mono',monospace; font-size:.88em; background:var(--panel);
+    padding:.1em .38em; border-radius:4px; border:1px solid var(--line);
+  }
+
+  footer{
+    border-top:1px solid var(--line); padding-top:1.4rem; margin-top:3rem;
+    font-size:.82rem; color:var(--ink-dim); display:flex; justify-content:space-between; flex-wrap:wrap; gap:.5rem;
+  }
+
+  @media (max-width:860px){
+    .shell{ display:block; }
+    nav.toc{ position:relative; height:auto; width:auto; border-right:none; border-bottom:1px solid var(--line);
+      padding:1.6rem 1.4rem; }
+    nav.toc ul{ display:flex; flex-wrap:wrap; gap:.2rem .6rem; margin-top:1rem; }
+    nav.toc li{ margin:0; }
+    main{ padding:2rem 1.4rem 4rem; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="toc">
+    <p class="brand">WAYLORD<small>Owner's reference</small></p>
+    <ul>
+      <li><a href="#overview"><span class="num">01</span>What it is</a></li>
+      <li><a href="#sockets"><span class="num">02</span>Plugging it in</a></li>
+      <li><a href="#controls"><span class="num">03</span>The controls</a></li>
+      <li><a href="#patches"><span class="num">04</span>Patches &amp; banks</a></li>
+      <li><a href="#instruments"><span class="num">05</span>Instruments</a></li>
+      <li><a href="#effects"><span class="num">06</span>Effects</a></li>
+      <li><a href="#audioin"><span class="num">07</span>Audio in &amp; bypass</a></li>
+      <li><a href="#editor"><span class="num">08</span>The editor</a></li>
+      <li><a href="#midi"><span class="num">09</span>MIDI</a></li>
+      <li><a href="#card"><span class="num">10</span>The SD card</a></li>
+      <li><a href="#firmware"><span class="num">11</span>Firmware updates</a></li>
+      <li><a href="#trouble"><span class="num">12</span>When it misbehaves</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <span class="eyebrow">Daisy hardware &middot; two-slot sampler and synthesiser</span>
+      <h1>WAYLORD</h1>
+      <p class="tag">Two instruments at once, ten patches, every sample on a card you can swap. This is the owner's reference for both formats &mdash; the Pod and the Stompbox.</p>
+
+      <div class="callout">
+        <strong>Two formats, one instrument</strong>
+        The sound, the patches and the editor are identical. They differ only in
+        their sockets and their front panel: the <b>Pod</b> is the Electrosmith
+        Daisy Pod, with 3.5mm connectors throughout; the <b>Stompbox</b> is the
+        pedal-format board, with 5-pin DIN MIDI, quarter-inch jacks, a 9V supply
+        and a true-bypass footswitch. Where they differ, this page says so.
+      </div>
+    </header>
+
+    <section id="overview">
+      <span class="eyebrow">01 &mdash; Overview</span>
+      <h2>What it is</h2>
+      <p>WAYLORD plays <b>two instruments at once</b> &mdash; a <b>Left slot</b> and a <b>Right slot</b>. Each slot picks its own sound from the whole instrument list, has its own volume, pan, pitch LFO, EQ, filter and glide, and can be layered with the other or split across the keyboard. The two are then mixed into one chain of shared effects.</p>
+      <p>A <b>patch</b> is the whole picture: both slots, their instruments and settings, the effects, the envelope. The instrument holds <b>ten patches</b> in its own memory and keeps them through a power cycle. Everything else &mdash; larger libraries of patches, naming, importing and exporting &mdash; lives in the browser editor.</p>
+      <p>The sounds themselves come from two places. The oscillator and FM engines are computed, so they are instant. The sampled instruments are files on the <b>microSD card</b>, read into memory the first time you select them, which is why those take a moment to arrive.</p>
+
+      <div class="slotgrid">
+        <div class="slotcard">
+          <span class="n">Slots</span>
+          <h4>2</h4>
+          <p>Left and Right, independent, layered or split.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Patches on the device</span>
+          <h4>10</h4>
+          <p>Complete setups, held in flash. Unlimited banks on the computer.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Instruments</span>
+          <h4>~80</h4>
+          <p>Oscillators, FM, organs, and sampled pianos, Rhodes, guitars and steels.</p>
+        </div>
+        <div class="slotcard">
+          <span class="n">Audio</span>
+          <h4>48kHz</h4>
+          <p>24-bit in and out, stereo, with a headphone amplifier of its own.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="sockets">
+      <span class="eyebrow">02 &mdash; Connections</span>
+      <h2>Plugging it in</h2>
+
+      <h3>Stompbox</h3>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Socket</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td><b>MIDI in</b></td><td>5-pin DIN. Your keyboard goes here with an ordinary MIDI cable, no adaptor. A separate path from USB &mdash; it works on its own with no computer attached.</td></tr>
+            <tr><td><b>MIDI thru</b></td><td>5-pin DIN. A copy of whatever arrives at MIDI in, for chaining another instrument after this one. It is a <em>thru</em>, not an out: WAYLORD does not generate MIDI on it.</td></tr>
+            <tr><td><b>Power</b></td><td>9V DC barrel jack. The main supply. USB does not have to be connected to play.</td></tr>
+            <tr><td><b>USB</b></td><td>Micro USB, on the Daisy Seed inside. MIDI to and from a computer, and how the editor talks to the instrument. It will also power the board on its own, but a computer's USB adds noise &mdash; use the DC jack for a quiet signal.</td></tr>
+            <tr><td><b>Audio out</b></td><td>Two quarter-inch jacks, Left and Right, line level. Ordinary instrument cables, no breakout.</td></tr>
+            <tr><td><b>Audio in</b></td><td>Two quarter-inch jacks, Left and Right, line level. Optional &mdash; runs a guitar or anything else through the same effects.</td></tr>
+            <tr><td><b>Headphones</b></td><td>3.5mm stereo, its own amplifier. It shares the Volume knob with the quarter-inch outputs, so turning down for headphones turns the outputs down too.</td></tr>
+            <tr><td><b>SD card</b></td><td>microSD, holding every sampled instrument. The instrument still boots and plays its oscillators without a card; the sampled sounds are simply silent.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <strong>Check your supply's polarity</strong>
+        Confirm the polarity your unit expects before you plug a pedal-board
+        supply into the barrel jack. Do not assume the usual pedal convention.
+      </div>
+
+      <h3>Pod</h3>
+      <p>The Pod uses 3.5mm connectors throughout: <b>MIDI in</b> on a 3.5mm TRS jack, <b>audio in</b> and <b>audio out</b> on 3.5mm stereo jacks, and <b>micro USB</b> for both power and the editor. There is no DC jack, no MIDI thru, no footswitch and no separate volume knob &mdash; the encoder is the volume. The microSD slot is the one on the Daisy Seed itself.</p>
+
+      <h3>Cables that work</h3>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>For</th><th>Stompbox</th><th>Pod</th></tr></thead>
+          <tbody>
+            <tr><td>Power</td><td>9V DC supply on the barrel jack</td><td>Micro USB</td></tr>
+            <tr><td>Audio</td><td>Quarter-inch instrument cables, one per jack</td><td>3.5mm stereo</td></tr>
+            <tr><td>MIDI</td><td>Any ordinary 5-pin DIN MIDI cable</td><td>3.5mm TRS MIDI adaptor</td></tr>
+            <tr><td>Computer</td><td>Micro USB</td><td>Micro USB</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="controls">
+      <span class="eyebrow">03 &mdash; Hardware</span>
+      <h2>The controls</h2>
+      <p>Everything on the panel is a performance control. Nothing here needs a computer, and the editor follows whatever you do with your hands.</p>
+
+      <div class="control">
+        <span class="num">1</span>
+        <div>
+          <h4>Knob 1 &mdash; chorus</h4>
+          <p class="detail">Sweeps the chorus from none up to the wet level the patch was saved with. Global: it acts on the mix of both slots, and it is not stored in the patch.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">2</span>
+        <div>
+          <h4>Knob 2 &mdash; delay</h4>
+          <p class="detail">The same idea for the delay, sweeping wet and feedback together up to the patch's saved levels. Whichever moved last wins: the knob takes over from the editor, and the editor takes it back.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">3</span>
+        <div>
+          <h4>Encoder &mdash; three things</h4>
+          <ul class="sub">
+            <li><b>Turn</b> &mdash; the master volume, inside the instrument, outputs and headphones together. It is velocity-sensitive: a slow detent moves 0.8dB for trimming, a fast one 6.4dB so you can cross the range in eight clicks. The top end goes deliberately past unity, into clipping, if you want it.</li>
+            <li><b>Tap</b> &mdash; bypass the effects, and back. The LEDs flash to say which. This is a digital bypass of the effects block, not a hardware bypass.</li>
+            <li><b>Hold</b> (about half a second) &mdash; return to patch 1 from wherever you are.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">4</span>
+        <div>
+          <h4>Buttons 1 and 2 &mdash; patches</h4>
+          <p class="detail">Previous and next patch, wrapping round 1&ndash;10. <b>Hold</b> one for half a second to jump two at a time; <b>press both together</b> to jump five. These are faster than the editor's buttons &mdash; use them when you are playing.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">5</span>
+        <div>
+          <h4>Volume knob <span class="mono" style="font-size:.78em">STOMPBOX ONLY</span></h4>
+          <p class="detail">The analogue output level, after everything else, feeding the quarter-inch outputs and the headphones together. It is a passive control, so it also rolls off a little top end as it comes down &mdash; that is the circuit, not a fault.</p>
+          <p class="detail">This is a different control from the encoder's master volume. The encoder works inside the instrument and the editor follows it; this knob is the last thing in the signal path and the instrument knows nothing about it.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">6</span>
+        <div>
+          <h4>Footswitch <span class="mono" style="font-size:.78em">STOMPBOX ONLY</span></h4>
+          <p class="detail"><b>True bypass, in hardware.</b> A relay wires the inputs straight through to the outputs, around the Daisy entirely &mdash; so bypass works whatever the firmware is doing, and the instrument is silent through it. The small LED beside the switch is lit when the effect is in circuit.</p>
+          <p class="detail">Not to be confused with the encoder's tap, which is a digital bypass of the effects block only.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">7</span>
+        <div>
+          <h4>Mod wheel (on your keyboard)</h4>
+          <p class="detail">Brightness, on both slots together: filter cutoff on the oscillator engines, tone crossfade on the sampled ones. It also sets the rotary speaker's speed &mdash; down stops it, middle is slow, up is fast.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="num">8</span>
+        <div>
+          <h4>The two LEDs</h4>
+          <p class="detail">Each slot's instrument has a colour, the left LED for the Left slot, brightening on every MIDI message so you can see notes arriving. They turn <b>purple while the card is being read</b> and <b>green</b> when a load succeeded. A failed load holds purple and then blinks a count.</p>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <strong>Stompbox: red does not come out red</strong>
+        On the current Stompbox board the LED driver's channels are rotated and
+        two segments share a line, so pure red cannot be produced &mdash; anything
+        the firmware means as red appears purple. Green and blue are correct.
+        If a load fails, <b>count the blinks rather than reading the colour</b>
+        (see <a href="#trouble">When it misbehaves</a>). Patch colours that
+        contain red or yellow are not distinct on this board either.
+      </div>
+    </section>
+
+    <section id="patches">
+      <span class="eyebrow">04 &mdash; Patches</span>
+      <h2>Patches &amp; banks</h2>
+      <p>The instrument holds <b>ten patches</b>. A patch carries both slots' instruments and all their settings, the effects, the envelope, the split and transpose, the in/out mode and the advanced MIDI effect &mdash; everything except the handful of things that are deliberately global.</p>
+
+      <h3>What is global rather than per patch</h3>
+      <p>Chorus and delay settings, velocity sensitivity and velocity boost, the per-instrument sample start, attack and velocity curves, keyboard and velocity tracking, mono output, and the EQ bypass. These are properties of the instrument, saved with it, and they do not change as you move between patches.</p>
+
+      <h3>Changing patch</h3>
+      <p>Buttons 1 and 2 on the panel, the editor's patch tabs, or MIDI CC 36. A patch change <b>lets go of everything</b>: notes stop, effects are cleared, and the new patch's sounds are loaded. If either slot wants a sampled instrument, that load happens now &mdash; both slots, one after the other &mdash; so a sampled patch takes noticeably longer to arrive than an oscillator one.</p>
+
+      <div class="callout">
+        <strong>Don't play while anything is loading</strong>
+        Notes sent while a patch or a bank is arriving &mdash; from the editor, the
+        plugin or a sequencer &mdash; can land in the middle of it. Let a load
+        finish before you play.
+      </div>
+
+      <h3>Saving</h3>
+      <p>Everything you change takes effect immediately but is <b>not kept</b> until you save. That is deliberate: you can try anything and simply reload the patch to get back. The editor's <b>Save all patches to device</b> writes all ten to flash at once; nothing reaches flash before you press it.</p>
+
+      <h3>Banks on the computer</h3>
+      <p>The editor stores named banks of ten patches in the browser and exports them as files, so the ten slots on the device are a working set rather than a limit. A bank file is a plain list of MIDI messages, which is why the same file works with the editor, the plugin and the hardware.</p>
+    </section>
+
+    <section id="instruments">
+      <span class="eyebrow">05 &mdash; Sound</span>
+      <h2>Instruments</h2>
+      <p>Each slot picks one instrument from the full list, independently. There are around eighty. They fall into a few families, and the family tells you how the instrument behaves more than its name does.</p>
+
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Family</th><th>Examples</th><th>How it behaves</th></tr></thead>
+          <tbody>
+            <tr><td><b>Oscillators</b></td><td>Sine, Saw, Square, Pulse, band-limited and analogue-modelled variants</td><td>Instant. Velocity and note number open the filter, the mod wheel sets its base cutoff. Pulse gets a live width control.</td></tr>
+            <tr><td><b>FM and PM</b></td><td>FM Rhodes, Waylo Xfade2, mda DX10, 4-Op PM</td><td>Instant. The 4-Op page gives you eight algorithms and full per-operator control when you turn Manual edit on.</td></tr>
+            <tr><td><b>Organs</b></td><td>Tonewheel Organ, with drawbars, percussion, vibrato and a rotary speaker</td><td>Instant. The rotary speaker's speed follows the mod wheel.</td></tr>
+            <tr><td><b>Wavetable keys</b></td><td>mda EPiano, Vintage Vibe, Waylo Tele, Sustain Steel</td><td>Their data is on the card as well, but it is small &mdash; a few megabytes rather than thirty &mdash; so they arrive quickly.</td></tr>
+            <tr><td><b>Sampled</b></td><td>Salamander and Studio pianos, Rhodes and Wurlitzer takes, acoustic and electric guitars, pedal steels, Nord and Ensoniq one-shots</td><td>Read off the card on first selection. Full-size banks are up to 30MB and take several seconds; the eight &ldquo;Small&rdquo; banks are a second or two.</td></tr>
+            <tr><td><b>Patterned</b></td><td>CDG Rotator</td><td>Each key-down fans out into up to three notes &mdash; the key, a fifth above, and a harmony stepping through a sequence.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>The Double</h3>
+      <p>Each slot can run a <b>Double</b>: a second copy of its own sound, sharing the same recordings, so it costs voices but no extra memory. It has its own level, pan, pitch LFO and timbre tilt. Set the LFO slow and shallow and it is a detune; set it faster and it is a chorus you can hear through the effects. Available on the sampled instruments, Waylo Tele and the mda EPiano.</p>
+
+      <h3>Per-slot EQ</h3>
+      <p>Each slot has its own three-band EQ applied to its instrument and its Double before the two slots are mixed, like a channel strip. Flat &mdash; all gains centred &mdash; switches it off entirely rather than processing to no effect.</p>
+
+      <h3>Your own samples</h3>
+      <p>The editor's <b>Your own sample</b> panel turns one recording of a held note into a playable instrument: pick the file, check the note it found, choose mono or stereo and a User slot, audition it across the keyboard, then download the <code>.dat</code> for the root of the card. It all runs in the browser. The detector takes the median pitch over the whole sustain and checks the octave, which is what stops it hearing a saxophone an octave high.</p>
+    </section>
+
+    <section id="effects">
+      <span class="eyebrow">06 &mdash; Effects</span>
+      <h2>Effects</h2>
+      <p>The two slots are mixed, the audio input is added, and the result goes through one chain. Every stage is saved with the patch, and each one costs nothing while it is switched off.</p>
+
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>#</th><th>Stage</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="cc">1</td><td><b>Amp</b></td><td>Amp simulation with drive, wah, presence and a wet control. First in the chain on purpose: distortion into chorus and delay is what a guitar rig sounds like, and the other order smears.</td></tr>
+            <tr><td class="cc">2</td><td><b>Delay</b></td><td>Three delay times (left, centre, right) with dry, wet and feedback. Knob 2 sweeps it live.</td></tr>
+            <tr><td class="cc">3</td><td><b>Chorus</b></td><td>Dry, wet, speed and depth. Knob 1 sweeps it live.</td></tr>
+            <tr><td class="cc">4</td><td><b>Phaser</b></td><td>Two characters: Classic, or a Phase 90 model.</td></tr>
+            <tr><td class="cc">5</td><td><b>Ring modulator</b></td><td>Frequency and depth.</td></tr>
+            <tr><td class="cc">6</td><td><b>Rotary speaker</b></td><td>A Leslie. Its speed follows the mod wheel: down stops, middle slow, up fast.</td></tr>
+            <tr><td class="cc">7</td><td><b>Reverb</b></td><td>Three types: Plate, Hall, Room.</td></tr>
+            <tr><td class="cc">8</td><td><b>Tremolo</b></td><td>Rate and depth, as a level tremolo or a pan tremolo.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>The classic chorus and delay</h3>
+      <p>The chorus and the delay each have a second mode, saved per patch, which runs the <b>Waylinator's</b> own chorus and delay instead of WAYLORD's &mdash; the same code, with the same knob response it has there. You can take one of each, in any combination.</p>
+
+      <h3>Advanced MIDI</h3>
+      <p>A patch can run one note-processing effect ahead of the engines: <b>Waylo Trans</b>, <b>MIDI Rotator</b>, <b>Chord Sequencer</b>, <b>Diatonic Chords</b>, <b>Fifth Up</b>, or <b>Fifth Up Fourth Down</b>. These are the note-remapping ideas from the Waylinator, applied to whatever the slots are playing.</p>
+    </section>
+
+    <section id="audioin">
+      <span class="eyebrow">07 &mdash; Routing</span>
+      <h2>Audio in &amp; bypass</h2>
+      <p>Whatever is plugged into the inputs is mixed in <b>before</b> the effects, so it goes through them exactly as the engines do. Turn both slots' volumes down and WAYLORD is an effects box. The input level is per patch: 0 is off, 100 is unity, and above that it drives into clipping on purpose. Mono takes the left input to both sides, for a guitar in one jack.</p>
+
+      <h3>In/out mode, per patch</h3>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Mode</th><th>What you get</th></tr></thead>
+          <tbody>
+            <tr><td class="cc">1</td><td>Synth and samples, stereo out</td></tr>
+            <tr><td class="cc">2</td><td>Synth and samples, mono out</td></tr>
+            <tr><td class="cc">3</td><td>Synth and samples blended with the input, stereo out</td></tr>
+            <tr><td class="cc">4</td><td>Effects only, stereo in, stereo out</td></tr>
+            <tr><td class="cc">5</td><td>Effects only, mono in, stereo out</td></tr>
+            <tr><td class="cc">6</td><td>Effects only, mono in and mono out</td></tr>
+            <tr><td class="cc">7</td><td>Synth and samples blended with the input, all mono</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>In the effects-only modes the engines still run &mdash; notes keep their envelopes &mdash; they simply are not summed into the output. So a patch carrying nothing but phaser and reverb is a phaser-and-reverb pedal.</p>
+
+      <div class="callout">
+        <strong>The mode is a patch setting, the bypass is a pedal</strong>
+        You choose the in/out mode in the editor, where you can see it. The
+        encoder's tap is the live control: effects in, effects out, nothing
+        else. It is never saved with a patch &mdash; a patch should not load
+        already bypassed.
+      </div>
+    </section>
+    <section id="editor">
+      <span class="eyebrow">08 &mdash; Editor</span>
+      <h2>The editor</h2>
+      <p>Everything the panel cannot reach is in the browser editor, which talks to the instrument over USB MIDI. There are two pages, one per format: use the <b>Stompbox</b> page for the pedal and the <b>Pod</b> page for the Pod. They are the same editor; they differ in what they tell you about your sockets.</p>
+
+      <div class="callout warn">
+        <strong>Chrome or Edge</strong>
+        The editor needs Web MIDI, which Safari and Firefox do not support.
+        Connect the instrument over USB <em>before</em> you press Connect.
+      </div>
+
+      <ol class="steps">
+        <li><p>Connect the instrument over USB and open the editor page for your format.</p></li>
+        <li><p>Press <b>Connect</b> and pick the Daisy from the list.</p></li>
+        <li><p>Edit. Everything is live immediately &mdash; you hear each change as you make it.</p>
+            <p class="note">Switching patch tabs loads that patch onto the device and keeps whatever you changed on the one you left, so you can work through all ten and listen to each.</p></li>
+        <li><p>Press <b>Save all patches to device</b> when you are happy. Nothing reaches flash before that, so anything you dislike is undone by reloading the patch.</p></li>
+      </ol>
+
+      <h3>What takes time</h3>
+      <p>Loading a whole bank from the editor takes about <b>thirty seconds</b>, because all ten patches and all their samples go across. Let it finish.</p>
+
+      <h3>The plugin</h3>
+      <p>There is also a desktop plugin and standalone app that compiles the same engine, holds a bank, and can talk to the hardware in both directions. It can edit, but the browser is the better editor &mdash; use the plugin to play the sound inside a session, and the page to build patches.</p>
+    </section>
+
+    <section id="midi">
+      <span class="eyebrow">09 &mdash; MIDI</span>
+      <h2>MIDI</h2>
+      <p>WAYLORD listens on all channels. Notes, velocity, pitch bend (&plusmn;7 semitones), the mod wheel and the sustain pedal all do the obvious thing. Everything else is continuous controllers, and the editor sends the same ones you can.</p>
+
+      <h3>The controllers worth knowing by hand</h3>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>CC</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td class="cc">1</td><td>Mod wheel &mdash; brightness on both slots, and the rotary speaker's speed</td></tr>
+            <tr><td class="cc">7</td><td>Master volume (the same one the encoder turns)</td></tr>
+            <tr><td class="cc">20 / 21</td><td>Left / Right slot instrument</td></tr>
+            <tr><td class="cc">30 / 31</td><td>Left / Right slot volume</td></tr>
+            <tr><td class="cc">33 / 34</td><td>Left / Right slot pan</td></tr>
+            <tr><td class="cc">36</td><td>Patch select &mdash; ten slots, banded across the range (see below)</td></tr>
+            <tr><td class="cc">39&ndash;42</td><td>Envelope attack, decay, sustain, release</td></tr>
+            <tr><td class="cc">43&ndash;45</td><td>Tremolo rate, depth, and mode (level or pan)</td></tr>
+            <tr><td class="cc">46&ndash;49</td><td>Left slot EQ: low, mid, high, mid sweep</td></tr>
+            <tr><td class="cc">64</td><td>Sustain pedal</td></tr>
+            <tr><td class="cc">66 / 67</td><td>Left / Right glide on or off</td></tr>
+            <tr><td class="cc">71 / 74</td><td>Delay / chorus amount &mdash; the two panel knobs, remotely</td></tr>
+            <tr><td class="cc">94</td><td>Velocity sensitivity</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Instrument and patch selection are <b>banded</b> across the 0&ndash;127 range rather than numbered directly, because there are more than 128 of some things and fewer of others. The editor handles this; if you are sequencing it by hand, send the middle of the band rather than its edge.</p>
+
+      <p>The deeper parameters &mdash; the operator pages, the doubles, the amp, tracking, the advanced MIDI effect &mdash; travel as NRPN: controller 99 picks the parameter and controller 6 sets it. The full table is in the editor's own footer, which is generated from the firmware and is therefore always the current one.</p>
+
+      <h3>Two useful messages</h3>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Send</th><th>And</th></tr></thead>
+          <tbody>
+            <tr><td class="cc">99 = 2, then 6 = 127</td><td>Save everything to flash</td></tr>
+            <tr><td class="cc">99 = 3, then 6 = 127</td><td>Reload everything from flash, discarding live changes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="card">
+      <span class="eyebrow">10 &mdash; Storage</span>
+      <h2>The SD card</h2>
+      <p>Every sampled instrument is a file on the card. The patches are not &mdash; they live in the instrument's own flash &mdash; so swapping cards changes the available sounds but never your patches.</p>
+
+      <h3>What a card needs</h3>
+      <ul>
+        <li>Formatted <b>FAT32</b>.</li>
+        <li>The instrument <code>.dat</code> files at the <b>root</b> of the card, not in a folder.</li>
+        <li>Nothing else is required. The instrument reads only the files it needs, by name.</li>
+      </ul>
+
+      <h3>Without a card</h3>
+      <p>It boots, it plays, and every oscillator, FM and wavetable instrument works normally. Only the sampled instruments are silent, and each one says why rather than failing quietly.</p>
+
+      <h3>How much time a load takes</h3>
+      <p>Two instruments' worth of samples are held in memory at once, one per slot, so moving between two sampled patches re-reads the card while moving back and forth between the same two does not. A full-size bank is up to 30MB; the eight <b>Small</b> banks exist precisely so that a sustaining keyboard sound can be switched quickly.</p>
+
+      <div class="callout warn">
+        <strong>Counterfeit cards are real and they fail exactly here</strong>
+        A card that reports 16 or 32GB and holds a hundred megabytes will pass
+        a format, copy your files without complaint, and then read back
+        garbage. If sampled instruments load and sound wrong &mdash; not silent,
+        wrong &mdash; suspect the card before anything else, and verify it by
+        reading the whole payload back, not by checking its reported size.
+      </div>
+    </section>
+
+    <section id="firmware">
+      <span class="eyebrow">11 &mdash; Maintenance</span>
+      <h2>Firmware updates</h2>
+      <p>A firmware update writes about half a megabyte into the instrument's program area. <b>It cannot touch a single sound</b> &mdash; the sounds are files on the card, and there is no longer any address in the instrument for a sample to be written to. Your ten patches are kept as well.</p>
+
+      <h3>Two ways to do it</h3>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Route</th><th>Needs</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><b>The installer app</b><br><span class="mono" style="font-size:.78em">macOS</span></td><td>An app, supplied for your instrument</td><td>Self-contained: nothing to install and no file to choose. It carries the firmware inside it, names which board and which release it is about to write, finds the instrument, installs the bootloader first if the board has never had one, and shows you the write as it happens.</td></tr>
+            <tr><td><b>By hand</b><br><span class="mono" style="font-size:.78em">Windows, Linux</span></td><td><code>dfu-util</code></td><td>Put the board in DFU &mdash; the editor's <em>Reboot to DFU</em> button does it over USB, or hold BOOT and tap RESET &mdash; then <code>dfu-util -a 0 -s 0x90040000:leave -D &lt;image&gt;.bin -d ,0483:df11</code>. On Windows the DFU device needs a WinUSB driver (Zadig) bound to it first.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <strong>The Pod and the Stompbox need different firmware</strong>
+        They are not interchangeable. The Stompbox's card wiring differs, and
+        the Pod's image will appear to work on it while reading the card
+        incorrectly. Use the download named for your format, and if you are
+        choosing a file by hand, check the name.
+      </div>
+
+      <p>The editor page has a <b>Reboot to DFU</b> button, which is the easy way to get the instrument into the state an update needs without holding buttons. It does not write the firmware itself.</p>
+
+      <h3>If an update is interrupted</h3>
+      <p>The instrument is left <b>in its bootloader, not broken</b>. It will not play, and it will not look alive. Run the update again &mdash; it will find it waiting and finish the job.</p>
+    </section>
+
+    <section id="trouble">
+      <span class="eyebrow">12 &mdash; Troubleshooting</span>
+      <h2>When it misbehaves</h2>
+
+      <h3>Reading a failed load</h3>
+      <p>When a sampled instrument fails to arrive, the LEDs hold purple and then blink twice: first a count for <b>where</b> it failed, then a count for <b>what</b> the card said.</p>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>First count</th><th>Where it got to</th></tr></thead>
+          <tbody>
+            <tr><td class="cc">1</td><td>Opening the file</td></tr>
+            <tr><td class="cc">2</td><td>Reading its header</td></tr>
+            <tr><td class="cc">3</td><td>The file's format</td></tr>
+            <tr><td class="cc">4</td><td>The bank is too big</td></tr>
+            <tr><td class="cc">5</td><td>Its note table</td></tr>
+            <tr><td class="cc">6</td><td>The audio itself</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>One blink then four</b> is by far the commonest, and it means exactly one thing: that file is not on the card under the name the instrument expects. <b>Thirteen</b> on the second count means the card did not mount as a filesystem at all.</p>
+
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Look at</th></tr></thead>
+          <tbody>
+            <tr><td>No sound at all, Stompbox</td><td>The footswitch &mdash; true bypass is silent through the instrument. Then the Volume knob, then the encoder's volume, then the encoder's tap.</td></tr>
+            <tr><td>No sound from one slot</td><td>That slot's volume and pan, and whether its instrument is a sampled one that failed to load.</td></tr>
+            <tr><td>Sampled instruments silent, oscillators fine</td><td>The card: present, FAT32, files at the root.</td></tr>
+            <tr><td>Sampled instruments load but sound wrong</td><td>The card's authenticity. See above.</td></tr>
+            <tr><td>Notes arrive on MIDI in but nothing plays</td><td>Whether the patch's in/out mode is one of the effects-only ones.</td></tr>
+            <tr><td>A note that will not stop</td><td>Change patch &mdash; a patch change releases everything.</td></tr>
+            <tr><td>The editor cannot see it</td><td>Chrome or Edge, and the USB cable. A charge-only cable carries no data.</td></tr>
+            <tr><td>A periodic click</td><td>Close the editor tab. It polls the instrument every two seconds, and on a heavily loaded patch that poll is audible.</td></tr>
+            <tr><td>Dead after an interrupted update</td><td>Run the update again. It is in its bootloader.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>WAYLORD &mdash; owner's reference</span>
+      <span class="mono">seanwayland.com</span>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
