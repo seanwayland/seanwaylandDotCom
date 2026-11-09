@@ -272,7 +272,7 @@
       <img src="waylord.png" alt="WAYLORD" class="brand-logo">
       <div>
       <h1>WAYLORD</h1>
-      <div class="sub">Live parameter editing over USB MIDI, and a browser-side preset library. Requires Chrome or Edge (Web MIDI isn't supported in Safari/Firefox). Connect the Pod over USB first.</div>
+      <div class="sub">Live parameter editing over USB MIDI, and a browser-side preset library. Requires Chrome or Edge (Web MIDI isn't supported in Safari/Firefox). Connect the Stompbox over USB first.</div>
       </div>
     </div>
     <div class="conn">
@@ -286,43 +286,76 @@
   <details class="panel" id="gettingStarted" open>
     <summary style="cursor:pointer; font-weight:600; font-size:15px; color:var(--accent);">What this is and how to plug it in</summary>
     <div style="margin-top:12px;">
-      <p class="sub" style="max-width:76ch;">WAYLORD is a sampler and synthesiser on a Daisy Pod. It plays
-      <strong>two instruments at once</strong> &mdash; a Left and a Right slot &mdash; layered or split across
-      the keyboard, and it holds <strong>ten patches</strong>, each one a complete setup of both slots plus
-      its own effects. The samples live on the SD card; the patches live in the Pod's own memory.</p>
+      <p class="sub" style="max-width:76ch;">WAYLORD is a sampler and synthesiser. This page is for the
+      <strong>Stompbox</strong> build &mdash; the pedal-format board with 5-pin DIN MIDI, quarter-inch
+      jacks and a footswitch. (The Daisy Pod version has 3.5mm connectors throughout and a different
+      page.) It plays <strong>two instruments at once</strong> &mdash; a Left and a Right slot &mdash;
+      layered or split across the keyboard, and it holds <strong>ten patches</strong>, each one a
+      complete setup of both slots plus its own effects. The samples live on the SD card; the patches
+      live in the instrument's own memory.</p>
 
       <h3 style="margin:16px 0 6px; font-size:14px;">Plugging it in</h3>
       <table class="hwmap">
         <tr><td>MIDI in</td>
-            <td><strong>3.5mm TRS, Type A.</strong> Your keyboard goes here. A Type&nbsp;A TRS-to-5-pin-DIN adaptor <strong>comes with the instrument</strong>, so you only need an ordinary 5-pin DIN MIDI cable. This is a different path from USB and works on its own &mdash; no computer needed.</td></tr>
+            <td><strong>5-pin DIN.</strong> Your keyboard goes here, with an ordinary MIDI cable &mdash;
+            no adaptor. This is a separate path from USB and works on its own, with no computer.</td></tr>
+        <tr><td>MIDI thru</td>
+            <td><strong>5-pin DIN.</strong> A copy of whatever arrives at MIDI in, for chaining another
+            instrument after this one. It is a <em>thru</em>, not an out &mdash; the Stompbox does not
+            generate MIDI on it.</td></tr>
+        <tr><td>Power</td>
+            <td><strong>9V DC barrel jack.</strong> This is the main supply &mdash; USB does not have to be
+            connected to play. <strong>Check the polarity against your supply before plugging anything in.</strong></td></tr>
         <tr><td>USB</td>
-            <td>Power, and MIDI to and from a computer. This page talks to the Pod over USB; a DAW can play it over USB too. <strong>Powering it from a computer adds noise</strong> &mdash; use a phone charger or a USB power bank for a quiet signal.</td></tr>
+            <td><strong>Micro USB</strong>, on the Daisy Seed inside. MIDI to and from a computer, and how
+            this page talks to the instrument. It will also power the board on its own, but a computer's
+            USB adds noise &mdash; use the DC jack for a quiet signal.</td></tr>
         <tr><td>Audio out</td>
-            <td><strong>3.5mm stereo, line level.</strong> Use a stereo breakout to two mono jacks for a desk or an interface.</td></tr>
-        <tr><td>Headphones</td>
-            <td>Its own amplifier with <strong>its own volume control</strong>, so you can monitor without a desk.</td></tr>
+            <td><strong>Two quarter-inch jacks, Left and Right</strong>, line level. Ordinary instrument
+            cables. No breakout needed.</td></tr>
         <tr><td>Audio in</td>
-            <td><strong>3.5mm stereo, line level.</strong> Optional. Runs a guitar or anything else through the same effects &mdash; see <em>Input level</em> below.</td></tr>
+            <td><strong>Two quarter-inch jacks, Left and Right</strong>, line level. Optional. Runs a guitar
+            or anything else through the same effects &mdash; see <em>Input level</em> below.</td></tr>
+        <tr><td>Headphones</td>
+            <td><strong>3.5mm stereo</strong>, its own amplifier. It shares the <em>Volume</em> knob with the
+            quarter-inch outputs, so turning down for headphones turns down the outputs too.</td></tr>
+        <tr><td>Footswitch</td>
+            <td><strong>True bypass, in hardware.</strong> A relay wires the inputs straight through to the
+            outputs, around the Daisy entirely &mdash; so bypass works whatever the firmware is doing, and
+            the instrument is silent through it. The small LED beside it is lit when the effect is
+            <em>in</em> circuit. This is a different thing from the encoder's effects bypass, which is
+            digital and only bypasses the effects block.</td></tr>
         <tr><td>SD card</td>
-            <td>Every sampled instrument. The Pod still boots and plays its oscillators without one, but the sampled sounds will be silent.</td></tr>
+            <td><strong>microSD.</strong> Every sampled instrument. It still boots and plays its oscillators
+            without one, but the sampled sounds will be silent.</td></tr>
       </table>
 
       <h3 style="margin:16px 0 6px; font-size:14px;">Cables that work</h3>
       <table class="hwmap">
         <tr><td>Power</td>
-            <td>Amazon Basics <strong>USB-A to Micro USB</strong> charging cable. Into a phone charger or a power bank rather than a computer, unless you want the computer's noise with it.</td></tr>
+            <td>A <strong>9V DC</strong> supply on the barrel jack. Confirm the polarity your unit expects
+            before you plug in a pedal-board supply.</td></tr>
         <tr><td>Audio</td>
-            <td>Hosa <strong>CMP-159</strong> &mdash; stereo breakout, 3.5mm TRS to dual 1/4" TS, 10 foot. One of these does the output; a second does the input if you want to run something through it.</td></tr>
+            <td>Ordinary <strong>quarter-inch instrument cables</strong>, one per jack. Two for a stereo
+            output, two more if you are running something in.</td></tr>
         <tr><td>MIDI</td>
-            <td>Any ordinary <strong>5-pin DIN MIDI cable</strong>, into the Type&nbsp;A adaptor supplied with the instrument.</td></tr>
+            <td>Any ordinary <strong>5-pin DIN MIDI cable</strong>, straight into the socket.</td></tr>
+        <tr><td>USB</td>
+            <td>A <strong>micro USB</strong> cable, to reach this page from a computer.</td></tr>
       </table>
 
       <h3 style="margin:16px 0 6px; font-size:14px;">The controls</h3>
       <table class="hwmap">
         <tr><td>Knob 1 / Knob 2</td>
             <td>Chorus amount and delay amount. Whichever moved last wins &mdash; the knob takes over from this page, and this page takes it back.</td></tr>
+        <tr><td>Volume knob</td>
+            <td>The <strong>analogue</strong> output level, after everything else, feeding the quarter-inch
+            outputs and the headphones together. It is a passive control and also rolls off a little top
+            end as it comes down.</td></tr>
         <tr><td>Encoder turn</td>
-            <td>Master volume, outputs and headphones together. Turn it slowly to trim, quickly to cover the range.</td></tr>
+            <td>The <strong>digital</strong> master volume, inside the instrument &mdash; a separate thing
+            from the Volume knob above, and the one this page follows. Turn it slowly to trim, quickly to
+            cover the range.</td></tr>
         <tr><td>Encoder tap</td>
             <td>Bypass the effects in and out, and back again. The LEDs flash to say which.</td></tr>
         <tr><td>Encoder held</td>
@@ -332,7 +365,11 @@
         <tr><td>Mod wheel</td>
             <td>Brightness on both slots, and the rotary speaker's speed: down stops it, middle slow, up fast.</td></tr>
         <tr><td>The two LEDs</td>
-            <td>Each slot's instrument has a colour (left LED = Left slot), brightening on every MIDI message so you can see notes arriving. After loading from the card they go green, or blink red as many times as the stage that failed.</td></tr>
+            <td>Each slot's instrument has a colour (left LED = Left slot), brightening on every MIDI
+            message so you can see notes arriving. They turn <strong>purple while the card is being
+            read</strong>, and green when it succeeded. On this board the LED wiring is rotated and pure
+            red cannot be produced, so anything the firmware means as red comes out purple &mdash; if a
+            load fails, count the blinks rather than reading the colour.</td></tr>
       </table>
 
       <h3 style="margin:16px 0 6px; font-size:14px;">What to expect</h3>
